@@ -9,9 +9,8 @@ on:
       - develop
 
 jobs:
-  build-lint-test:
+  install-dependencies:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -21,7 +20,7 @@ jobs:
         with:
           go-version: '1.24.0'
 
-      - name: Кэширование зависимостей
+      - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
@@ -33,18 +32,53 @@ jobs:
         working-directory: backend
         run: go mod tidy
 
+  lint:
+    runs-on: ubuntu-latest
+    needs: install-dependencies  
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.0'
+
       - name: Install golangci-lint
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
 
       - name: Linter check (golangci-lint)
         working-directory: backend
-        run: |
-          golangci-lint run ./...
+        run: golangci-lint run ./...
+
+  build:
+    runs-on: ubuntu-latest
+    needs: install-dependencies  
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.0'
 
       - name: Build
         working-directory: backend
         run: go build -v ./...
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build 
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.0'
 
       - name: Run tests
         working-directory: backend
