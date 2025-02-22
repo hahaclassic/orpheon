@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout репозитория
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Установка Go
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.0'
@@ -25,27 +25,27 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('backend/go.sum') }}
           restore-keys: |
-            ${{ runner.os }}-go-
+            ${{ runner.os }}-go-mod-
 
-      - name: Установка зависимостей
+      - name: Install dependencies (Go)
         working-directory: backend
         run: go mod tidy
 
-      - name: Установка golangci-lint (последняя версия)
+      - name: Install golangci-lint
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
 
-      - name: Проверка кода линтером (golangci-lint)
+      - name: Linter check (golangci-lint)
         working-directory: backend
         run: |
           golangci-lint run ./...
 
-      - name: Сборка проекта
+      - name: Build
         working-directory: backend
         run: go build -v ./...
 
-      - name: Запуск тестов
+      - name: Run tests
         working-directory: backend
         run: go test -v ./...
