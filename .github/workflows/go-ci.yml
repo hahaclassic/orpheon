@@ -33,10 +33,13 @@ jobs:
         working-directory: backend
         run: go mod tidy
 
+      - name: Установка golangci-lint (последняя версия)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+
       - name: Проверка кода линтером (golangci-lint)
         working-directory: backend
         run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
           golangci-lint run ./...
 
       - name: Сборка проекта
