@@ -152,3 +152,37 @@
 
 ![bpmn](./diagrams/bpmn/bpmn.png)
 
+
+## Описание типа приложения и выбранного технологического стека
+
+Тип приложения: `Web SPA`
+
+Стек:
+* Бэкенд: Golang
+
+* Фронт: React + Typescript 
+
+* БД: PostgreSQL для метаданных, объектное хранилище MinIO для аудиофайлов и изображений
+
+## Верхнеуровневое разбиение на компоненты
+
+![components](./diagrams/components/components.drawio.png)
+
+
+## UML диаграммы классов для компонента доступа к данным и компонента с бизнес-логикой
+
+### Сервисы
+
+1. PlaylistService
+
+2. AlbumService
+
+3. 
+
+### Сущности
+
+1. Playlist
+
+2. Album
+
+3. Artist
