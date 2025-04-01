@@ -61,7 +61,7 @@
 
 ## ER-диграмма
 
-![er-diagram](./diagrams/er/er-diagram.png)
+![er-diagram](./diagrams/er/er-diagram-new.png)
 
 
 ## Пользовательские сценарии
