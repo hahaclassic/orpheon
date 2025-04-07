@@ -11,15 +11,15 @@ import (
 // как сделать так, чтобы сохранялась целостность данных.
 
 type metaDeletionService interface {
-	Delete(ctx context.Context, claims entities.Claims, playlistID uuid.UUID) error
+	Delete(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) error
 }
 
 type trackDeletionService interface {
-	Delete(ctx context.Context, claims entities.Claims, playlistID uuid.UUID) error
+	Delete(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) error
 }
 
 type favoritesDeletionService interface {
-	Delete(ctx context.Context, claims entities.Claims, playlistID uuid.UUID) error
+	Delete(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) error
 }
 
 type PlaylistDeleter struct {
@@ -37,7 +37,7 @@ func New(meta metaDeletionService, track trackDeletionService,
 	}
 }
 
-func (p *PlaylistDeleter) Delete(ctx context.Context, claims entities.Claims, playlistID uuid.UUID) error {
+func (p *PlaylistDeleter) Delete(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) error {
 	err := p.favorites.Delete(ctx, claims, playlistID)
 	if err != nil {
 		return err

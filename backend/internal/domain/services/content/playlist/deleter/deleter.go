@@ -8,5 +8,5 @@ import (
 )
 
 type PlaylistDeletionService interface {
-	DeletePlaylist(ctx context.Context, claims entities.Claims, playlistID uuid.UUID) error
+	DeletePlaylist(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) error
 }

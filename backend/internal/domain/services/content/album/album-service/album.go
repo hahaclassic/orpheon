@@ -2,6 +2,7 @@ package albumservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entities"
@@ -24,7 +25,17 @@ func New(repo AlbumRepository) *AlbumService {
 	}
 }
 
-func (a *AlbumService) CreateAlbum(ctx context.Context, album *entities.AlbumMeta) error {
+func (a *AlbumService) CreateAlbum(ctx context.Context, claims *entities.Claims, album *entities.AlbumMeta) error {
+	if claims.AccessLvl != entities.Admin {
+		return errors.New("forbidden")
+	}
+
+	var err error
+	album.ID, err = uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+
 	return a.repo.CreateAlbum(ctx, album)
 }
 
@@ -32,10 +43,18 @@ func (a *AlbumService) GetAlbum(ctx context.Context, albumID uuid.UUID) (*entiti
 	return a.repo.GetAlbum(ctx, albumID)
 }
 
-func (a *AlbumService) UpdateAlbum(ctx context.Context, album *entities.AlbumMeta) error {
+func (a *AlbumService) UpdateAlbum(ctx context.Context, claims *entities.Claims, album *entities.AlbumMeta) error {
+	if claims.AccessLvl != entities.Admin {
+		return errors.New("forbidden")
+	}
+
 	return a.repo.UpdateAlbum(ctx, album)
 }
 
-func (a *AlbumService) DeleteAlbum(ctx context.Context, albumID uuid.UUID) error {
+func (a *AlbumService) DeleteAlbum(ctx context.Context, claims *entities.Claims, albumID uuid.UUID) error {
+	if claims.AccessLvl != entities.Admin {
+		return errors.New("forbidden")
+	}
+
 	return a.repo.DeleteAlbum(ctx, albumID)
 }

@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/entities"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/entities"
 )
 
 type CoverService interface {
-	UploadCover(ctx context.Context, id uuid.UUID, cover *entities.Cover) error
-	GetCover(ctx context.Context, id uuid.UUID) (*entities.Cover, error)
-	DeleteCover(ctx context.Context, id uuid.UUID) error
+	UploadCover(ctx context.Context, claims *entities.Claims, cover *entities.Cover) error
+	GetCover(ctx context.Context, claims *entities.Claims, objID uuid.UUID) (*entities.Cover, error)
+	DeleteCover(ctx context.Context, claims *entities.Claims, objID uuid.UUID) error
 }
