@@ -8,8 +8,8 @@ import (
 )
 
 type UserService interface {
-	CreateUser(ctx context.Context, user *entities.User) error
-	GetUser(ctx context.Context, userID uuid.UUID) (*entities.User, error)
-	UpdateUser(ctx context.Context, user *entities.User) error
-	DeleteUser(ctx context.Context, userID uuid.UUID) error
+	CreateUser(ctx context.Context, user *entities.UserInfo) error
+	GetUser(ctx context.Context, userID uuid.UUID) (*entities.UserInfo, error)
+	UpdateUser(ctx context.Context, claims *entities.Claims, user *entities.UserInfo) error
+	DeleteUser(ctx context.Context, claims *entities.Claims, userID uuid.UUID) error
 }
