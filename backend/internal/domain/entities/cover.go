@@ -1,5 +1,16 @@
 package entities
 
+import "github.com/google/uuid"
+
+type CoverObjectType string
+
+const (
+	CoverAlbum    CoverObjectType = "album"
+	CoverPlaylist CoverObjectType = "playlist"
+)
+
 type Cover struct {
-	Data []byte
+	ObjectType CoverObjectType
+	ObjectID   uuid.UUID
+	Data       []byte
 }

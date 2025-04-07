@@ -9,7 +9,7 @@ import (
 type UserInfo struct {
 	ID               uuid.UUID
 	Name             string
-	Description      string
+	Status           string
 	RegistrationDate time.Time
 	BirthDate        time.Time
 }

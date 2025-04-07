@@ -6,3 +6,9 @@ type Claims struct {
 	UserID    uuid.UUID
 	AccessLvl AccessLevel
 }
+
+type JWTClaims struct {
+	UserID    uuid.UUID
+	AccessLvl AccessLevel
+	Exp       int64
+}
