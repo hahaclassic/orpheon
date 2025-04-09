@@ -1,11 +1,11 @@
-package playlistservice
+package meta
 
 import (
 	"context"
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/entities"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 )
 
 // TODO: обработка ошибок
@@ -18,16 +18,16 @@ var (
 )
 
 type PlaylistPolicyService interface {
-	CanDelete(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) (bool, error)
-	CanEdit(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) (bool, error)
-	CanView(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) (bool, error)
+	CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error)
+	CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error)
+	CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error)
 }
 
 type PlaylistMetaRepository interface {
-	Create(ctx context.Context, playlist *entities.Playlist) error
-	GetByID(ctx context.Context, playlistID uuid.UUID) (*entities.Playlist, error)
-	GetByUser(ctx context.Context, userID uuid.UUID) ([]*entities.Playlist, error)
-	Update(ctx context.Context, playlist *entities.Playlist) error
+	Create(ctx context.Context, playlist *entity.Playlist) error
+	GetByID(ctx context.Context, playlistID uuid.UUID) (*entity.Playlist, error)
+	GetByUser(ctx context.Context, userID uuid.UUID) ([]*entity.Playlist, error)
+	Update(ctx context.Context, playlist *entity.Playlist) error
 	Delete(ctx context.Context, playlistID uuid.UUID) error
 }
 
@@ -43,7 +43,7 @@ func NewPlaylistMetaService(repo PlaylistMetaRepository, policy PlaylistPolicySe
 	}
 }
 
-func (p *PlaylistMetaService) CreatePlaylist(ctx context.Context, claims *entities.Claims, playlist *entities.Playlist) error {
+func (p *PlaylistMetaService) CreatePlaylist(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) error {
 	if playlist.Name == "" {
 		return errors.New("playlist name cannot be empty")
 	}
@@ -51,7 +51,7 @@ func (p *PlaylistMetaService) CreatePlaylist(ctx context.Context, claims *entiti
 	return p.repo.Create(ctx, playlist)
 }
 
-func (p *PlaylistMetaService) GetPlaylist(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) (*entities.Playlist, error) {
+func (p *PlaylistMetaService) GetPlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (*entity.Playlist, error) {
 	ok, err := p.policy.CanView(ctx, claims, playlistID)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (p *PlaylistMetaService) GetPlaylist(ctx context.Context, claims *entities.
 	return p.repo.GetByID(ctx, playlistID)
 }
 
-func (p *PlaylistMetaService) GetUserPlaylists(ctx context.Context, claims *entities.Claims, userID uuid.UUID) ([]*entities.Playlist, error) {
+func (p *PlaylistMetaService) GetUserPlaylists(ctx context.Context, claims *entity.Claims, userID uuid.UUID) ([]*entity.Playlist, error) {
 	playlists, err := p.repo.GetByUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (p *PlaylistMetaService) GetUserPlaylists(ctx context.Context, claims *enti
 	return publicPlaylists, nil
 }
 
-func (p *PlaylistMetaService) UpdatePlaylist(ctx context.Context, claims *entities.Claims, playlist *entities.Playlist) error {
+func (p *PlaylistMetaService) UpdatePlaylist(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) error {
 	ok, err := p.policy.CanEdit(ctx, claims, playlist.ID)
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func (p *PlaylistMetaService) UpdatePlaylist(ctx context.Context, claims *entiti
 	return p.repo.Update(ctx, playlist)
 }
 
-func (p *PlaylistMetaService) DeletePlaylist(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) error {
+func (p *PlaylistMetaService) DeletePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
 	ok, err := p.policy.CanDelete(ctx, claims, playlistID)
 	if err != nil {
 		return err

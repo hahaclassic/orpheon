@@ -1,22 +1,22 @@
-package policyservice
+package policy
 
 import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/entities"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 )
 
 // TODO: 1. надо учесть, что права могут инвалидироваться (если плейлист стал непубличным, например)
 //  	 2. обновить логику с учетом того, что PlaylistViewer тоже может кешироваться
 
 type PlaylistAccessCache interface {
-	Set(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID, lvl entities.PlaylistAccessLvl) error
-	Get(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) (lvl entities.PlaylistAccessLvl, err error)
+	Set(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID, lvl entity.PlaylistAccessLvl) error
+	Get(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) (lvl entity.PlaylistAccessLvl, err error)
 }
 
 type PlaylistRepository interface {
-	GetByID(ctx context.Context, id uuid.UUID) (*entities.Playlist, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*entity.Playlist, error)
 }
 
 type PlaylistPolicyService struct {
@@ -29,9 +29,9 @@ func NewPlaylistPolicyService(localCache PlaylistAccessCache, cache PlaylistAcce
 }
 
 // Owner + Admin (if private=false)
-func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) (bool, error) {
+func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
 	var (
-		lvl entities.PlaylistAccessLvl
+		lvl entity.PlaylistAccessLvl
 		err error
 	)
 
@@ -40,7 +40,7 @@ func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entities.
 		return false, err
 	}
 
-	if lvl == entities.PlaylistOwnerLvl {
+	if lvl == entity.PlaylistOwnerLvl {
 		return true, nil
 	}
 
@@ -49,13 +49,14 @@ func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entities.
 		return false, err
 	}
 
-	return playlist.OwnerID == claims.UserID || (claims.AccessLvl == entities.Admin && !playlist.IsPrivate), nil
+	return playlist.OwnerID == claims.UserID ||
+		(claims.AccessLvl == entity.Admin && !playlist.IsPrivate), nil
 }
 
 // Owner
-func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) (bool, error) {
+func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
 	var (
-		lvl entities.PlaylistAccessLvl
+		lvl entity.PlaylistAccessLvl
 		err error
 	)
 
@@ -64,7 +65,7 @@ func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entities.Cl
 		return false, err
 	}
 
-	if lvl == entities.PlaylistOwnerLvl {
+	if lvl == entity.PlaylistOwnerLvl {
 		return true, nil
 	}
 
@@ -76,7 +77,7 @@ func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entities.Cl
 	isOwner := playlist.OwnerID == claims.UserID
 
 	if isOwner {
-		err = p.cache.Set(ctx, playlist.OwnerID, playlistID, entities.PlaylistOwnerLvl)
+		err = p.cache.Set(ctx, playlist.OwnerID, playlistID, entity.PlaylistOwnerLvl)
 		if err != nil {
 			return isOwner, err
 		}
@@ -87,9 +88,9 @@ func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entities.Cl
 
 // All users (if private=false)
 // Если userID != ownerID
-func (p *PlaylistPolicyService) CanView(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) (bool, error) {
+func (p *PlaylistPolicyService) CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
 	var (
-		lvl entities.PlaylistAccessLvl
+		lvl entity.PlaylistAccessLvl
 		err error
 	)
 
@@ -98,7 +99,7 @@ func (p *PlaylistPolicyService) CanView(ctx context.Context, claims *entities.Cl
 		return false, err
 	}
 
-	if lvl == entities.PlaylistOwnerLvl {
+	if lvl == entity.PlaylistOwnerLvl {
 		return true, nil
 	}
 
@@ -110,7 +111,7 @@ func (p *PlaylistPolicyService) CanView(ctx context.Context, claims *entities.Cl
 	isOwner := playlist.OwnerID == claims.UserID
 
 	if isOwner {
-		err = p.cache.Set(ctx, playlist.OwnerID, playlistID, entities.PlaylistOwnerLvl)
+		err = p.cache.Set(ctx, playlist.OwnerID, playlistID, entity.PlaylistOwnerLvl)
 		if err != nil {
 			return isOwner, err
 		}

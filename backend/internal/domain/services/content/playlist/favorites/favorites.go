@@ -1,11 +1,11 @@
-package favoritesservice
+package favorites
 
 import (
 	"context"
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/entities"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 )
 
 type playlistPolicyService interface {
@@ -15,7 +15,7 @@ type playlistPolicyService interface {
 type playlistFavoriteRepository interface {
 	AddToFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error
 	RemoveFromFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error
-	GetFavoritePlaylists(ctx context.Context, userID uuid.UUID) ([]*entities.Playlist, error)
+	GetFavoritePlaylists(ctx context.Context, userID uuid.UUID) ([]*entity.Playlist, error)
 	GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID) ([]uuid.UUID, error)
 	RemovePlaylistFromAllFavorites(ctx context.Context, playlistID uuid.UUID) error
 }
