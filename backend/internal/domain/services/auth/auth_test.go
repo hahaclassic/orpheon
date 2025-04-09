@@ -26,6 +26,8 @@ func TestAuthService_Register(t *testing.T) {
 		Password: "password",
 	}
 
+	user := &entity.UserInfo{}
+
 	// OK
 	mockUserCreator.On("Create", ctx, user).Return(nil).Once()
 	mockTokenService.On("GenerateAccessToken", user.ID).Return("access_token", nil).Once()
