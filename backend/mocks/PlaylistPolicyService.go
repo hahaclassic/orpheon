@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	entities "github.com/hahaclassic/orpheon/backend/internal/domain/entities"
+	entity "github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"
@@ -25,7 +25,7 @@ func (_m *PlaylistPolicyService) EXPECT() *PlaylistPolicyService_Expecter {
 }
 
 // CanDelete provides a mock function with given fields: ctx, claims, playlistID
-func (_m *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) (bool, error) {
+func (_m *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
 	ret := _m.Called(ctx, claims, playlistID)
 
 	if len(ret) == 0 {
@@ -34,16 +34,16 @@ func (_m *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entities
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entities.Claims, uuid.UUID) (bool, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) (bool, error)); ok {
 		return rf(ctx, claims, playlistID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *entities.Claims, uuid.UUID) bool); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) bool); ok {
 		r0 = rf(ctx, claims, playlistID)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *entities.Claims, uuid.UUID) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *entity.Claims, uuid.UUID) error); ok {
 		r1 = rf(ctx, claims, playlistID)
 	} else {
 		r1 = ret.Error(1)
@@ -59,15 +59,15 @@ type PlaylistPolicyService_CanDelete_Call struct {
 
 // CanDelete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - claims *entities.Claims
+//   - claims *entity.Claims
 //   - playlistID uuid.UUID
 func (_e *PlaylistPolicyService_Expecter) CanDelete(ctx interface{}, claims interface{}, playlistID interface{}) *PlaylistPolicyService_CanDelete_Call {
 	return &PlaylistPolicyService_CanDelete_Call{Call: _e.mock.On("CanDelete", ctx, claims, playlistID)}
 }
 
-func (_c *PlaylistPolicyService_CanDelete_Call) Run(run func(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID)) *PlaylistPolicyService_CanDelete_Call {
+func (_c *PlaylistPolicyService_CanDelete_Call) Run(run func(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID)) *PlaylistPolicyService_CanDelete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*entities.Claims), args[2].(uuid.UUID))
+		run(args[0].(context.Context), args[1].(*entity.Claims), args[2].(uuid.UUID))
 	})
 	return _c
 }
@@ -77,13 +77,13 @@ func (_c *PlaylistPolicyService_CanDelete_Call) Return(_a0 bool, _a1 error) *Pla
 	return _c
 }
 
-func (_c *PlaylistPolicyService_CanDelete_Call) RunAndReturn(run func(context.Context, *entities.Claims, uuid.UUID) (bool, error)) *PlaylistPolicyService_CanDelete_Call {
+func (_c *PlaylistPolicyService_CanDelete_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) (bool, error)) *PlaylistPolicyService_CanDelete_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CanEdit provides a mock function with given fields: ctx, claims, playlistID
-func (_m *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) (bool, error) {
+func (_m *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
 	ret := _m.Called(ctx, claims, playlistID)
 
 	if len(ret) == 0 {
@@ -92,16 +92,16 @@ func (_m *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entities.C
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entities.Claims, uuid.UUID) (bool, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) (bool, error)); ok {
 		return rf(ctx, claims, playlistID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *entities.Claims, uuid.UUID) bool); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) bool); ok {
 		r0 = rf(ctx, claims, playlistID)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *entities.Claims, uuid.UUID) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *entity.Claims, uuid.UUID) error); ok {
 		r1 = rf(ctx, claims, playlistID)
 	} else {
 		r1 = ret.Error(1)
@@ -117,15 +117,15 @@ type PlaylistPolicyService_CanEdit_Call struct {
 
 // CanEdit is a helper method to define mock.On call
 //   - ctx context.Context
-//   - claims *entities.Claims
+//   - claims *entity.Claims
 //   - playlistID uuid.UUID
 func (_e *PlaylistPolicyService_Expecter) CanEdit(ctx interface{}, claims interface{}, playlistID interface{}) *PlaylistPolicyService_CanEdit_Call {
 	return &PlaylistPolicyService_CanEdit_Call{Call: _e.mock.On("CanEdit", ctx, claims, playlistID)}
 }
 
-func (_c *PlaylistPolicyService_CanEdit_Call) Run(run func(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID)) *PlaylistPolicyService_CanEdit_Call {
+func (_c *PlaylistPolicyService_CanEdit_Call) Run(run func(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID)) *PlaylistPolicyService_CanEdit_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*entities.Claims), args[2].(uuid.UUID))
+		run(args[0].(context.Context), args[1].(*entity.Claims), args[2].(uuid.UUID))
 	})
 	return _c
 }
@@ -135,13 +135,13 @@ func (_c *PlaylistPolicyService_CanEdit_Call) Return(_a0 bool, _a1 error) *Playl
 	return _c
 }
 
-func (_c *PlaylistPolicyService_CanEdit_Call) RunAndReturn(run func(context.Context, *entities.Claims, uuid.UUID) (bool, error)) *PlaylistPolicyService_CanEdit_Call {
+func (_c *PlaylistPolicyService_CanEdit_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) (bool, error)) *PlaylistPolicyService_CanEdit_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CanView provides a mock function with given fields: ctx, claims, playlistID
-func (_m *PlaylistPolicyService) CanView(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID) (bool, error) {
+func (_m *PlaylistPolicyService) CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
 	ret := _m.Called(ctx, claims, playlistID)
 
 	if len(ret) == 0 {
@@ -150,16 +150,16 @@ func (_m *PlaylistPolicyService) CanView(ctx context.Context, claims *entities.C
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entities.Claims, uuid.UUID) (bool, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) (bool, error)); ok {
 		return rf(ctx, claims, playlistID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *entities.Claims, uuid.UUID) bool); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) bool); ok {
 		r0 = rf(ctx, claims, playlistID)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *entities.Claims, uuid.UUID) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *entity.Claims, uuid.UUID) error); ok {
 		r1 = rf(ctx, claims, playlistID)
 	} else {
 		r1 = ret.Error(1)
@@ -175,15 +175,15 @@ type PlaylistPolicyService_CanView_Call struct {
 
 // CanView is a helper method to define mock.On call
 //   - ctx context.Context
-//   - claims *entities.Claims
+//   - claims *entity.Claims
 //   - playlistID uuid.UUID
 func (_e *PlaylistPolicyService_Expecter) CanView(ctx interface{}, claims interface{}, playlistID interface{}) *PlaylistPolicyService_CanView_Call {
 	return &PlaylistPolicyService_CanView_Call{Call: _e.mock.On("CanView", ctx, claims, playlistID)}
 }
 
-func (_c *PlaylistPolicyService_CanView_Call) Run(run func(ctx context.Context, claims *entities.Claims, playlistID uuid.UUID)) *PlaylistPolicyService_CanView_Call {
+func (_c *PlaylistPolicyService_CanView_Call) Run(run func(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID)) *PlaylistPolicyService_CanView_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*entities.Claims), args[2].(uuid.UUID))
+		run(args[0].(context.Context), args[1].(*entity.Claims), args[2].(uuid.UUID))
 	})
 	return _c
 }
@@ -193,7 +193,7 @@ func (_c *PlaylistPolicyService_CanView_Call) Return(_a0 bool, _a1 error) *Playl
 	return _c
 }
 
-func (_c *PlaylistPolicyService_CanView_Call) RunAndReturn(run func(context.Context, *entities.Claims, uuid.UUID) (bool, error)) *PlaylistPolicyService_CanView_Call {
+func (_c *PlaylistPolicyService_CanView_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) (bool, error)) *PlaylistPolicyService_CanView_Call {
 	_c.Call.Return(run)
 	return _c
 }
