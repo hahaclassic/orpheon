@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
@@ -41,13 +40,6 @@ type AuthRepository interface {
 
 type UserCreatorService interface {
 	CreateUser(ctx context.Context, info *entity.UserInfo) (uuid.UUID, error)
-}
-
-type AuthConfig struct {
-	SecretKey  []byte
-	AccessTTL  time.Duration
-	RefreshTTL time.Duration
-	HashCost   int
 }
 
 type AuthService struct {
