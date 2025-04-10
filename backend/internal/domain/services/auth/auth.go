@@ -9,14 +9,21 @@ import (
 )
 
 var (
+	ErrRegisterUser   = errors.New("register user error")
+	ErrLogin          = errors.New("login error")
+	ErrLogout         = errors.New("logout error")
+	ErrGetClaims      = errors.New("get claims error")
+	ErrUpdatePassword = errors.New("update password error")
+	ErrRefreshTokens  = errors.New("refresh tokens errors")
+
 	ErrHashingPassword = errors.New("hashing password error")
 	ErrNewUserCreation = errors.New("new user creation error")
-	ErrLogin           = errors.New("login error")
 )
 
 type TokenService interface {
-	CreateAccessToken(claims *entity.Claims) (string, error)
+	GenerateAccessToken(claims *entity.Claims) (string, error)
 	ParseAccessToken(tokenStr string) (*entity.Claims, error)
+	GenerateRefreshToken() (string, error)
 }
 
 type PasswordHasher interface {
@@ -100,16 +107,15 @@ func (a *AuthService) Login(ctx context.Context, credentials *entity.UserCredent
 		return nil, err
 	}
 
-	accessToken, err := a.tokenService.CreateAccessToken(claims)
+	accessToken, err := a.tokenService.GenerateAccessToken(claims)
 	if err != nil {
 		return nil, err
 	}
 
-	refresh, err := uuid.NewRandom()
+	refreshToken, err := a.tokenService.GenerateRefreshToken()
 	if err != nil {
 		return nil, err
 	}
-	refreshToken := refresh.String()
 
 	err = a.refreshRepo.Set(ctx, refreshToken, claims)
 	if err != nil {
@@ -131,23 +137,27 @@ func (a *AuthService) RefreshTokens(ctx context.Context, refreshToken string) (*
 		return nil, err
 	}
 
-	accessToken, err := a.tokenService.CreateAccessToken(claims)
+	accessToken, err := a.tokenService.GenerateAccessToken(claims)
 	if err != nil {
 		return nil, err
 	}
 
-	newRefresh, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
-	}
-	newRefreshToken := newRefresh.String()
-
-	err = a.refreshRepo.Set(ctx, newRefreshToken, claims)
+	newRefresh, err := a.tokenService.GenerateRefreshToken()
 	if err != nil {
 		return nil, err
 	}
 
-	return &entity.AuthTokens{Access: accessToken, Refresh: newRefreshToken}, nil
+	err = a.refreshRepo.Delete(ctx, refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.refreshRepo.Set(ctx, newRefresh, claims)
+	if err != nil {
+		return nil, err
+	}
+
+	return &entity.AuthTokens{Access: accessToken, Refresh: newRefresh}, nil
 }
 
 func (a *AuthService) UpdatePassword(ctx context.Context, userID uuid.UUID, passwords *entity.UserPasswords) error {

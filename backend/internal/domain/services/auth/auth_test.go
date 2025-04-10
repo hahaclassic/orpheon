@@ -26,10 +26,17 @@ func TestAuthService_Register(t *testing.T) {
 		Password: "password",
 	}
 
-	user := &entity.UserInfo{}
+	user := &entity.UserInfo{
+		Name: credentials.Login,
+	}
+
+	claims := &entity.Claims{
+		UserID:    uuid.New(),
+		AccessLvl: entity.User,
+	}
 
 	// OK
-	mockUserCreator.On("Create", ctx, user).Return(nil).Once()
+	mockUserCreator.On("Create", ctx, user).Return("6d6fdb15-b669-4edf-bf94-7484af3cfc7b").Once()
 	mockTokenService.On("GenerateAccessToken", user.ID).Return("access_token", nil).Once()
 	mockTokenService.On("GenerateRefreshToken", user.ID).Return("refresh_token", nil).Once()
 

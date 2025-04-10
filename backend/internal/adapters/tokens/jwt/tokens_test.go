@@ -24,7 +24,7 @@ func TestCreateAccessToken(t *testing.T) {
 		AccessLvl: entity.AccessLevel(1),
 	}
 
-	token, err := tokenService.CreateAccessToken(claims)
+	token, err := tokenService.GenerateAccessToken(claims)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
 
@@ -47,7 +47,7 @@ func TestTokenExpired(t *testing.T) {
 		AccessLvl: entity.AccessLevel(1),
 	}
 
-	token, err := tokenService.CreateAccessToken(claims)
+	token, err := tokenService.GenerateAccessToken(claims)
 	assert.NoError(t, err)
 
 	time.Sleep(time.Second * 2)
@@ -70,7 +70,7 @@ func TestInvalidClaims(t *testing.T) {
 		AccessLvl: entity.AccessLevel(1),
 	}
 
-	token, err := tokenService.CreateAccessToken(claims)
+	token, err := tokenService.GenerateAccessToken(claims)
 	assert.NoError(t, err)
 
 	parsedClaims, err := tokenService.ParseAccessToken(token)

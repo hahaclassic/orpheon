@@ -44,7 +44,7 @@ func New(config AccessTokenConfig, secretKey []byte) *JWTTokenService {
 	}
 }
 
-func (s *JWTTokenService) CreateAccessToken(claims *entity.Claims) (string, error) {
+func (s *JWTTokenService) GenerateAccessToken(claims *entity.Claims) (string, error) {
 	jitter := time.Duration(rand.Int63n(int64(s.accessCnf.Jitter)))
 	exp := time.Now().Add(s.accessCnf.TTL + jitter)
 
@@ -86,4 +86,13 @@ func (s *JWTTokenService) ParseAccessToken(tokenStr string) (*entity.Claims, err
 		UserID:    jwtClaims.UserID,
 		AccessLvl: jwtClaims.AccessLvl,
 	}, nil
+}
+
+func (s *JWTTokenService) GenerateRefreshToken() (string, error) {
+	newRefresh, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+
+	return newRefresh.String(), nil
 }
