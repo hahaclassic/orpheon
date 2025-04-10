@@ -1,9 +1,6 @@
 name: Go CI
 
 on:
-  push:
-    branches:
-      - feature/github-actions
   pull_request:
     branches:
       - develop
