@@ -74,7 +74,7 @@ func proccessListeningEvent(segments []*entity.Segment, event *entity.ListeningE
 	segLength := segments[0].Range.Len()
 	affectedSegIdx := make([]int, 0, len(segments))
 
-	incrementListenCount := func(segIdx int, lisRange *entity.Range) {
+	incrementStreamCount := func(segIdx int, lisRange *entity.Range) {
 		intersec := intersection(segments[segIdx].Range, lisRange)
 		if float64(intersec.Len()) >= float64(segments[segIdx].Range.Len())/2 {
 			segments[segIdx].StreamCount++
@@ -86,8 +86,8 @@ func proccessListeningEvent(segments []*entity.Segment, event *entity.ListeningE
 		totalDuration += listenedRange.End - listenedRange.Start
 		segStartIdx, segEndIdx := listenedRange.Start/segLength, listenedRange.End/segLength
 
-		incrementListenCount(segStartIdx, listenedRange)
-		incrementListenCount(segEndIdx, listenedRange)
+		incrementStreamCount(segStartIdx, listenedRange)
+		incrementStreamCount(segEndIdx, listenedRange)
 
 		for idx := segStartIdx + 1; idx < segEndIdx; idx++ {
 			segments[idx].StreamCount++
