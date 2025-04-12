@@ -1,4 +1,4 @@
-package meta
+package playlist
 
 import (
 	"context"

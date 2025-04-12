@@ -1,4 +1,4 @@
-package facade
+package playlist
 
 import (
 	"context"

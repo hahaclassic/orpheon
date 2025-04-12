@@ -1,4 +1,4 @@
-package favorites
+package playlist
 
 import (
 	"context"

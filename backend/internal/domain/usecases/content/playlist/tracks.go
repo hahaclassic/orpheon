@@ -1,4 +1,4 @@
-package tracks
+package playlist
 
 import (
 	"context"
