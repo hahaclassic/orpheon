@@ -10,7 +10,6 @@ const (
 )
 
 type Cover struct {
-	ObjectType CoverObjectType
-	ObjectID   uuid.UUID
-	Data       []byte
+	ObjectID uuid.UUID
+	Data     []byte
 }

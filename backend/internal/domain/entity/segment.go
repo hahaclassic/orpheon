@@ -4,11 +4,11 @@ import (
 	"github.com/google/uuid"
 )
 
-// meta information about
+// meta information about segment
+// !!! UPDATED: NO SEGMENT ID ONLY IDX
 type Segment struct {
-	ID          uuid.UUID
 	TrackID     uuid.UUID
-	ListenCount int64
-	Start       int
-	Duration    int
+	Idx         uint
+	StreamCount uint64
+	Range       *Range
 }
