@@ -2,9 +2,16 @@ package cover
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+)
+
+var (
+	ErrUploadCover = errors.New("upload cover error")
+	ErrGetCover    = errors.New("get cover error")
+	ErrDeleteCover = errors.New("delete cover error")
 )
 
 type CoverService interface {
