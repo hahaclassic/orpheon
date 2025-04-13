@@ -3,15 +3,27 @@ package tracks
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
+)
+
+var (
+	ErrAddTrack        = errors.New("track addition error")
+	ErrGetAllTracks    = errors.New("get all tracks error")
+	ErrDeleteTrack     = errors.New("delete track error")
+	ErrDeleteAllTracks = errors.New("delete all tracks error")
+
+	ErrForbidden = errors.New("permission denied")
 )
 
 type playlistTracksRepository interface {
-	AddTrackToPlaylist(playlistID uuid.UUID, trackID uuid.UUID) error
-	DeleteTrackFromPlaylist(playlistID uuid.UUID, trackID uuid.UUID) error
-	GetTracksInPlaylist(playlistID uuid.UUID) ([]entity.TrackMeta, error)
+	AddTrackToPlaylist(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID) error
+	DeleteTrackFromPlaylist(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID) error
+	DeleteAllTracksFromPlaylist(ctx context.Context, playlistID uuid.UUID) error
+	GetAllPlaylistTracks(ctx context.Context, playlistID uuid.UUID) ([]*entity.TrackMeta, error)
 }
 
 type playlistPolicyService interface {
@@ -35,59 +47,58 @@ func NewPlaylistTrackService(repo playlistTracksRepository, policy playlistPolic
 func (s *PlaylistTrackService) AddTrack(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, trackID uuid.UUID) error {
 	canEdit, err := s.policy.CanEdit(ctx, claims, playlistID)
 	if err != nil {
-		return err
+		return errwrap.Wrap(ErrAddTrack, err)
 	}
 	if !canEdit {
-		return errors.New("permission denied: user cannot edit playlist")
+		return fmt.Errorf("%w: %w: user cannot edit playlist", ErrAddTrack, ErrForbidden)
 	}
 
-	return s.repo.AddTrackToPlaylist(playlistID, trackID)
+	err = s.repo.AddTrackToPlaylist(ctx, playlistID, trackID)
+
+	return errwrap.WrapIfErr(ErrAddTrack, err)
 }
 
-func (s *PlaylistTrackService) GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]entity.TrackMeta, error) {
+func (s *PlaylistTrackService) GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]*entity.TrackMeta, error) {
 	canView, err := s.policy.CanView(ctx, claims, playlistID)
 	if err != nil {
-		return nil, err
+		return nil, errwrap.Wrap(ErrGetAllTracks, err)
 	}
 	if !canView {
-		return nil, errors.New("permission denied: user cannot view playlist")
+		return nil, fmt.Errorf("%w: %w: user cannot view playlist", ErrGetAllTracks, ErrForbidden)
 	}
 
-	return s.repo.GetTracksInPlaylist(playlistID)
+	tracks, err := s.repo.GetAllPlaylistTracks(ctx, playlistID)
+	if err != nil {
+		return nil, errwrap.Wrap(ErrGetAllTracks, err)
+	}
+
+	return tracks, nil
 }
 
 func (s *PlaylistTrackService) DeleteTrack(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, trackID uuid.UUID) error {
 	canEdit, err := s.policy.CanEdit(ctx, claims, playlistID)
 	if err != nil {
-		return err
+		return errwrap.Wrap(ErrDeleteTrack, err)
 	}
 	if !canEdit {
-		return errors.New("permission denied: user cannot edit playlist")
+		return fmt.Errorf("%w: %w: user cannot edit playlist", ErrDeleteTrack, ErrForbidden)
 	}
 
-	return s.repo.DeleteTrackFromPlaylist(playlistID, trackID)
+	err = s.repo.DeleteTrackFromPlaylist(ctx, playlistID, trackID)
+
+	return errwrap.WrapIfErr(ErrDeleteTrack, err)
 }
 
 func (s *PlaylistTrackService) DeleteAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
 	canEdit, err := s.policy.CanEdit(ctx, claims, playlistID)
 	if err != nil {
-		return err
+		return errwrap.Wrap(ErrDeleteAllTracks, err)
 	}
 	if !canEdit {
-		return errors.New("permission denied: user cannot edit playlist")
+		return fmt.Errorf("%w: %w: user cannot edit playlist", ErrDeleteAllTracks, ErrForbidden)
 	}
 
-	tracks, err := s.repo.GetTracksInPlaylist(playlistID)
-	if err != nil {
-		return err
-	}
+	err = s.repo.DeleteAllTracksFromPlaylist(ctx, playlistID)
 
-	for _, track := range tracks {
-		err := s.repo.DeleteTrackFromPlaylist(playlistID, track.ID)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return errwrap.WrapIfErr(ErrDeleteAllTracks, err)
 }

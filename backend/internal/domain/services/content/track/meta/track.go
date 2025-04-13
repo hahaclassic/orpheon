@@ -16,7 +16,7 @@ var (
 	ErrDeleteTrackMeta = errors.New("delete track meta error")
 
 	ErrGenerateTrackID = errors.New("generate track id error")
-	ErrForbidden       = errors.New("access forbidden")
+	ErrForbidden       = errors.New("permission denied")
 )
 
 type TrackMetaRepository interface {

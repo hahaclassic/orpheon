@@ -14,7 +14,7 @@ var (
 	ErrGetCover    = errors.New("get cover error")
 	ErrDeleteCover = errors.New("delete cover error")
 
-	ErrForbidden = errors.New("access forbidden")
+	ErrForbidden = errors.New("permission denied")
 )
 
 type PlaylistCoverRepository interface {

@@ -16,7 +16,7 @@ type PlaylistAccessCache interface {
 }
 
 type PlaylistRepository interface {
-	GetByID(ctx context.Context, id uuid.UUID) (*entity.Playlist, error)
+	GetByID(ctx context.Context, playlistID uuid.UUID) (*entity.Playlist, error)
 }
 
 type PlaylistPolicyService struct {
