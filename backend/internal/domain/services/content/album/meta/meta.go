@@ -6,6 +6,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
+	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
+)
+
+var (
+	ErrGenerateID = errors.New("id generation error")
+	ErrForbidden  = errors.New("permission denied error")
 )
 
 type AlbumRepository interface {
@@ -25,35 +32,57 @@ func New(repo AlbumRepository) *AlbumService {
 	}
 }
 
-func (a *AlbumService) CreateAlbum(ctx context.Context, claims *entity.Claims, album *entity.AlbumMeta) error {
+func (a *AlbumService) CreateAlbum(ctx context.Context, claims *entity.Claims, album *entity.AlbumMeta) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrCreateAlbum, err)
+		}
+	}()
 	if claims.AccessLvl != entity.Admin {
-		return errors.New("forbidden")
+		return ErrForbidden
 	}
 
-	var err error
 	album.ID, err = uuid.NewRandom()
 	if err != nil {
-		return err
+		return ErrGenerateID
 	}
 
 	return a.repo.CreateAlbum(ctx, album)
 }
 
-func (a *AlbumService) GetAlbum(ctx context.Context, albumID uuid.UUID) (*entity.AlbumMeta, error) {
+func (a *AlbumService) GetAlbum(ctx context.Context, albumID uuid.UUID) (_ *entity.AlbumMeta, err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrGetAlbum, err)
+		}
+	}()
+
 	return a.repo.GetAlbum(ctx, albumID)
 }
 
-func (a *AlbumService) UpdateAlbum(ctx context.Context, claims *entity.Claims, album *entity.AlbumMeta) error {
+func (a *AlbumService) UpdateAlbum(ctx context.Context, claims *entity.Claims, album *entity.AlbumMeta) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrUpdateAlbum, err)
+		}
+	}()
+
 	if claims.AccessLvl != entity.Admin {
-		return errors.New("forbidden")
+		return ErrForbidden
 	}
 
 	return a.repo.UpdateAlbum(ctx, album)
 }
 
-func (a *AlbumService) DeleteAlbum(ctx context.Context, claims *entity.Claims, albumID uuid.UUID) error {
+func (a *AlbumService) DeleteAlbum(ctx context.Context, claims *entity.Claims, albumID uuid.UUID) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrDeleteAlbum, err)
+		}
+	}()
+
 	if claims.AccessLvl != entity.Admin {
-		return errors.New("forbidden")
+		return ErrForbidden
 	}
 
 	return a.repo.DeleteAlbum(ctx, albumID)

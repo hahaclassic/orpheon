@@ -6,15 +6,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/cover"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
-	ErrUploadCover = errors.New("upload cover error")
-	ErrGetCover    = errors.New("get cover error")
-	ErrDeleteCover = errors.New("delete cover error")
-
-	ErrForbidden = errors.New("access forbidden")
+	ErrForbidden = errors.New("permission denied")
 )
 
 type AlbumCoverRepository interface {
@@ -33,37 +30,45 @@ func New(repo AlbumCoverRepository) *AlbumCoverService {
 	}
 }
 
-func (c *AlbumCoverService) GetCover(ctx context.Context, claims *entity.Claims, albumID uuid.UUID) (*entity.Cover, error) {
+func (c *AlbumCoverService) GetCover(ctx context.Context, claims *entity.Claims, albumID uuid.UUID) (_ *entity.Cover, err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrGetCover, err)
+		}
+	}()
+
 	cover, err := c.repo.GetCover(ctx, albumID)
 	if err != nil {
-		return nil, errwrap.Wrap(ErrGetCover, err)
+		return nil, err
 	}
 
 	return cover, nil
 }
 
-func (c *AlbumCoverService) UploadCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) error {
+func (c *AlbumCoverService) UploadCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrUploadCover, err)
+		}
+	}()
+
 	if claims.AccessLvl != entity.Admin {
-		return errwrap.Wrap(ErrUploadCover, ErrForbidden)
+		return ErrForbidden
 	}
 
-	err := c.repo.SaveCover(ctx, cover)
-	if err != nil {
-		return errwrap.Wrap(ErrUploadCover, err)
-	}
-
-	return nil
+	return c.repo.SaveCover(ctx, cover)
 }
 
-func (c *AlbumCoverService) DeleteCover(ctx context.Context, claims *entity.Claims, albumID uuid.UUID) error {
+func (c *AlbumCoverService) DeleteCover(ctx context.Context, claims *entity.Claims, albumID uuid.UUID) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrDeleteCover, err)
+		}
+	}()
+
 	if claims.AccessLvl != entity.Admin {
-		return errwrap.Wrap(ErrDeleteCover, ErrForbidden)
+		return ErrForbidden
 	}
 
-	err := c.repo.DeleteCover(ctx, albumID)
-	if err != nil {
-		return errwrap.Wrap(ErrDeleteCover, err)
-	}
-
-	return nil
+	return c.repo.DeleteCover(ctx, albumID)
 }

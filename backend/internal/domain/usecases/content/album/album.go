@@ -2,9 +2,17 @@ package album
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+)
+
+var (
+	ErrGetAlbum    = errors.New("get album error")
+	ErrCreateAlbum = errors.New("get album error")
+	ErrUpdateAlbum = errors.New("get album error")
+	ErrDeleteAlbum = errors.New("get album error")
 )
 
 type AlbumService interface {
