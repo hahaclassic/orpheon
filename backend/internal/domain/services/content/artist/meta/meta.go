@@ -1,4 +1,4 @@
-package artist
+package meta
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	ErrForbidden  = errors.New("access forbidden error")
+	ErrForbidden  = errors.New("permission denied error")
 	ErrGenerateID = errors.New("id generation error")
 )
 
