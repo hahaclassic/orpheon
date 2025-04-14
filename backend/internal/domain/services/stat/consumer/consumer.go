@@ -2,15 +2,10 @@ package consumer
 
 import (
 	"context"
-	"errors"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/stat"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
-)
-
-var (
-	ErrSetupConsumer         = errors.New("setup consumer error")
-	ErrConsumeListeningEvent = errors.New("consume listening event")
 )
 
 type ListeningStatService interface {
@@ -22,25 +17,30 @@ type EventBus interface {
 }
 
 type ListeningEventConsumer struct {
+	bus  EventBus
 	stat ListeningStatService
 }
 
-func Setup(ctx context.Context, bus EventBus, statService ListeningStatService) error {
-	consumer := &ListeningEventConsumer{stat: statService}
-
-	var err error
-
-	go func() {
-		err = bus.Subscribe(ctx, consumer.ConsumeListeningEvent)
-	}()
-
-	return errwrap.WrapIfErr(ErrSetupConsumer, err)
+func New(bus EventBus, statService ListeningStatService) *ListeningEventConsumer {
+	return &ListeningEventConsumer{bus: bus, stat: statService}
 }
 
-func (c *ListeningEventConsumer) ConsumeListeningEvent(ctx context.Context, event *entity.ListeningEvent) error {
-	if err := c.stat.UpdateTrackStat(ctx, event); err != nil {
-		return errwrap.Wrap(ErrConsumeListeningEvent, err)
-	}
+func (c *ListeningEventConsumer) Start(ctx context.Context) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrListen, err)
+		}
+	}()
 
-	return nil
+	return c.bus.Subscribe(ctx, c.consumeListeningEvent)
+}
+
+func (c *ListeningEventConsumer) consumeListeningEvent(ctx context.Context, event *entity.ListeningEvent) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrConsumeListeningEvent, err)
+		}
+	}()
+
+	return c.stat.UpdateTrackStat(ctx, event)
 }

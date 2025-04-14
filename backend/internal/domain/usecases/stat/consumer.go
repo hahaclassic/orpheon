@@ -2,10 +2,15 @@ package stats
 
 import (
 	"context"
+	"errors"
+)
 
-	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+var (
+	ErrListen                = errors.New("failed to listen events")
+	ErrConsumeListeningEvent = errors.New("failed to consume listening event")
 )
 
 type ListeningEventConsumer interface {
-	ConsumeListeningEvent(ctx context.Context, event *entity.ListeningEvent) error
+	Start(ctx context.Context) error
+	//ConsumeListeningEvent(ctx context.Context, event *entity.ListeningEvent) error
 }

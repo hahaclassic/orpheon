@@ -6,14 +6,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
-	ErrGetAudioChunk   = errors.New("get audio chunk error")
-	ErrUploadAudioFile = errors.New("upload audio file error")
-	ErrDeleteAudioFile = errors.New("delete audio file error")
-
 	ErrForbidden          = errors.New("permission denied")
 	ErrInvalidChunkParams = errors.New("invalid chunk parameters")
 )
@@ -34,38 +31,52 @@ func New(repo audioFileRepository) *AudioFileService {
 	}
 }
 
-func (a *AudioFileService) GetAudioChunk(ctx context.Context, chunk *entity.AudioChunk) (*entity.AudioChunk, error) {
+func (a *AudioFileService) GetAudioChunk(ctx context.Context, chunk *entity.AudioChunk) (result *entity.AudioChunk, err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrGetAudioChunk, err)
+		}
+	}()
+
 	if chunk.End <= chunk.Start {
-		return nil, errwrap.Wrap(ErrGetAudioChunk, ErrInvalidChunkParams)
+		return nil, ErrInvalidChunkParams
 	}
 
-	chunk, err := a.repo.GetAudioChunk(ctx, chunk)
+	result, err = a.repo.GetAudioChunk(ctx, chunk)
 	if err != nil {
-		return nil, errwrap.Wrap(ErrGetAudioChunk, err)
+		return nil, err
 	}
 
-	return chunk, nil
+	return result, nil
 }
 
-func (a *AudioFileService) UploadAudioFile(ctx context.Context, claims *entity.Claims, chunk *entity.AudioChunk) error {
+func (a *AudioFileService) UploadAudioFile(ctx context.Context, claims *entity.Claims, chunk *entity.AudioChunk) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrUploadAudioFile, err)
+		}
+	}()
+
 	switch {
 	case claims.AccessLvl != entity.Admin:
-		return errwrap.Wrap(ErrUploadAudioFile, ErrForbidden)
+		return ErrForbidden
 	case chunk.End <= chunk.Start || chunk.Start != 0 || chunk.End != uint64(len(chunk.Data)):
-		return errwrap.Wrap(ErrUploadAudioFile, ErrInvalidChunkParams)
+		return ErrInvalidChunkParams
 	}
 
-	err := a.repo.UploadAudioFile(ctx, chunk)
-
-	return errwrap.WrapIfErr(ErrUploadAudioFile, err)
+	return a.repo.UploadAudioFile(ctx, chunk)
 }
 
-func (a *AudioFileService) DeleteAudioFile(ctx context.Context, claims *entity.Claims, trackID uuid.UUID) error {
+func (a *AudioFileService) DeleteAudioFile(ctx context.Context, claims *entity.Claims, trackID uuid.UUID) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrDeleteAudioFile, err)
+		}
+	}()
+
 	if claims.AccessLvl != entity.Admin {
-		return errwrap.Wrap(ErrDeleteAudioFile, ErrForbidden)
+		return ErrForbidden
 	}
 
-	err := a.repo.DeleteFile(ctx, trackID)
-
-	return errwrap.WrapIfErr(ErrDeleteAudioFile, err)
+	return a.repo.DeleteFile(ctx, trackID)
 }

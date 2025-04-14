@@ -2,20 +2,15 @@ package processor
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/stat"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 const (
 	MinSeconds = 30 // the minimum number of listening seconds to count
-)
-
-var (
-	ErrUpdateStat       = errors.New("update track stat")
-	ErrGetTrackSegments = errors.New("get track segments error")
 )
 
 type ListeningStatService struct {
@@ -37,39 +32,45 @@ func NewListeningStatService(trackRepo TrackStatRepository, segmentRepo SegmentS
 	return &ListeningStatService{trackRepo: trackRepo, segmentRepo: segmentRepo}
 }
 
-func (s *ListeningStatService) GetTrackSegments(ctx context.Context, trackID uuid.UUID) ([]*entity.Segment, error) {
-	segments, err := s.segmentRepo.GetTrackSegments(ctx, trackID)
-	if err != nil {
-		return nil, errwrap.Wrap(ErrGetTrackSegments, err)
-	}
+func (s *ListeningStatService) GetTrackSegments(ctx context.Context, trackID uuid.UUID) (segments []*entity.Segment, err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrGetTrackSegments, err)
+		}
+	}()
 
-	return segments, nil
+	segments, err = s.segmentRepo.GetTrackSegments(ctx, trackID)
+	return segments, err
 }
 
-func (s *ListeningStatService) UpdateStat(ctx context.Context, event *entity.ListeningEvent) error {
+func (s *ListeningStatService) UpdateStat(ctx context.Context, event *entity.ListeningEvent) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrUpdateStat, err)
+		}
+	}()
+
 	segments, err := s.segmentRepo.GetTrackSegments(ctx, event.TrackID)
 	if err != nil {
-		return errwrap.Wrap(ErrUpdateStat, err)
+		return err
 	}
 
-	affectedSegIdx, totalDuration := proccessListeningEvent(segments, event)
+	affectedSegIdx, totalDuration := s.proccessListeningEvent(segments, event)
 
-	err = s.segmentRepo.IncrementSegmentPlays(ctx, event.TrackID, affectedSegIdx)
-	if err != nil {
-		return errwrap.Wrap(ErrUpdateStat, err)
+	if err = s.segmentRepo.IncrementSegmentPlays(ctx, event.TrackID, affectedSegIdx); err != nil {
+		return err
 	}
 
 	if totalDuration > MinSeconds {
-		err = s.trackRepo.IncrementTrackPlays(ctx, event.TrackID, event.UserID)
-		if err != nil {
-			return errwrap.Wrap(ErrUpdateStat, err)
+		if err = s.trackRepo.IncrementTrackPlays(ctx, event.TrackID, event.UserID); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func proccessListeningEvent(segments []*entity.Segment, event *entity.ListeningEvent) ([]int, int) {
+func (ListeningStatService) proccessListeningEvent(segments []*entity.Segment, event *entity.ListeningEvent) ([]int, int) {
 	totalDuration := 0
 	segLength := segments[0].Range.Len()
 	affectedSegIdx := make([]int, 0, len(segments))

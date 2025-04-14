@@ -2,9 +2,17 @@ package user
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+)
+
+var (
+	ErrCreateUser = errors.New("failed to create user")
+	ErrGetUser    = errors.New("failed to get user")
+	ErrUpdateUser = errors.New("failed to update user")
+	ErrDeleteUser = errors.New("failed to delete user")
 )
 
 type UserService interface {

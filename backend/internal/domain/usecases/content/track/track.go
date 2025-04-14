@@ -2,9 +2,17 @@ package track
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+)
+
+var (
+	ErrCreateTrackMeta = errors.New("failed to create track meta")
+	ErrGetTrackMeta    = errors.New("failed to get track meta")
+	ErrUpdateTrackMeta = errors.New("failed to update track meta")
+	ErrDeleteTrackMeta = errors.New("failed to delete track meta")
 )
 
 type TrackMetaService interface {

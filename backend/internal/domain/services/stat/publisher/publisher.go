@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/stat"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
@@ -13,8 +14,7 @@ const (
 )
 
 var (
-	ErrShortListeningTime    = errors.New("error: the listening time is too short")
-	ErrPublishListeningEvent = errors.New("publish listening event error")
+	ErrShortListeningTime = errors.New("error: the listening time is too short")
 )
 
 type EventBus interface {
@@ -29,14 +29,19 @@ func New(bus EventBus) *ListeningEventPublisher {
 	return &ListeningEventPublisher{bus: bus}
 }
 
-func (p *ListeningEventPublisher) PublishListeningEvent(ctx context.Context, event *entity.ListeningEvent) error {
-	total := totalDuration(event)
-	if total < MinTotalDuration {
-		return errwrap.Wrap(ErrPublishListeningEvent, ErrShortListeningTime)
+func (p *ListeningEventPublisher) PublishListeningEvent(ctx context.Context, event *entity.ListeningEvent) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrPublishListeningEvent, err)
+		}
+	}()
+
+	if total := totalDuration(event); total < MinTotalDuration {
+		return ErrShortListeningTime
 	}
 
-	if err := p.bus.Publish(ctx, event); err != nil {
-		return errwrap.Wrap(ErrPublishListeningEvent, err)
+	if err = p.bus.Publish(ctx, event); err != nil {
+		return err
 	}
 
 	return nil

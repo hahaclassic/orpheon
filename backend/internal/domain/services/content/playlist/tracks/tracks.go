@@ -7,15 +7,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
-	ErrAddTrack        = errors.New("track addition error")
-	ErrGetAllTracks    = errors.New("get all tracks error")
-	ErrDeleteTrack     = errors.New("delete track error")
-	ErrDeleteAllTracks = errors.New("delete all tracks error")
-
 	ErrForbidden = errors.New("permission denied")
 )
 
@@ -44,61 +40,78 @@ func NewPlaylistTrackService(repo playlistTracksRepository, policy playlistPolic
 	}
 }
 
-func (s *PlaylistTrackService) AddTrack(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, trackID uuid.UUID) error {
+func (s *PlaylistTrackService) AddTrack(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, trackID uuid.UUID) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrAddTrack, err)
+		}
+	}()
+
 	canEdit, err := s.policy.CanEdit(ctx, claims, playlistID)
 	if err != nil {
-		return errwrap.Wrap(ErrAddTrack, err)
+		return err
 	}
 	if !canEdit {
-		return fmt.Errorf("%w: %w: user cannot edit playlist", ErrAddTrack, ErrForbidden)
+		return fmt.Errorf("%w: user cannot edit playlist", ErrForbidden)
 	}
 
 	err = s.repo.AddTrackToPlaylist(ctx, playlistID, trackID)
-
-	return errwrap.WrapIfErr(ErrAddTrack, err)
+	return err
 }
 
-func (s *PlaylistTrackService) GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]*entity.TrackMeta, error) {
+func (s *PlaylistTrackService) GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (tracks []*entity.TrackMeta, err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrGetAllTracks, err)
+		}
+	}()
+
 	canView, err := s.policy.CanView(ctx, claims, playlistID)
 	if err != nil {
-		return nil, errwrap.Wrap(ErrGetAllTracks, err)
+		return nil, err
 	}
 	if !canView {
-		return nil, fmt.Errorf("%w: %w: user cannot view playlist", ErrGetAllTracks, ErrForbidden)
+		return nil, fmt.Errorf("%w: user cannot view playlist", ErrForbidden)
 	}
 
-	tracks, err := s.repo.GetAllPlaylistTracks(ctx, playlistID)
-	if err != nil {
-		return nil, errwrap.Wrap(ErrGetAllTracks, err)
-	}
-
-	return tracks, nil
+	tracks, err = s.repo.GetAllPlaylistTracks(ctx, playlistID)
+	return tracks, err
 }
 
-func (s *PlaylistTrackService) DeleteTrack(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, trackID uuid.UUID) error {
+func (s *PlaylistTrackService) DeleteTrack(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, trackID uuid.UUID) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrDeleteTrack, err)
+		}
+	}()
+
 	canEdit, err := s.policy.CanEdit(ctx, claims, playlistID)
 	if err != nil {
-		return errwrap.Wrap(ErrDeleteTrack, err)
+		return err
 	}
 	if !canEdit {
-		return fmt.Errorf("%w: %w: user cannot edit playlist", ErrDeleteTrack, ErrForbidden)
+		return fmt.Errorf("%w: user cannot edit playlist", ErrForbidden)
 	}
 
 	err = s.repo.DeleteTrackFromPlaylist(ctx, playlistID, trackID)
-
-	return errwrap.WrapIfErr(ErrDeleteTrack, err)
+	return err
 }
 
-func (s *PlaylistTrackService) DeleteAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
+func (s *PlaylistTrackService) DeleteAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrDeleteAllTracks, err)
+		}
+	}()
+
 	canEdit, err := s.policy.CanEdit(ctx, claims, playlistID)
 	if err != nil {
-		return errwrap.Wrap(ErrDeleteAllTracks, err)
+		return err
 	}
 	if !canEdit {
-		return fmt.Errorf("%w: %w: user cannot edit playlist", ErrDeleteAllTracks, ErrForbidden)
+		return fmt.Errorf("%w: user cannot edit playlist", ErrForbidden)
 	}
 
 	err = s.repo.DeleteAllTracksFromPlaylist(ctx, playlistID)
-
-	return errwrap.WrapIfErr(ErrDeleteAllTracks, err)
+	return err
 }

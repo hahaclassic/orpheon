@@ -6,15 +6,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
-	ErrGetTrackMeta    = errors.New("get track meta error")
-	ErrCreateTrackMeta = errors.New("create track meta error")
-	ErrUpdateTrackMeta = errors.New("update track meta error")
-	ErrDeleteTrackMeta = errors.New("delete track meta error")
-
 	ErrGenerateTrackID = errors.New("generate track id error")
 	ErrForbidden       = errors.New("permission denied")
 )
@@ -34,54 +30,65 @@ func NewTrackMetaService(repo TrackMetaRepository) *TrackMetaService {
 	return &TrackMetaService{repo: repo}
 }
 
-func (s *TrackMetaService) GetTrackMeta(ctx context.Context, trackID uuid.UUID) (*entity.TrackMeta, error) {
-	meta, err := s.repo.GetByID(ctx, trackID)
-	if err != nil {
-		return nil, errwrap.Wrap(ErrGetTrackMeta, err)
-	}
+func (s *TrackMetaService) GetTrackMeta(ctx context.Context, trackID uuid.UUID) (_ *entity.TrackMeta, err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrGetTrackMeta, err)
+		}
+	}()
 
-	return meta, nil
+	return s.repo.GetByID(ctx, trackID)
 }
 
-func (s *TrackMetaService) CreateTrackMeta(ctx context.Context, claims *entity.Claims, track *entity.TrackMeta) (uuid.UUID, error) {
+func (s *TrackMetaService) CreateTrackMeta(ctx context.Context, claims *entity.Claims, track *entity.TrackMeta) (id uuid.UUID, err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrCreateTrackMeta, err)
+		}
+	}()
+
 	if claims.AccessLvl != entity.Admin {
 		return uuid.Nil, ErrForbidden
 	}
 
-	id, err := uuid.NewRandom()
+	id, err = uuid.NewRandom()
 	if err != nil {
-		return uuid.Nil, errwrap.Wrap(ErrCreateTrackMeta, ErrGenerateTrackID)
+		return uuid.Nil, ErrGenerateTrackID
 	}
 
 	track.ID = id
 
-	if err := s.repo.Create(ctx, track); err != nil {
-		return uuid.Nil, errwrap.Wrap(ErrGetTrackMeta, err)
+	if err = s.repo.Create(ctx, track); err != nil {
+		return uuid.Nil, err
 	}
 
 	return id, nil
 }
 
-func (s *TrackMetaService) UpdateTrackMeta(ctx context.Context, claims *entity.Claims, track *entity.TrackMeta) error {
+func (s *TrackMetaService) UpdateTrackMeta(ctx context.Context, claims *entity.Claims, track *entity.TrackMeta) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrUpdateTrackMeta, err)
+		}
+	}()
+
 	if claims.AccessLvl != entity.Admin {
 		return ErrForbidden
 	}
 
-	if err := s.repo.Update(ctx, track); err != nil {
-		return errwrap.Wrap(ErrUpdateTrackMeta, err)
-	}
-
-	return nil
+	return s.repo.Update(ctx, track)
 }
 
-func (s *TrackMetaService) DeleteTrackMeta(ctx context.Context, claims *entity.Claims, trackID uuid.UUID) error {
+func (s *TrackMetaService) DeleteTrackMeta(ctx context.Context, claims *entity.Claims, trackID uuid.UUID) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrDeleteTrackMeta, err)
+		}
+	}()
+
 	if claims.AccessLvl != entity.Admin {
 		return ErrForbidden
 	}
 
-	if err := s.repo.Delete(ctx, trackID); err != nil {
-		return errwrap.Wrap(ErrUpdateTrackMeta, err)
-	}
-
-	return nil
+	return s.repo.Delete(ctx, trackID)
 }

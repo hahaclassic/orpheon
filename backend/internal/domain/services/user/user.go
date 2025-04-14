@@ -7,6 +7,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/user"
+	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
+)
+
+var (
+	ErrGenerateID = errors.New("id generation error")
+	ErrForbidden  = errors.New("permission denied error")
 )
 
 type UserRepository interface {
@@ -26,10 +33,16 @@ func New(repo UserRepository) *UserService {
 	}
 }
 
-func (u *UserService) CreateUser(ctx context.Context, user *entity.UserInfo) error {
+func (u *UserService) CreateUser(ctx context.Context, user *entity.UserInfo) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrCreateUser, err)
+		}
+	}()
+
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return err
+		return ErrGenerateID
 	}
 
 	user.ID = id
@@ -38,21 +51,39 @@ func (u *UserService) CreateUser(ctx context.Context, user *entity.UserInfo) err
 	return u.repo.CreateUser(ctx, user)
 }
 
-func (u *UserService) GetUser(ctx context.Context, userID uuid.UUID) (*entity.UserInfo, error) {
+func (u *UserService) GetUser(ctx context.Context, userID uuid.UUID) (_ *entity.UserInfo, err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrGetUser, err)
+		}
+	}()
+
 	return u.repo.GetUser(ctx, userID)
 }
 
-func (u *UserService) UpdateUser(ctx context.Context, claims *entity.Claims, user *entity.UserInfo) error {
+func (u *UserService) UpdateUser(ctx context.Context, claims *entity.Claims, user *entity.UserInfo) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrUpdateUser, err)
+		}
+	}()
+
 	if claims.UserID != user.ID {
-		return errors.New("Forbidden")
+		return ErrForbidden
 	}
 
 	return u.repo.UpdateUser(ctx, user)
 }
 
-func (u *UserService) DeleteUser(ctx context.Context, claims *entity.Claims, userID uuid.UUID) error {
+func (u *UserService) DeleteUser(ctx context.Context, claims *entity.Claims, userID uuid.UUID) (err error) {
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrDeleteUser, err)
+		}
+	}()
+
 	if claims.UserID != userID && claims.AccessLvl != entity.Admin {
-		return errors.New("Forbidden")
+		return ErrForbidden
 	}
 
 	return u.repo.DeleteUser(ctx, userID)
