@@ -2,8 +2,17 @@ package playlist
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
+)
+
+var (
+	ErrAddToFavorites                  = errors.New("failed to add playlist to favorites")
+	ErrGetUserFavorites                = errors.New("failed to get user favorites")
+	ErrGetUsersWithFavoritePlaylist    = errors.New("failed to get users with favorite playlist")
+	ErrDeleteFromFavorites             = errors.New("failed to delete playlist from favorites")
+	ErrsDeletePlaylistFromAllFavorites = errors.New("failed to delete favorite playlist for all users")
 )
 
 type PlaylistFavoriteService interface {

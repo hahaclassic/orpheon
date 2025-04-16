@@ -2,15 +2,12 @@ package favorites
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
-
-type playlistPolicyService interface {
-	CanView(ctx context.Context, playlist uuid.UUID, userID uuid.UUID) (bool, error)
-}
 
 type playlistFavoriteRepository interface {
 	AddToFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error
@@ -22,35 +19,37 @@ type playlistFavoriteRepository interface {
 
 type PlaylistFavoriteService struct {
 	favoriteRepo  playlistFavoriteRepository
-	policyService playlistPolicyService
+	policyService usecase.PlaylistPolicyService
 }
 
 func NewPlaylistFavoriteService(favoriteRepo playlistFavoriteRepository,
-	policyService playlistPolicyService) *PlaylistFavoriteService {
+	policyService usecase.PlaylistPolicyService) *PlaylistFavoriteService {
 	return &PlaylistFavoriteService{
 		favoriteRepo:  favoriteRepo,
 		policyService: policyService,
 	}
 }
 
-func (s *PlaylistFavoriteService) AddToFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error {
-	canView, err := s.policyService.CanView(ctx, playlistID, userID)
+func (s *PlaylistFavoriteService) AddToFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrAddToFavorites, err)
+	}()
+
+	err = s.policyService.CanView(ctx, claims, playlistID)
 	if err != nil {
 		return err
-	}
-	if !canView {
-		return errors.New("user does not have permission to view the playlist")
 	}
 
-	err = s.favoriteRepo.AddToFavorites(ctx, userID, playlistID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.favoriteRepo.AddToFavorites(ctx, claims.UserID, playlistID)
 }
 
-func (s *PlaylistFavoriteService) GetUserFavorites(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
-	playlists, err := s.favoriteRepo.GetFavoritePlaylists(ctx, userID)
+// Only user can view his favorite playlists
+func (s *PlaylistFavoriteService) GetUserFavorites(ctx context.Context, claims *entity.Claims) (_ []uuid.UUID, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetUserFavorites, err)
+	}()
+
+	playlists, err := s.favoriteRepo.GetFavoritePlaylists(ctx, claims.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -59,10 +58,26 @@ func (s *PlaylistFavoriteService) GetUserFavorites(ctx context.Context, userID u
 	for _, playlist := range playlists {
 		favoritePlaylistIDs = append(favoritePlaylistIDs, playlist.ID)
 	}
+
 	return favoritePlaylistIDs, nil
 }
 
-func (s *PlaylistFavoriteService) GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID) ([]uuid.UUID, error) {
+// TODO
+func (s *PlaylistFavoriteService) DeleteFromFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrDeleteFromFavorites, err)
+	}()
+
+	// err = s.policyService.CanView(ctx, claims, playlistID)
+	// if err != nil {
+	// 	return err
+	// }
+
+	return s.favoriteRepo.RemoveFromFavorites(ctx, claims.UserID, playlistID)
+}
+
+// IDK (mb for recoverable transaction)
+func (s *PlaylistFavoriteService) GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID) (_ []uuid.UUID, err error) {
 	usersWithFavorite, err := s.favoriteRepo.GetUsersWithFavoritePlaylist(ctx, playlistID)
 	if err != nil {
 		return nil, err
@@ -70,14 +85,7 @@ func (s *PlaylistFavoriteService) GetUsersWithFavoritePlaylist(ctx context.Conte
 	return usersWithFavorite, nil
 }
 
-func (s *PlaylistFavoriteService) DeleteFromFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error {
-	err := s.favoriteRepo.RemoveFromFavorites(ctx, userID, playlistID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
+// for deleter
 func (s *PlaylistFavoriteService) DeletePlaylistFromAllFavorites(ctx context.Context, playlistID uuid.UUID) error {
 	err := s.favoriteRepo.RemovePlaylistFromAllFavorites(ctx, playlistID)
 	if err != nil {

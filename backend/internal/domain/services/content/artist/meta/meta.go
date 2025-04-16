@@ -36,29 +36,24 @@ func (s *ArtistMetaService) GetArtistMeta(ctx context.Context, artistID uuid.UUI
 
 func (s *ArtistMetaService) CreateArtistMeta(ctx context.Context, claims *entity.Claims, artist *entity.ArtistMeta) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrCreateArtistMeta, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrCreateArtistMeta, err)
 	}()
 
 	if claims.AccessLvl == entity.Admin {
 		return ErrForbidden
 	}
 
-	id, err := uuid.NewRandom()
+	artist.ID, err = uuid.NewRandom()
 	if err != nil {
 		return ErrGenerateID
 	}
-	artist.ID = id
 
 	return s.repo.Create(ctx, artist)
 }
 
 func (s *ArtistMetaService) UpdateArtistMeta(ctx context.Context, claims *entity.Claims, artist *entity.ArtistMeta) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrUpdateArtistMeta, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrUpdateArtistMeta, err)
 	}()
 
 	if claims.AccessLvl == entity.Admin {
@@ -70,9 +65,7 @@ func (s *ArtistMetaService) UpdateArtistMeta(ctx context.Context, claims *entity
 
 func (s *ArtistMetaService) DeleteArtistMeta(ctx context.Context, claims *entity.Claims, artistID uuid.UUID) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrDeleteArtistMeta, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrDeleteArtistMeta, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
-	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/cover"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
@@ -30,11 +30,9 @@ func New(repo AlbumCoverRepository) *AlbumCoverService {
 	}
 }
 
-func (c *AlbumCoverService) GetCover(ctx context.Context, claims *entity.Claims, albumID uuid.UUID) (_ *entity.Cover, err error) {
+func (c *AlbumCoverService) GetCover(ctx context.Context, albumID uuid.UUID) (_ *entity.Cover, err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrGetCover, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrGetCover, err)
 	}()
 
 	cover, err := c.repo.GetCover(ctx, albumID)
@@ -47,9 +45,7 @@ func (c *AlbumCoverService) GetCover(ctx context.Context, claims *entity.Claims,
 
 func (c *AlbumCoverService) UploadCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrUploadCover, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrUploadCover, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {
@@ -61,9 +57,7 @@ func (c *AlbumCoverService) UploadCover(ctx context.Context, claims *entity.Clai
 
 func (c *AlbumCoverService) DeleteCover(ctx context.Context, claims *entity.Claims, albumID uuid.UUID) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrDeleteCover, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrDeleteCover, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {

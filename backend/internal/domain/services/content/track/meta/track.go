@@ -32,9 +32,7 @@ func NewTrackMetaService(repo TrackMetaRepository) *TrackMetaService {
 
 func (s *TrackMetaService) GetTrackMeta(ctx context.Context, trackID uuid.UUID) (_ *entity.TrackMeta, err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrGetTrackMeta, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrGetTrackMeta, err)
 	}()
 
 	return s.repo.GetByID(ctx, trackID)
@@ -42,21 +40,17 @@ func (s *TrackMetaService) GetTrackMeta(ctx context.Context, trackID uuid.UUID) 
 
 func (s *TrackMetaService) CreateTrackMeta(ctx context.Context, claims *entity.Claims, track *entity.TrackMeta) (id uuid.UUID, err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrCreateTrackMeta, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrCreateTrackMeta, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {
 		return uuid.Nil, ErrForbidden
 	}
 
-	id, err = uuid.NewRandom()
+	track.ID, err = uuid.NewRandom()
 	if err != nil {
 		return uuid.Nil, ErrGenerateTrackID
 	}
-
-	track.ID = id
 
 	if err = s.repo.Create(ctx, track); err != nil {
 		return uuid.Nil, err
@@ -67,9 +61,7 @@ func (s *TrackMetaService) CreateTrackMeta(ctx context.Context, claims *entity.C
 
 func (s *TrackMetaService) UpdateTrackMeta(ctx context.Context, claims *entity.Claims, track *entity.TrackMeta) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrUpdateTrackMeta, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrUpdateTrackMeta, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {
@@ -81,9 +73,7 @@ func (s *TrackMetaService) UpdateTrackMeta(ctx context.Context, claims *entity.C
 
 func (s *TrackMetaService) DeleteTrackMeta(ctx context.Context, claims *entity.Claims, trackID uuid.UUID) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrDeleteTrackMeta, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrDeleteTrackMeta, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {

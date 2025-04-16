@@ -2,19 +2,11 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
-)
-
-var (
-	ErrUploadCover = errors.New("upload cover error")
-	ErrGetCover    = errors.New("get cover error")
-	ErrDeleteCover = errors.New("delete cover error")
-
-	ErrForbidden = errors.New("permission denied")
 )
 
 type PlaylistCoverRepository interface {
@@ -23,14 +15,8 @@ type PlaylistCoverRepository interface {
 	DeleteCover(ctx context.Context, playlistID uuid.UUID) error
 }
 
-type PlaylistPolicyService interface {
-	CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error)
-	CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error)
-	CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error)
-}
-
 type PlaylistCoverService struct {
-	policy PlaylistPolicyService
+	policy usecase.PlaylistPolicyService
 	repo   PlaylistCoverRepository
 }
 
@@ -40,47 +26,41 @@ func New(repo PlaylistCoverRepository) *PlaylistCoverService {
 	}
 }
 
-func (c *PlaylistCoverService) GetCover(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (*entity.Cover, error) {
-	canUpdate, err := c.policy.CanEdit(ctx, claims, playlistID)
+func (c *PlaylistCoverService) GetCover(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ *entity.Cover, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetCover, err)
+	}()
+
+	err = c.policy.CanView(ctx, claims, playlistID)
 	if err != nil {
-		return nil, errwrap.Wrap(ErrGetCover, err)
-	}
-	if !canUpdate {
-		return nil, errwrap.Wrap(ErrGetCover, ErrForbidden)
+		return nil, err
 	}
 
-	cover, err := c.repo.GetCover(ctx, playlistID)
-	if err != nil {
-		return nil, errwrap.Wrap(ErrGetCover, err)
-	}
-
-	return cover, nil
+	return c.repo.GetCover(ctx, playlistID)
 }
 
-func (c *PlaylistCoverService) UploadCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) error {
-	canUpdate, err := c.policy.CanEdit(ctx, claims, cover.ObjectID)
+func (c *PlaylistCoverService) UploadCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrUploadCover, err)
+	}()
+
+	err = c.policy.CanEdit(ctx, claims, cover.ObjectID)
 	if err != nil {
-		return errwrap.Wrap(ErrUploadCover, err)
-	}
-	if !canUpdate {
-		return errwrap.Wrap(ErrUploadCover, ErrForbidden)
+		return err
 	}
 
-	err = c.repo.SaveCover(ctx, cover)
-
-	return errwrap.WrapIfErr(ErrUploadCover, err)
+	return c.repo.SaveCover(ctx, cover)
 }
 
-func (c *PlaylistCoverService) DeleteCover(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
-	canUpdate, err := c.policy.CanDelete(ctx, claims, playlistID)
+func (c *PlaylistCoverService) DeleteCover(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrDeleteCover, err)
+	}()
+
+	err = c.policy.CanDelete(ctx, claims, playlistID)
 	if err != nil {
-		return errwrap.Wrap(ErrDeleteCover, err)
-	}
-	if !canUpdate {
-		return errwrap.Wrap(ErrDeleteCover, ErrForbidden)
+		return err
 	}
 
-	err = c.repo.DeleteCover(ctx, playlistID)
-
-	return errwrap.WrapIfErr(ErrDeleteCover, err)
+	return c.repo.DeleteCover(ctx, playlistID)
 }

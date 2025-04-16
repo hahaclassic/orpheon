@@ -6,15 +6,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 // TODO: обработка ошибок
 
 var (
-	ErrForbidden      = errors.New("access denied")
-	ErrNotFound       = errors.New("playlist not found")
-	ErrTrackExists    = errors.New("track already in playlist")
-	ErrTrackNotExists = errors.New("track not in playlist")
+	ErrEmptyPlaylistName = errors.New("playlist name cannot be empty")
 )
 
 type PlaylistPolicyService interface {
@@ -33,37 +32,46 @@ type PlaylistMetaRepository interface {
 
 type PlaylistMetaService struct {
 	repo   PlaylistMetaRepository
-	policy PlaylistPolicyService
+	policy usecase.PlaylistPolicyService
 }
 
-func NewPlaylistMetaService(repo PlaylistMetaRepository, policy PlaylistPolicyService) *PlaylistMetaService {
+func NewPlaylistMetaService(repo PlaylistMetaRepository, policy usecase.PlaylistPolicyService) *PlaylistMetaService {
 	return &PlaylistMetaService{
 		repo:   repo,
 		policy: policy,
 	}
 }
 
-func (p *PlaylistMetaService) CreatePlaylist(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) error {
+func (p *PlaylistMetaService) CreatePlaylist(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrCreatePlaylist, err)
+	}()
+
 	if playlist.Name == "" {
-		return errors.New("playlist name cannot be empty")
+		return ErrEmptyPlaylistName
 	}
 
 	return p.repo.Create(ctx, playlist)
 }
 
-func (p *PlaylistMetaService) GetPlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (*entity.Playlist, error) {
-	ok, err := p.policy.CanView(ctx, claims, playlistID)
+func (p *PlaylistMetaService) GetPlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ *entity.Playlist, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetPlaylist, err)
+	}()
+
+	err = p.policy.CanView(ctx, claims, playlistID)
 	if err != nil {
 		return nil, err
-	}
-	if !ok {
-		return nil, ErrForbidden
 	}
 
 	return p.repo.GetByID(ctx, playlistID)
 }
 
-func (p *PlaylistMetaService) GetUserPlaylists(ctx context.Context, claims *entity.Claims, userID uuid.UUID) ([]*entity.Playlist, error) {
+func (p *PlaylistMetaService) GetUserPlaylists(ctx context.Context, claims *entity.Claims, userID uuid.UUID) (_ []*entity.Playlist, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetUserPlaylists, err)
+	}()
+
 	playlists, err := p.repo.GetByUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -86,25 +94,27 @@ func (p *PlaylistMetaService) GetUserPlaylists(ctx context.Context, claims *enti
 	return publicPlaylists, nil
 }
 
-func (p *PlaylistMetaService) UpdatePlaylist(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) error {
-	ok, err := p.policy.CanEdit(ctx, claims, playlist.ID)
+func (p *PlaylistMetaService) UpdatePlaylist(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrUpdatePlaylist, err)
+	}()
+
+	err = p.policy.CanEdit(ctx, claims, playlist.ID)
 	if err != nil {
 		return err
-	}
-	if !ok {
-		return ErrForbidden
 	}
 
 	return p.repo.Update(ctx, playlist)
 }
 
-func (p *PlaylistMetaService) DeletePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
-	ok, err := p.policy.CanDelete(ctx, claims, playlistID)
+func (p *PlaylistMetaService) DeletePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrDeletePlaylist, err)
+	}()
+
+	err = p.policy.CanDelete(ctx, claims, playlistID)
 	if err != nil {
 		return err
-	}
-	if !ok {
-		return ErrForbidden
 	}
 
 	return p.repo.Delete(ctx, playlistID)

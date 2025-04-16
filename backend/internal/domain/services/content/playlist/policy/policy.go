@@ -23,41 +23,54 @@ func New(accessRepo PlaylistAccessRepository) *PlaylistPolicyService {
 	}
 }
 
-func (p *PlaylistPolicyService) CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ bool, err error) {
+func (p *PlaylistPolicyService) CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrCanView, err)
 	}()
 
 	meta, err := p.accessRepo.GetAccessMeta(ctx, playlistID)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return !meta.IsPrivate || claims.UserID == meta.OwnerID, nil
+	if !meta.IsPrivate || claims.UserID == meta.OwnerID {
+		return usecase.ErrForbidden
+	}
+
+	return nil
 }
 
-func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ bool, err error) {
+func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrCanEdit, err)
 	}()
 
 	meta, err := p.accessRepo.GetAccessMeta(ctx, playlistID)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return claims.UserID == meta.OwnerID, nil
+	if claims.UserID == meta.OwnerID {
+		return usecase.ErrForbidden
+	}
+
+	return nil
 }
 
-func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ bool, err error) {
+func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrCanEdit, err)
 	}()
 
 	meta, err := p.accessRepo.GetAccessMeta(ctx, playlistID)
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return claims.UserID == meta.OwnerID || (claims.AccessLvl == entity.Admin && !meta.IsPrivate), nil
+	if claims.UserID == meta.OwnerID ||
+		(claims.AccessLvl == entity.Admin && !meta.IsPrivate) {
+		return usecase.ErrForbidden
+	}
+
+	return nil
 }

@@ -34,9 +34,7 @@ func New(repo AlbumRepository) *AlbumService {
 
 func (a *AlbumService) CreateAlbum(ctx context.Context, claims *entity.Claims, album *entity.AlbumMeta) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrCreateAlbum, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrCreateAlbum, err)
 	}()
 	if claims.AccessLvl != entity.Admin {
 		return ErrForbidden
@@ -52,9 +50,7 @@ func (a *AlbumService) CreateAlbum(ctx context.Context, claims *entity.Claims, a
 
 func (a *AlbumService) GetAlbum(ctx context.Context, albumID uuid.UUID) (_ *entity.AlbumMeta, err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrGetAlbum, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrGetAlbum, err)
 	}()
 
 	return a.repo.GetAlbum(ctx, albumID)
@@ -62,9 +58,7 @@ func (a *AlbumService) GetAlbum(ctx context.Context, albumID uuid.UUID) (_ *enti
 
 func (a *AlbumService) UpdateAlbum(ctx context.Context, claims *entity.Claims, album *entity.AlbumMeta) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrUpdateAlbum, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrUpdateAlbum, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {
@@ -76,9 +70,7 @@ func (a *AlbumService) UpdateAlbum(ctx context.Context, claims *entity.Claims, a
 
 func (a *AlbumService) DeleteAlbum(ctx context.Context, claims *entity.Claims, albumID uuid.UUID) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrDeleteAlbum, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrDeleteAlbum, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {
