@@ -6,18 +6,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/auth"
+	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
-	ErrRegisterUser   = errors.New("register user error")
-	ErrLogin          = errors.New("login error")
-	ErrLogout         = errors.New("logout error")
-	ErrGetClaims      = errors.New("get claims error")
-	ErrUpdatePassword = errors.New("update password error")
-	ErrRefreshTokens  = errors.New("refresh tokens errors")
-
-	ErrHashingPassword = errors.New("hashing password error")
-	ErrNewUserCreation = errors.New("new user creation error")
+	ErrWrongOldPassword   = errors.New("wrong old password")
+	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
 type TokenService interface {
@@ -68,7 +63,11 @@ func NewAuthService(authRepo AuthRepository, refreshRepo RefreshTokenRepository,
 	}
 }
 
-func (a *AuthService) RegisterUser(ctx context.Context, credentials *entity.UserCredentials) (*entity.AuthTokens, error) {
+func (a *AuthService) RegisterUser(ctx context.Context, credentials *entity.UserCredentials) (_ *entity.AuthTokens, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrRegisterUser, err)
+	}()
+
 	hashedPassword, err := a.hasher.GenerateFromPassword(credentials.Password)
 	if err != nil {
 		return nil, err
@@ -92,14 +91,18 @@ func (a *AuthService) RegisterUser(ctx context.Context, credentials *entity.User
 	return a.Login(ctx, credentials)
 }
 
-func (a *AuthService) Login(ctx context.Context, credentials *entity.UserCredentials) (*entity.AuthTokens, error) {
+func (a *AuthService) Login(ctx context.Context, credentials *entity.UserCredentials) (_ *entity.AuthTokens, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrLogin, err)
+	}()
+
 	hashedPassword, err := a.authRepo.GetPasswordByLogin(ctx, credentials.Login)
 	if err != nil {
 		return nil, err
 	}
 
 	if a.hasher.CompareHashAndPassword(hashedPassword, credentials.Password) != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, ErrInvalidCredentials
 	}
 
 	claims, err := a.authRepo.GetClaimsByLogin(ctx, credentials.Login)
@@ -127,11 +130,19 @@ func (a *AuthService) Login(ctx context.Context, credentials *entity.UserCredent
 		Refresh: refreshToken}, nil
 }
 
-func (a *AuthService) Logout(ctx context.Context, userID uuid.UUID, refreshToken string) error {
+func (a *AuthService) Logout(ctx context.Context, userID uuid.UUID, refreshToken string) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrLogout, err)
+	}()
+
 	return a.refreshRepo.Delete(ctx, refreshToken)
 }
 
-func (a *AuthService) RefreshTokens(ctx context.Context, refreshToken string) (*entity.AuthTokens, error) {
+func (a *AuthService) RefreshTokens(ctx context.Context, refreshToken string) (_ *entity.AuthTokens, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrRefreshTokens, err)
+	}()
+
 	claims, err := a.refreshRepo.Get(ctx, refreshToken)
 	if err != nil {
 		return nil, err
@@ -160,14 +171,18 @@ func (a *AuthService) RefreshTokens(ctx context.Context, refreshToken string) (*
 	return &entity.AuthTokens{Access: accessToken, Refresh: newRefresh}, nil
 }
 
-func (a *AuthService) UpdatePassword(ctx context.Context, userID uuid.UUID, passwords *entity.UserPasswords) error {
+func (a *AuthService) UpdatePassword(ctx context.Context, userID uuid.UUID, passwords *entity.UserPasswords) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrUpdatePassword, err)
+	}()
+
 	hashedPassword, err := a.authRepo.GetPasswordByID(ctx, userID)
 	if err != nil {
 		return err
 	}
 
 	if a.hasher.CompareHashAndPassword(hashedPassword, passwords.Old) != nil {
-		return errors.New("invalid old password")
+		return ErrInvalidCredentials
 	}
 
 	newHashed, err := a.hasher.GenerateFromPassword(passwords.New)
@@ -178,6 +193,10 @@ func (a *AuthService) UpdatePassword(ctx context.Context, userID uuid.UUID, pass
 	return a.authRepo.UpdatePassword(ctx, userID, string(newHashed))
 }
 
-func (a *AuthService) GetClaims(ctx context.Context, accessToken string) (*entity.Claims, error) {
+func (a *AuthService) GetClaims(ctx context.Context, accessToken string) (_ *entity.Claims, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetClaims, err)
+	}()
+
 	return a.tokenService.ParseAccessToken(accessToken)
 }

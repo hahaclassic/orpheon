@@ -2,9 +2,19 @@ package auth
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+)
+
+var (
+	ErrRegisterUser   = errors.New("register user error")
+	ErrLogin          = errors.New("login error")
+	ErrLogout         = errors.New("logout error")
+	ErrGetClaims      = errors.New("get claims error")
+	ErrUpdatePassword = errors.New("update password error")
+	ErrRefreshTokens  = errors.New("refresh tokens errors")
 )
 
 type AuthService interface {
