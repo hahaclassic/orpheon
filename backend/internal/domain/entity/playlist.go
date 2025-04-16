@@ -15,3 +15,8 @@ type Playlist struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
+
+type PlaylistAccessMeta struct {
+	OwnerID   uuid.UUID
+	IsPrivate bool
+}

@@ -5,119 +5,59 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
-// TODO: 1. надо учесть, что права могут инвалидироваться (если плейлист стал непубличным, например)
-//  	 2. обновить логику с учетом того, что PlaylistViewer тоже может кешироваться
-
-type PlaylistAccessCache interface {
-	Set(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID, lvl entity.PlaylistAccessLvl) error
-	Get(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) (lvl entity.PlaylistAccessLvl, err error)
-}
-
-type PlaylistRepository interface {
-	GetByID(ctx context.Context, playlistID uuid.UUID) (*entity.Playlist, error)
+type PlaylistAccessRepository interface {
+	GetAccessMeta(ctx context.Context, playlistID uuid.UUID) (*entity.PlaylistAccessMeta, error)
 }
 
 type PlaylistPolicyService struct {
-	cache PlaylistAccessCache // fast path
-	repo  PlaylistRepository  // long path
+	accessRepo PlaylistAccessRepository
 }
 
-func NewPlaylistPolicyService(localCache PlaylistAccessCache, cache PlaylistAccessCache, repo PlaylistRepository) *PlaylistPolicyService {
-	return &PlaylistPolicyService{}
+func New(accessRepo PlaylistAccessRepository) *PlaylistPolicyService {
+	return &PlaylistPolicyService{
+		accessRepo: accessRepo,
+	}
 }
 
-// Owner + Admin (if private=false)
-func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
-	var (
-		lvl entity.PlaylistAccessLvl
-		err error
-	)
+func (p *PlaylistPolicyService) CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ bool, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrCanView, err)
+	}()
 
-	lvl, err = p.cache.Get(ctx, claims.UserID, playlistID)
-	if err != nil { // CHECK CACHE MISS ERROR !!!
-		return false, err
-	}
-
-	if lvl == entity.PlaylistOwnerLvl {
-		return true, nil
-	}
-
-	playlist, err := p.repo.GetByID(ctx, claims.UserID)
+	meta, err := p.accessRepo.GetAccessMeta(ctx, playlistID)
 	if err != nil {
 		return false, err
 	}
 
-	return playlist.OwnerID == claims.UserID ||
-		(claims.AccessLvl == entity.Admin && !playlist.IsPrivate), nil
+	return !meta.IsPrivate || claims.UserID == meta.OwnerID, nil
 }
 
-// Owner
-func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
-	var (
-		lvl entity.PlaylistAccessLvl
-		err error
-	)
+func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ bool, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrCanEdit, err)
+	}()
 
-	lvl, err = p.cache.Get(ctx, claims.UserID, playlistID)
-	if err != nil { // CHECK CACHE MISS ERROR !!!
-		return false, err
-	}
-
-	if lvl == entity.PlaylistOwnerLvl {
-		return true, nil
-	}
-
-	playlist, err := p.repo.GetByID(ctx, claims.UserID)
+	meta, err := p.accessRepo.GetAccessMeta(ctx, playlistID)
 	if err != nil {
 		return false, err
 	}
 
-	isOwner := playlist.OwnerID == claims.UserID
-
-	if isOwner {
-		err = p.cache.Set(ctx, playlist.OwnerID, playlistID, entity.PlaylistOwnerLvl)
-		if err != nil {
-			return isOwner, err
-		}
-	}
-
-	return isOwner, nil
+	return claims.UserID == meta.OwnerID, nil
 }
 
-// All users (if private=false)
-// Если userID != ownerID
-func (p *PlaylistPolicyService) CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
-	var (
-		lvl entity.PlaylistAccessLvl
-		err error
-	)
+func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ bool, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrCanEdit, err)
+	}()
 
-	lvl, err = p.cache.Get(ctx, claims.UserID, playlistID)
-	if err != nil { // CHECK CACHE MISS ERROR !!!
-		return false, err
-	}
-
-	if lvl == entity.PlaylistOwnerLvl {
-		return true, nil
-	}
-
-	playlist, err := p.repo.GetByID(ctx, claims.UserID)
+	meta, err := p.accessRepo.GetAccessMeta(ctx, playlistID)
 	if err != nil {
 		return false, err
 	}
 
-	isOwner := playlist.OwnerID == claims.UserID
-
-	if isOwner {
-		err = p.cache.Set(ctx, playlist.OwnerID, playlistID, entity.PlaylistOwnerLvl)
-		if err != nil {
-			return isOwner, err
-		}
-	}
-
-	// TODO: Надо ли кешировать то, что плейлист публичный?
-
-	return isOwner || !playlist.IsPrivate, nil
+	return claims.UserID == meta.OwnerID || (claims.AccessLvl == entity.Admin && !meta.IsPrivate), nil
 }

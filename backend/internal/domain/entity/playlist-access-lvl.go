@@ -3,7 +3,7 @@ package entity
 type PlaylistAccessLvl int
 
 const (
-	PlaylistUndefinedLvl PlaylistAccessLvl = iota
-	PlaylistViewer
+	PlaylistNoAccessLvl PlaylistAccessLvl = iota
+	PlaylistViewerLvl
 	PlaylistOwnerLvl
 )
