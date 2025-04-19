@@ -36,7 +36,7 @@ func (p *ListeningEventPublisher) PublishListeningEvent(ctx context.Context, eve
 		}
 	}()
 
-	if total := totalDuration(event); total < MinTotalDuration {
+	if totalDuration(event) < MinTotalDuration {
 		return ErrShortListeningTime
 	}
 
