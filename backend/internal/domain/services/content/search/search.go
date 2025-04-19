@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
-	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/search"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/search"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
