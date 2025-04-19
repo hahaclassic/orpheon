@@ -15,19 +15,25 @@ var (
 	ErrInvalidChunkParams = errors.New("invalid chunk parameters")
 )
 
-type audioFileRepository interface {
+type AudioFileRepository interface {
 	GetAudioChunk(ctx context.Context, chunk *entity.AudioChunk) (*entity.AudioChunk, error)
 	UploadAudioFile(ctx context.Context, chunk *entity.AudioChunk) error
 	DeleteFile(ctx context.Context, trackID uuid.UUID) error
 }
 
-type AudioFileService struct {
-	repo audioFileRepository
+type AudioConverter interface {
+	ChangeBitrate(ctx context.Context, chunk *entity.AudioChunk) (*entity.AudioChunk, error)
 }
 
-func New(repo audioFileRepository) *AudioFileService {
+type AudioFileService struct {
+	converter AudioConverter
+	repo      AudioFileRepository
+}
+
+func New(repo AudioFileRepository, converter AudioConverter) *AudioFileService {
 	return &AudioFileService{
-		repo: repo,
+		repo:      repo,
+		converter: converter,
 	}
 }
 
@@ -55,7 +61,12 @@ func (a *AudioFileService) UploadAudioFile(ctx context.Context, claims *entity.C
 		return ErrInvalidChunkParams
 	}
 
-	return a.repo.UploadAudioFile(ctx, chunk)
+	converted, err := a.converter.ChangeBitrate(ctx, chunk)
+	if err != nil {
+		return err
+	}
+
+	return a.repo.UploadAudioFile(ctx, converted)
 }
 
 func (a *AudioFileService) DeleteAudioFile(ctx context.Context, claims *entity.Claims, trackID uuid.UUID) (err error) {
