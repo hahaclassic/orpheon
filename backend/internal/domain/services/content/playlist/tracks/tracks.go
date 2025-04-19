@@ -9,7 +9,7 @@ import (
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
-type playlistTracksRepository interface {
+type PlaylistTracksRepository interface {
 	AddTrackToPlaylist(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID) error
 	DeleteTrackFromPlaylist(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID) error
 	DeleteAllTracksFromPlaylist(ctx context.Context, playlistID uuid.UUID) error
@@ -17,11 +17,11 @@ type playlistTracksRepository interface {
 }
 
 type PlaylistTrackService struct {
-	repo   playlistTracksRepository
+	repo   PlaylistTracksRepository
 	policy usecase.PlaylistPolicyService
 }
 
-func NewPlaylistTrackService(repo playlistTracksRepository, policy usecase.PlaylistPolicyService) *PlaylistTrackService {
+func NewPlaylistTrackService(repo PlaylistTracksRepository, policy usecase.PlaylistPolicyService) *PlaylistTrackService {
 	return &PlaylistTrackService{
 		repo:   repo,
 		policy: policy,

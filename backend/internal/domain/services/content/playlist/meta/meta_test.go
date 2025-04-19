@@ -25,12 +25,12 @@ func TestPlaylistMetaService_CreatePlaylist(t *testing.T) {
 
 	// OK
 	mockRepo.On("Create", ctx, playlist).Return(nil).Once()
-	err := service.CreatePlaylist(ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist)
+	err := service.CreateMeta(ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist)
 	assert.NoError(t, err)
 
 	// ошибка от репозитория
 	mockRepo.On("Create", ctx, playlist).Return(assert.AnError).Once()
-	err = service.CreatePlaylist(ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist)
+	err = service.CreateMeta(ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist)
 	assert.Error(t, err)
 
 	mockRepo.AssertExpectations(t)
@@ -51,13 +51,13 @@ func TestPlaylistMetaService_GetPlaylist(t *testing.T) {
 	mockPolicy.On("CanView", ctx, &entity.Claims{UserID: userID}, playlistID).Return(true, nil).Once()
 	mockRepo.On("GetByID", ctx, playlistID).Return(expected, nil).Once()
 
-	res, err := service.GetPlaylist(ctx, &entity.Claims{UserID: userID}, playlistID)
+	res, err := service.GetMeta(ctx, &entity.Claims{UserID: userID}, playlistID)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 
 	// нет прав
 	mockPolicy.On("CanView", ctx, &entity.Claims{UserID: userID}, playlistID).Return(false, nil).Once()
-	res, err = service.GetPlaylist(ctx, &entity.Claims{UserID: userID}, playlistID)
+	res, err = service.GetMeta(ctx, &entity.Claims{UserID: userID}, playlistID)
 	assert.Error(t, err)
 	assert.Nil(t, res)
 
@@ -65,7 +65,7 @@ func TestPlaylistMetaService_GetPlaylist(t *testing.T) {
 	mockPolicy.On("CanView", ctx, &entity.Claims{UserID: userID}, playlistID).Return(true, nil).Once()
 	mockRepo.On("GetByID", ctx, playlistID).Return(nil, assert.AnError).Once()
 
-	res, err = service.GetPlaylist(ctx, &entity.Claims{UserID: userID}, playlistID)
+	res, err = service.GetMeta(ctx, &entity.Claims{UserID: userID}, playlistID)
 	assert.Error(t, err)
 	assert.Nil(t, res)
 
@@ -88,13 +88,13 @@ func TestPlaylistMetaService_GetUserPlaylists(t *testing.T) {
 
 	// OK
 	mockRepo.On("GetByUser", ctx, userID).Return(playlists, nil).Once()
-	res, err := service.GetUserPlaylists(ctx, &entity.Claims{UserID: userID}, userID)
+	res, err := service.GetUserPlaylistsMeta(ctx, &entity.Claims{UserID: userID}, userID)
 	assert.NoError(t, err)
 	assert.Equal(t, playlists, res)
 
 	// ошибка из репозитория
 	mockRepo.On("GetByUser", ctx, userID).Return(nil, assert.AnError).Once()
-	res, err = service.GetUserPlaylists(ctx, &entity.Claims{UserID: userID}, userID)
+	res, err = service.GetUserPlaylistsMeta(ctx, &entity.Claims{UserID: userID}, userID)
 	assert.Error(t, err)
 	assert.Nil(t, res)
 
@@ -118,18 +118,18 @@ func TestPlaylistMetaService_UpdatePlaylist(t *testing.T) {
 	mockPolicy.On("CanEdit", ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist.ID).Return(true, nil).Once()
 	mockRepo.On("Update", ctx, playlist).Return(nil).Once()
 
-	err := service.UpdatePlaylist(ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist)
+	err := service.UpdateMeta(ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist)
 	assert.NoError(t, err)
 
 	// нет прав
 	mockPolicy.On("CanEdit", ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist.ID).Return(false, nil).Once()
-	err = service.UpdatePlaylist(ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist)
+	err = service.UpdateMeta(ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist)
 	assert.Error(t, err)
 
 	// ошибка из репозитория
 	mockPolicy.On("CanEdit", ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist.ID).Return(true, nil).Once()
 	mockRepo.On("Update", ctx, playlist).Return(assert.AnError).Once()
-	err = service.UpdatePlaylist(ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist)
+	err = service.UpdateMeta(ctx, &entity.Claims{UserID: playlist.OwnerID}, playlist)
 	assert.Error(t, err)
 
 	mockPolicy.AssertExpectations(t)
@@ -150,18 +150,18 @@ func TestPlaylistMetaService_DeletePlaylist(t *testing.T) {
 	mockPolicy.On("CanDelete", ctx, &entity.Claims{UserID: userID}, playlistID).Return(true, nil).Once()
 	mockRepo.On("Delete", ctx, playlistID).Return(nil).Once()
 
-	err := service.DeletePlaylist(ctx, &entity.Claims{UserID: userID}, playlistID)
+	err := service.DeleteMeta(ctx, &entity.Claims{UserID: userID}, playlistID)
 	assert.NoError(t, err)
 
 	// нет прав
 	mockPolicy.On("CanDelete", ctx, &entity.Claims{UserID: userID}, playlistID).Return(false, nil).Once()
-	err = service.DeletePlaylist(ctx, &entity.Claims{UserID: userID}, playlistID)
+	err = service.DeleteMeta(ctx, &entity.Claims{UserID: userID}, playlistID)
 	assert.Error(t, err)
 
 	// ошибка из репозитория
 	mockPolicy.On("CanDelete", ctx, &entity.Claims{UserID: userID}, playlistID).Return(true, nil).Once()
 	mockRepo.On("Delete", ctx, playlistID).Return(assert.AnError).Once()
-	err = service.DeletePlaylist(ctx, &entity.Claims{UserID: userID}, playlistID)
+	err = service.DeleteMeta(ctx, &entity.Claims{UserID: userID}, playlistID)
 	assert.Error(t, err)
 
 	mockPolicy.AssertExpectations(t)

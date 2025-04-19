@@ -9,7 +9,7 @@ import (
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
-type playlistFavoriteRepository interface {
+type PlaylistFavoriteRepository interface {
 	AddToFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error
 	RemoveFromFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error
 	GetFavoritePlaylists(ctx context.Context, userID uuid.UUID) ([]*entity.PlaylistMeta, error)
@@ -18,11 +18,11 @@ type playlistFavoriteRepository interface {
 }
 
 type PlaylistFavoriteService struct {
-	favoriteRepo  playlistFavoriteRepository
+	favoriteRepo  PlaylistFavoriteRepository
 	policyService usecase.PlaylistPolicyService
 }
 
-func NewPlaylistFavoriteService(favoriteRepo playlistFavoriteRepository,
+func NewPlaylistFavoriteService(favoriteRepo PlaylistFavoriteRepository,
 	policyService usecase.PlaylistPolicyService) *PlaylistFavoriteService {
 	return &PlaylistFavoriteService{
 		favoriteRepo:  favoriteRepo,
