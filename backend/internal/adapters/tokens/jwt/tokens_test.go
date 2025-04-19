@@ -50,7 +50,7 @@ func TestTokenExpired(t *testing.T) {
 	token, err := tokenService.GenerateAccessToken(claims)
 	assert.NoError(t, err)
 
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second*2 + time.Millisecond*500)
 
 	_, err = tokenService.ParseAccessToken(token)
 	assert.Error(t, err)
