@@ -17,7 +17,7 @@ func TestPlaylistMetaService_CreatePlaylist(t *testing.T) {
 
 	service := NewPlaylistMetaService(mockRepo, mockPolicy)
 
-	playlist := &entity.Playlist{
+	playlist := &entity.PlaylistMeta{
 		ID:      uuid.New(),
 		OwnerID: uuid.New(),
 		Name:    "Test Playlist",
@@ -45,7 +45,7 @@ func TestPlaylistMetaService_GetPlaylist(t *testing.T) {
 
 	playlistID := uuid.New()
 	userID := uuid.New()
-	expected := &entity.Playlist{ID: playlistID, OwnerID: userID}
+	expected := &entity.PlaylistMeta{ID: playlistID, OwnerID: userID}
 
 	// OK
 	mockPolicy.On("CanView", ctx, &entity.Claims{UserID: userID}, playlistID).Return(true, nil).Once()
@@ -81,7 +81,7 @@ func TestPlaylistMetaService_GetUserPlaylists(t *testing.T) {
 	service := NewPlaylistMetaService(mockRepo, mockPolicy)
 
 	userID := uuid.New()
-	playlists := []*entity.Playlist{
+	playlists := []*entity.PlaylistMeta{
 		{ID: uuid.New(), OwnerID: userID, Name: "Public", IsPrivate: false},
 		{ID: uuid.New(), OwnerID: userID, Name: "Private", IsPrivate: true},
 	}
@@ -108,7 +108,7 @@ func TestPlaylistMetaService_UpdatePlaylist(t *testing.T) {
 
 	service := NewPlaylistMetaService(mockRepo, mockPolicy)
 
-	playlist := &entity.Playlist{
+	playlist := &entity.PlaylistMeta{
 		ID:      uuid.New(),
 		OwnerID: uuid.New(),
 		Name:    "Updated",

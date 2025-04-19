@@ -17,9 +17,9 @@ var (
 )
 
 type PlaylistMetaService interface {
-	CreateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) error
-	GetMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (*entity.Playlist, error)
-	GetUserPlaylistsMeta(ctx context.Context, claims *entity.Claims, userID uuid.UUID) ([]*entity.Playlist, error)
-	UpdateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) error
+	CreateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.PlaylistMeta) error
+	GetMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (*entity.PlaylistMeta, error)
+	GetUserPlaylistsMeta(ctx context.Context, claims *entity.Claims, userID uuid.UUID) ([]*entity.PlaylistMeta, error)
+	UpdateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.PlaylistMeta) error
 	DeleteMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Playlist struct {
+type PlaylistMeta struct {
 	ID          uuid.UUID
 	OwnerID     uuid.UUID
 	Name        string

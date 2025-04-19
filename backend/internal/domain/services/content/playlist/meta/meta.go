@@ -15,10 +15,10 @@ var (
 )
 
 type PlaylistMetaRepository interface {
-	Create(ctx context.Context, playlist *entity.Playlist) error
-	GetByID(ctx context.Context, playlistID uuid.UUID) (*entity.Playlist, error)
-	GetByUser(ctx context.Context, userID uuid.UUID) ([]*entity.Playlist, error)
-	Update(ctx context.Context, playlist *entity.Playlist) error
+	Create(ctx context.Context, playlist *entity.PlaylistMeta) error
+	GetByID(ctx context.Context, playlistID uuid.UUID) (*entity.PlaylistMeta, error)
+	GetByUser(ctx context.Context, userID uuid.UUID) ([]*entity.PlaylistMeta, error)
+	Update(ctx context.Context, playlist *entity.PlaylistMeta) error
 	Delete(ctx context.Context, playlistID uuid.UUID) error
 }
 
@@ -34,7 +34,7 @@ func NewPlaylistMetaService(repo PlaylistMetaRepository, policy usecase.Playlist
 	}
 }
 
-func (p *PlaylistMetaService) CreateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) (err error) {
+func (p *PlaylistMetaService) CreateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.PlaylistMeta) (err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrCreateMeta, err)
 	}()
@@ -46,7 +46,7 @@ func (p *PlaylistMetaService) CreateMeta(ctx context.Context, claims *entity.Cla
 	return p.repo.Create(ctx, playlist)
 }
 
-func (p *PlaylistMetaService) GetMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ *entity.Playlist, err error) {
+func (p *PlaylistMetaService) GetMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ *entity.PlaylistMeta, err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrGetMeta, err)
 	}()
@@ -58,7 +58,7 @@ func (p *PlaylistMetaService) GetMeta(ctx context.Context, claims *entity.Claims
 	return p.repo.GetByID(ctx, playlistID)
 }
 
-func (p *PlaylistMetaService) GetUserPlaylistsMeta(ctx context.Context, claims *entity.Claims, userID uuid.UUID) (_ []*entity.Playlist, err error) {
+func (p *PlaylistMetaService) GetUserPlaylistsMeta(ctx context.Context, claims *entity.Claims, userID uuid.UUID) (_ []*entity.PlaylistMeta, err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrGetUserPlaylistsMeta, err)
 	}()
@@ -85,7 +85,7 @@ func (p *PlaylistMetaService) GetUserPlaylistsMeta(ctx context.Context, claims *
 	return publicPlaylists, nil
 }
 
-func (p *PlaylistMetaService) UpdateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) (err error) {
+func (p *PlaylistMetaService) UpdateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.PlaylistMeta) (err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrUpdateMeta, err)
 	}()

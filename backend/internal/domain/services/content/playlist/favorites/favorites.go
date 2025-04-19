@@ -12,7 +12,7 @@ import (
 type playlistFavoriteRepository interface {
 	AddToFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error
 	RemoveFromFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error
-	GetFavoritePlaylists(ctx context.Context, userID uuid.UUID) ([]*entity.Playlist, error)
+	GetFavoritePlaylists(ctx context.Context, userID uuid.UUID) ([]*entity.PlaylistMeta, error)
 	GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID) ([]uuid.UUID, error)
 	RemovePlaylistFromAllFavorites(ctx context.Context, playlistID uuid.UUID) error
 }
