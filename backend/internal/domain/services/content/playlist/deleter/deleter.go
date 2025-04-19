@@ -5,85 +5,121 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
-// TODO: нет транзакции. Нет восстанавливающих операций. Надо продумать,
-// как сделать так, чтобы сохранялась целостность данных.
+type rollback func() error
 
 type MetaDeletionService interface {
-	Delete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	DeleteMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
 }
 
 type TrackDeletionService interface {
-	Delete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]uuid.UUID, error)
+	DeleteAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	RestoreAllTracks(ctx context.Context, claims *entity.Claims,
+		playlistID uuid.UUID, trackIDs []uuid.UUID) error
 }
 
 type FavoritesDeletionService interface {
-	Delete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	GetUsersWithFavoritePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]uuid.UUID, error)
+	DeletePlaylistFromAllFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	RestoreAllFavorites(ctx context.Context, claims *entity.Claims, userIDs []uuid.UUID, playlistID uuid.UUID) error
 }
 
 type PlaylistCoverDeletionService interface {
-	Delete(ctx context.Context, claims *entity.Claims, objectID uuid.UUID) error
+	GetCover(ctx context.Context, claims *entity.Claims, objectID uuid.UUID) (*entity.Cover, error)
+	DeleteCover(ctx context.Context, claims *entity.Claims, objectID uuid.UUID) error
+	SaveCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) error
 }
 
 type PlaylistDeleter struct {
+	policy    usecase.PlaylistPolicyService
 	meta      MetaDeletionService
 	tracks    TrackDeletionService
 	favorites FavoritesDeletionService
 	cover     PlaylistCoverDeletionService
 }
 
-func New(meta MetaDeletionService, track TrackDeletionService,
-	favorites FavoritesDeletionService, cover PlaylistCoverDeletionService) *PlaylistDeleter {
-	return &PlaylistDeleter{
-		meta:      meta,
-		tracks:    track,
-		favorites: favorites,
-		cover:     cover,
+type OptionFunc func(*PlaylistDeleter)
+
+func WithMetaDeletion(metaService MetaDeletionService) OptionFunc {
+	return func(pd *PlaylistDeleter) {
+		pd.meta = metaService
 	}
 }
 
-func (p *PlaylistDeleter) Delete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
-	err := p.favorites.Delete(ctx, claims, playlistID)
-	if err != nil {
+func WithTracksDeletion(trackService TrackDeletionService) OptionFunc {
+	return func(pd *PlaylistDeleter) {
+		pd.tracks = trackService
+	}
+}
+
+func WithFavoritesDeletion(favoriteService FavoritesDeletionService) OptionFunc {
+	return func(pd *PlaylistDeleter) {
+		pd.favorites = favoriteService
+	}
+}
+
+func WIthCoverDeletion(coverService PlaylistCoverDeletionService) OptionFunc {
+	return func(pd *PlaylistDeleter) {
+		pd.cover = coverService
+	}
+}
+
+func New(options ...OptionFunc) *PlaylistDeleter {
+	deleter := &PlaylistDeleter{}
+	for _, configure := range options {
+		configure(deleter)
+	}
+
+	return deleter
+}
+
+func (p *PlaylistDeleter) DeletePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
+	var rollbacks []rollback
+
+	defer func() {
+		if err != nil {
+			err = errwrap.Wrap(usecase.ErrDeletePlaylist, err)
+
+			for i := len(rollbacks) - 1; i >= 0; i-- {
+				_ = rollbacks[i]()
+			}
+		}
+	}()
+
+	if err := p.policy.CanDelete(ctx, claims, playlistID); err != nil {
 		return err
 	}
 
-	err = p.tracks.Delete(ctx, claims, playlistID)
-	if err != nil {
-		return err
+	if p.favorites != nil {
+		rollback, err := p.deleteFavorites(ctx, claims, playlistID)
+		if err != nil {
+			return err
+		}
+		rollbacks = append(rollbacks, rollback)
 	}
 
-	err = p.meta.Delete(ctx, claims, playlistID)
-	if err != nil {
-		return err
+	if p.cover != nil {
+		rollback, err := p.deleteCover(ctx, claims, playlistID)
+		if err != nil {
+			return err
+		}
+		rollbacks = append(rollbacks, rollback)
 	}
 
-	err = p.cover.Delete(ctx, claims, playlistID)
-	if err != nil {
-		return err
+	if p.tracks != nil {
+		rollback, err := p.deleteAllTracks(ctx, claims, playlistID)
+		if err != nil {
+			return err
+		}
+		rollbacks = append(rollbacks, rollback)
 	}
 
-	return nil
-}
-
-type DeletionService interface {
-	Delete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
-}
-
-type PlaylistDeleterV2 struct {
-	deleters []DeletionService
-}
-
-func NewV2(deleters []DeletionService) *PlaylistDeleterV2 {
-	return &PlaylistDeleterV2{
-		deleters: deleters,
-	}
-}
-
-func (p *PlaylistDeleterV2) Delete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
-	for i := range p.deleters {
-		err := p.deleters[i].Delete(ctx, claims, playlistID)
+	if p.meta != nil {
+		err = p.deleteMeta(ctx, claims, playlistID)
 		if err != nil {
 			return err
 		}
@@ -92,25 +128,54 @@ func (p *PlaylistDeleterV2) Delete(ctx context.Context, claims *entity.Claims, p
 	return nil
 }
 
-type Deleter func(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
-
-type PlaylistDeleterV3 struct {
-	deleters []Deleter
-}
-
-func NewV3(deleters []Deleter) *PlaylistDeleterV3 {
-	return &PlaylistDeleterV3{
-		deleters: deleters,
-	}
-}
-
-func (p *PlaylistDeleterV3) Delete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
-	for i := range p.deleters {
-		err := p.deleters[i](ctx, claims, playlistID)
-		if err != nil {
-			return err
-		}
+func (p *PlaylistDeleter) deleteFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (rollback, error) {
+	userIDs, err := p.favorites.GetUsersWithFavoritePlaylist(ctx, claims, playlistID)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	err = p.favorites.DeletePlaylistFromAllFavorites(ctx, claims, playlistID)
+	if err != nil {
+		return nil, err
+	}
+
+	return func() error {
+		return p.favorites.RestoreAllFavorites(ctx, claims, userIDs, playlistID)
+	}, nil
+}
+
+func (p *PlaylistDeleter) deleteAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (rollback, error) {
+	trackIDs, err := p.tracks.GetAllTracks(ctx, claims, playlistID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.tracks.DeleteAllTracks(ctx, claims, playlistID)
+	if err != nil {
+		return nil, err
+	}
+
+	return func() error {
+		return p.tracks.RestoreAllTracks(ctx, claims, playlistID, trackIDs)
+	}, nil
+}
+
+func (p *PlaylistDeleter) deleteCover(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (rollback, error) {
+	cover, err := p.cover.GetCover(ctx, claims, playlistID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.cover.DeleteCover(ctx, claims, playlistID)
+	if err != nil {
+		return nil, err
+	}
+
+	return func() error {
+		return p.cover.SaveCover(ctx, claims, cover)
+	}, nil
+}
+
+func (p *PlaylistDeleter) deleteMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
+	return p.meta.DeleteMeta(ctx, claims, playlistID)
 }

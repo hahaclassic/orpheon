@@ -9,17 +9,17 @@ import (
 )
 
 var (
-	ErrCreatePlaylist   = errors.New("failed to create playlist")
-	ErrGetPlaylist      = errors.New("failed to get playlist")
-	ErrGetUserPlaylists = errors.New("failed to get user playlists")
-	ErrUpdatePlaylist   = errors.New("failed to update playlist")
-	ErrDeletePlaylist   = errors.New("failed to delete playlist")
+	ErrCreateMeta           = errors.New("failed to create playlist meta")
+	ErrGetMeta              = errors.New("failed to get playlist meta")
+	ErrGetUserPlaylistsMeta = errors.New("failed to get user playlists meta")
+	ErrUpdateMeta           = errors.New("failed to update playlist meta")
+	ErrDeleteMeta           = errors.New("failed to delete playlist meta")
 )
 
 type PlaylistMetaService interface {
-	CreatePlaylist(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) error
-	GetPlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (*entity.Playlist, error)
-	GetUserPlaylists(ctx context.Context, claims *entity.Claims, userID uuid.UUID) ([]*entity.Playlist, error)
-	UpdatePlaylist(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) error
-	DeletePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	CreateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) error
+	GetMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (*entity.Playlist, error)
+	GetUserPlaylistsMeta(ctx context.Context, claims *entity.Claims, userID uuid.UUID) ([]*entity.Playlist, error)
+	UpdateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.Playlist) error
+	DeleteMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
 }
