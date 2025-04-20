@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	entity "github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"
@@ -25,7 +26,7 @@ func (_m *PlaylistMetaRepository) EXPECT() *PlaylistMetaRepository_Expecter {
 }
 
 // Create provides a mock function with given fields: ctx, playlist
-func (_m *PlaylistMetaRepository) Create(ctx context.Context, playlist *entity.Playlist) error {
+func (_m *PlaylistMetaRepository) Create(ctx context.Context, playlist *entity.PlaylistMeta) error {
 	ret := _m.Called(ctx, playlist)
 
 	if len(ret) == 0 {
@@ -33,7 +34,7 @@ func (_m *PlaylistMetaRepository) Create(ctx context.Context, playlist *entity.P
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Playlist) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.PlaylistMeta) error); ok {
 		r0 = rf(ctx, playlist)
 	} else {
 		r0 = ret.Error(0)
@@ -49,14 +50,14 @@ type PlaylistMetaRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - playlist *entity.Playlist
+//   - playlist *entity.PlaylistMeta
 func (_e *PlaylistMetaRepository_Expecter) Create(ctx interface{}, playlist interface{}) *PlaylistMetaRepository_Create_Call {
 	return &PlaylistMetaRepository_Create_Call{Call: _e.mock.On("Create", ctx, playlist)}
 }
 
-func (_c *PlaylistMetaRepository_Create_Call) Run(run func(ctx context.Context, playlist *entity.Playlist)) *PlaylistMetaRepository_Create_Call {
+func (_c *PlaylistMetaRepository_Create_Call) Run(run func(ctx context.Context, playlist *entity.PlaylistMeta)) *PlaylistMetaRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*entity.Playlist))
+		run(args[0].(context.Context), args[1].(*entity.PlaylistMeta))
 	})
 	return _c
 }
@@ -66,7 +67,7 @@ func (_c *PlaylistMetaRepository_Create_Call) Return(_a0 error) *PlaylistMetaRep
 	return _c
 }
 
-func (_c *PlaylistMetaRepository_Create_Call) RunAndReturn(run func(context.Context, *entity.Playlist) error) *PlaylistMetaRepository_Create_Call {
+func (_c *PlaylistMetaRepository_Create_Call) RunAndReturn(run func(context.Context, *entity.PlaylistMeta) error) *PlaylistMetaRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -119,23 +120,23 @@ func (_c *PlaylistMetaRepository_Delete_Call) RunAndReturn(run func(context.Cont
 }
 
 // GetByID provides a mock function with given fields: ctx, playlistID
-func (_m *PlaylistMetaRepository) GetByID(ctx context.Context, playlistID uuid.UUID) (*entity.Playlist, error) {
+func (_m *PlaylistMetaRepository) GetByID(ctx context.Context, playlistID uuid.UUID) (*entity.PlaylistMeta, error) {
 	ret := _m.Called(ctx, playlistID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *entity.Playlist
+	var r0 *entity.PlaylistMeta
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*entity.Playlist, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*entity.PlaylistMeta, error)); ok {
 		return rf(ctx, playlistID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *entity.Playlist); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *entity.PlaylistMeta); ok {
 		r0 = rf(ctx, playlistID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*entity.Playlist)
+			r0 = ret.Get(0).(*entity.PlaylistMeta)
 		}
 	}
 
@@ -167,34 +168,34 @@ func (_c *PlaylistMetaRepository_GetByID_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *PlaylistMetaRepository_GetByID_Call) Return(_a0 *entity.Playlist, _a1 error) *PlaylistMetaRepository_GetByID_Call {
+func (_c *PlaylistMetaRepository_GetByID_Call) Return(_a0 *entity.PlaylistMeta, _a1 error) *PlaylistMetaRepository_GetByID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *PlaylistMetaRepository_GetByID_Call) RunAndReturn(run func(context.Context, uuid.UUID) (*entity.Playlist, error)) *PlaylistMetaRepository_GetByID_Call {
+func (_c *PlaylistMetaRepository_GetByID_Call) RunAndReturn(run func(context.Context, uuid.UUID) (*entity.PlaylistMeta, error)) *PlaylistMetaRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByUser provides a mock function with given fields: ctx, userID
-func (_m *PlaylistMetaRepository) GetByUser(ctx context.Context, userID uuid.UUID) ([]*entity.Playlist, error) {
+func (_m *PlaylistMetaRepository) GetByUser(ctx context.Context, userID uuid.UUID) ([]*entity.PlaylistMeta, error) {
 	ret := _m.Called(ctx, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByUser")
 	}
 
-	var r0 []*entity.Playlist
+	var r0 []*entity.PlaylistMeta
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.Playlist, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.PlaylistMeta, error)); ok {
 		return rf(ctx, userID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.Playlist); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.PlaylistMeta); ok {
 		r0 = rf(ctx, userID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*entity.Playlist)
+			r0 = ret.Get(0).([]*entity.PlaylistMeta)
 		}
 	}
 
@@ -226,18 +227,18 @@ func (_c *PlaylistMetaRepository_GetByUser_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *PlaylistMetaRepository_GetByUser_Call) Return(_a0 []*entity.Playlist, _a1 error) *PlaylistMetaRepository_GetByUser_Call {
+func (_c *PlaylistMetaRepository_GetByUser_Call) Return(_a0 []*entity.PlaylistMeta, _a1 error) *PlaylistMetaRepository_GetByUser_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *PlaylistMetaRepository_GetByUser_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.Playlist, error)) *PlaylistMetaRepository_GetByUser_Call {
+func (_c *PlaylistMetaRepository_GetByUser_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.PlaylistMeta, error)) *PlaylistMetaRepository_GetByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function with given fields: ctx, playlist
-func (_m *PlaylistMetaRepository) Update(ctx context.Context, playlist *entity.Playlist) error {
+func (_m *PlaylistMetaRepository) Update(ctx context.Context, playlist *entity.PlaylistMeta) error {
 	ret := _m.Called(ctx, playlist)
 
 	if len(ret) == 0 {
@@ -245,7 +246,7 @@ func (_m *PlaylistMetaRepository) Update(ctx context.Context, playlist *entity.P
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Playlist) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.PlaylistMeta) error); ok {
 		r0 = rf(ctx, playlist)
 	} else {
 		r0 = ret.Error(0)
@@ -261,14 +262,14 @@ type PlaylistMetaRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - playlist *entity.Playlist
+//   - playlist *entity.PlaylistMeta
 func (_e *PlaylistMetaRepository_Expecter) Update(ctx interface{}, playlist interface{}) *PlaylistMetaRepository_Update_Call {
 	return &PlaylistMetaRepository_Update_Call{Call: _e.mock.On("Update", ctx, playlist)}
 }
 
-func (_c *PlaylistMetaRepository_Update_Call) Run(run func(ctx context.Context, playlist *entity.Playlist)) *PlaylistMetaRepository_Update_Call {
+func (_c *PlaylistMetaRepository_Update_Call) Run(run func(ctx context.Context, playlist *entity.PlaylistMeta)) *PlaylistMetaRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*entity.Playlist))
+		run(args[0].(context.Context), args[1].(*entity.PlaylistMeta))
 	})
 	return _c
 }
@@ -278,7 +279,7 @@ func (_c *PlaylistMetaRepository_Update_Call) Return(_a0 error) *PlaylistMetaRep
 	return _c
 }
 
-func (_c *PlaylistMetaRepository_Update_Call) RunAndReturn(run func(context.Context, *entity.Playlist) error) *PlaylistMetaRepository_Update_Call {
+func (_c *PlaylistMetaRepository_Update_Call) RunAndReturn(run func(context.Context, *entity.PlaylistMeta) error) *PlaylistMetaRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

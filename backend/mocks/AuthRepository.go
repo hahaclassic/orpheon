@@ -16,6 +16,14 @@ type AuthRepository struct {
 	mock.Mock
 }
 
+type AuthRepository_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *AuthRepository) EXPECT() *AuthRepository_Expecter {
+	return &AuthRepository_Expecter{mock: &_m.Mock}
+}
+
 // GetClaimsByLogin provides a mock function with given fields: ctx, login
 func (_m *AuthRepository) GetClaimsByLogin(ctx context.Context, login string) (*entity.Claims, error) {
 	ret := _m.Called(ctx, login)
@@ -46,6 +54,35 @@ func (_m *AuthRepository) GetClaimsByLogin(ctx context.Context, login string) (*
 	return r0, r1
 }
 
+// AuthRepository_GetClaimsByLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetClaimsByLogin'
+type AuthRepository_GetClaimsByLogin_Call struct {
+	*mock.Call
+}
+
+// GetClaimsByLogin is a helper method to define mock.On call
+//   - ctx context.Context
+//   - login string
+func (_e *AuthRepository_Expecter) GetClaimsByLogin(ctx interface{}, login interface{}) *AuthRepository_GetClaimsByLogin_Call {
+	return &AuthRepository_GetClaimsByLogin_Call{Call: _e.mock.On("GetClaimsByLogin", ctx, login)}
+}
+
+func (_c *AuthRepository_GetClaimsByLogin_Call) Run(run func(ctx context.Context, login string)) *AuthRepository_GetClaimsByLogin_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *AuthRepository_GetClaimsByLogin_Call) Return(_a0 *entity.Claims, _a1 error) *AuthRepository_GetClaimsByLogin_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AuthRepository_GetClaimsByLogin_Call) RunAndReturn(run func(context.Context, string) (*entity.Claims, error)) *AuthRepository_GetClaimsByLogin_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetPasswordByID provides a mock function with given fields: ctx, userID
 func (_m *AuthRepository) GetPasswordByID(ctx context.Context, userID uuid.UUID) (string, error) {
 	ret := _m.Called(ctx, userID)
@@ -72,6 +109,35 @@ func (_m *AuthRepository) GetPasswordByID(ctx context.Context, userID uuid.UUID)
 	}
 
 	return r0, r1
+}
+
+// AuthRepository_GetPasswordByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPasswordByID'
+type AuthRepository_GetPasswordByID_Call struct {
+	*mock.Call
+}
+
+// GetPasswordByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *AuthRepository_Expecter) GetPasswordByID(ctx interface{}, userID interface{}) *AuthRepository_GetPasswordByID_Call {
+	return &AuthRepository_GetPasswordByID_Call{Call: _e.mock.On("GetPasswordByID", ctx, userID)}
+}
+
+func (_c *AuthRepository_GetPasswordByID_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *AuthRepository_GetPasswordByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *AuthRepository_GetPasswordByID_Call) Return(_a0 string, _a1 error) *AuthRepository_GetPasswordByID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AuthRepository_GetPasswordByID_Call) RunAndReturn(run func(context.Context, uuid.UUID) (string, error)) *AuthRepository_GetPasswordByID_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetPasswordByLogin provides a mock function with given fields: ctx, login
@@ -102,6 +168,35 @@ func (_m *AuthRepository) GetPasswordByLogin(ctx context.Context, login string) 
 	return r0, r1
 }
 
+// AuthRepository_GetPasswordByLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPasswordByLogin'
+type AuthRepository_GetPasswordByLogin_Call struct {
+	*mock.Call
+}
+
+// GetPasswordByLogin is a helper method to define mock.On call
+//   - ctx context.Context
+//   - login string
+func (_e *AuthRepository_Expecter) GetPasswordByLogin(ctx interface{}, login interface{}) *AuthRepository_GetPasswordByLogin_Call {
+	return &AuthRepository_GetPasswordByLogin_Call{Call: _e.mock.On("GetPasswordByLogin", ctx, login)}
+}
+
+func (_c *AuthRepository_GetPasswordByLogin_Call) Run(run func(ctx context.Context, login string)) *AuthRepository_GetPasswordByLogin_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *AuthRepository_GetPasswordByLogin_Call) Return(_a0 string, _a1 error) *AuthRepository_GetPasswordByLogin_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AuthRepository_GetPasswordByLogin_Call) RunAndReturn(run func(context.Context, string) (string, error)) *AuthRepository_GetPasswordByLogin_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SaveCredentials provides a mock function with given fields: ctx, userID, credentials
 func (_m *AuthRepository) SaveCredentials(ctx context.Context, userID uuid.UUID, credentials *entity.UserCredentials) error {
 	ret := _m.Called(ctx, userID, credentials)
@@ -120,6 +215,36 @@ func (_m *AuthRepository) SaveCredentials(ctx context.Context, userID uuid.UUID,
 	return r0
 }
 
+// AuthRepository_SaveCredentials_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveCredentials'
+type AuthRepository_SaveCredentials_Call struct {
+	*mock.Call
+}
+
+// SaveCredentials is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - credentials *entity.UserCredentials
+func (_e *AuthRepository_Expecter) SaveCredentials(ctx interface{}, userID interface{}, credentials interface{}) *AuthRepository_SaveCredentials_Call {
+	return &AuthRepository_SaveCredentials_Call{Call: _e.mock.On("SaveCredentials", ctx, userID, credentials)}
+}
+
+func (_c *AuthRepository_SaveCredentials_Call) Run(run func(ctx context.Context, userID uuid.UUID, credentials *entity.UserCredentials)) *AuthRepository_SaveCredentials_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(*entity.UserCredentials))
+	})
+	return _c
+}
+
+func (_c *AuthRepository_SaveCredentials_Call) Return(_a0 error) *AuthRepository_SaveCredentials_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *AuthRepository_SaveCredentials_Call) RunAndReturn(run func(context.Context, uuid.UUID, *entity.UserCredentials) error) *AuthRepository_SaveCredentials_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdatePassword provides a mock function with given fields: ctx, userID, newPassword
 func (_m *AuthRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
 	ret := _m.Called(ctx, userID, newPassword)
@@ -136,6 +261,36 @@ func (_m *AuthRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, 
 	}
 
 	return r0
+}
+
+// AuthRepository_UpdatePassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePassword'
+type AuthRepository_UpdatePassword_Call struct {
+	*mock.Call
+}
+
+// UpdatePassword is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - newPassword string
+func (_e *AuthRepository_Expecter) UpdatePassword(ctx interface{}, userID interface{}, newPassword interface{}) *AuthRepository_UpdatePassword_Call {
+	return &AuthRepository_UpdatePassword_Call{Call: _e.mock.On("UpdatePassword", ctx, userID, newPassword)}
+}
+
+func (_c *AuthRepository_UpdatePassword_Call) Run(run func(ctx context.Context, userID uuid.UUID, newPassword string)) *AuthRepository_UpdatePassword_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *AuthRepository_UpdatePassword_Call) Return(_a0 error) *AuthRepository_UpdatePassword_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *AuthRepository_UpdatePassword_Call) RunAndReturn(run func(context.Context, uuid.UUID, string) error) *AuthRepository_UpdatePassword_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewAuthRepository creates a new instance of AuthRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

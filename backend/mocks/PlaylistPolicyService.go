@@ -25,31 +25,21 @@ func (_m *PlaylistPolicyService) EXPECT() *PlaylistPolicyService_Expecter {
 }
 
 // CanDelete provides a mock function with given fields: ctx, claims, playlistID
-func (_m *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
+func (_m *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
 	ret := _m.Called(ctx, claims, playlistID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CanDelete")
 	}
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) (bool, error)); ok {
-		return rf(ctx, claims, playlistID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) error); ok {
 		r0 = rf(ctx, claims, playlistID)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *entity.Claims, uuid.UUID) error); ok {
-		r1 = rf(ctx, claims, playlistID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // PlaylistPolicyService_CanDelete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CanDelete'
@@ -72,42 +62,32 @@ func (_c *PlaylistPolicyService_CanDelete_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *PlaylistPolicyService_CanDelete_Call) Return(_a0 bool, _a1 error) *PlaylistPolicyService_CanDelete_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *PlaylistPolicyService_CanDelete_Call) Return(_a0 error) *PlaylistPolicyService_CanDelete_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *PlaylistPolicyService_CanDelete_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) (bool, error)) *PlaylistPolicyService_CanDelete_Call {
+func (_c *PlaylistPolicyService_CanDelete_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) error) *PlaylistPolicyService_CanDelete_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CanEdit provides a mock function with given fields: ctx, claims, playlistID
-func (_m *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
+func (_m *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
 	ret := _m.Called(ctx, claims, playlistID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CanEdit")
 	}
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) (bool, error)); ok {
-		return rf(ctx, claims, playlistID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) error); ok {
 		r0 = rf(ctx, claims, playlistID)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *entity.Claims, uuid.UUID) error); ok {
-		r1 = rf(ctx, claims, playlistID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // PlaylistPolicyService_CanEdit_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CanEdit'
@@ -130,42 +110,32 @@ func (_c *PlaylistPolicyService_CanEdit_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *PlaylistPolicyService_CanEdit_Call) Return(_a0 bool, _a1 error) *PlaylistPolicyService_CanEdit_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *PlaylistPolicyService_CanEdit_Call) Return(_a0 error) *PlaylistPolicyService_CanEdit_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *PlaylistPolicyService_CanEdit_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) (bool, error)) *PlaylistPolicyService_CanEdit_Call {
+func (_c *PlaylistPolicyService_CanEdit_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) error) *PlaylistPolicyService_CanEdit_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CanView provides a mock function with given fields: ctx, claims, playlistID
-func (_m *PlaylistPolicyService) CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
+func (_m *PlaylistPolicyService) CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
 	ret := _m.Called(ctx, claims, playlistID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CanView")
 	}
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) (bool, error)); ok {
-		return rf(ctx, claims, playlistID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) error); ok {
 		r0 = rf(ctx, claims, playlistID)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *entity.Claims, uuid.UUID) error); ok {
-		r1 = rf(ctx, claims, playlistID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // PlaylistPolicyService_CanView_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CanView'
@@ -188,12 +158,12 @@ func (_c *PlaylistPolicyService_CanView_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *PlaylistPolicyService_CanView_Call) Return(_a0 bool, _a1 error) *PlaylistPolicyService_CanView_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *PlaylistPolicyService_CanView_Call) Return(_a0 error) *PlaylistPolicyService_CanView_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *PlaylistPolicyService_CanView_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) (bool, error)) *PlaylistPolicyService_CanView_Call {
+func (_c *PlaylistPolicyService_CanView_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) error) *PlaylistPolicyService_CanView_Call {
 	_c.Call.Return(run)
 	return _c
 }

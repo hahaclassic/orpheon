@@ -12,6 +12,14 @@ type TokenService struct {
 	mock.Mock
 }
 
+type TokenService_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *TokenService) EXPECT() *TokenService_Expecter {
+	return &TokenService_Expecter{mock: &_m.Mock}
+}
+
 // GenerateAccessToken provides a mock function with given fields: claims
 func (_m *TokenService) GenerateAccessToken(claims *entity.Claims) (string, error) {
 	ret := _m.Called(claims)
@@ -38,6 +46,34 @@ func (_m *TokenService) GenerateAccessToken(claims *entity.Claims) (string, erro
 	}
 
 	return r0, r1
+}
+
+// TokenService_GenerateAccessToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateAccessToken'
+type TokenService_GenerateAccessToken_Call struct {
+	*mock.Call
+}
+
+// GenerateAccessToken is a helper method to define mock.On call
+//   - claims *entity.Claims
+func (_e *TokenService_Expecter) GenerateAccessToken(claims interface{}) *TokenService_GenerateAccessToken_Call {
+	return &TokenService_GenerateAccessToken_Call{Call: _e.mock.On("GenerateAccessToken", claims)}
+}
+
+func (_c *TokenService_GenerateAccessToken_Call) Run(run func(claims *entity.Claims)) *TokenService_GenerateAccessToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*entity.Claims))
+	})
+	return _c
+}
+
+func (_c *TokenService_GenerateAccessToken_Call) Return(_a0 string, _a1 error) *TokenService_GenerateAccessToken_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TokenService_GenerateAccessToken_Call) RunAndReturn(run func(*entity.Claims) (string, error)) *TokenService_GenerateAccessToken_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GenerateRefreshToken provides a mock function with no fields
@@ -68,6 +104,33 @@ func (_m *TokenService) GenerateRefreshToken() (string, error) {
 	return r0, r1
 }
 
+// TokenService_GenerateRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateRefreshToken'
+type TokenService_GenerateRefreshToken_Call struct {
+	*mock.Call
+}
+
+// GenerateRefreshToken is a helper method to define mock.On call
+func (_e *TokenService_Expecter) GenerateRefreshToken() *TokenService_GenerateRefreshToken_Call {
+	return &TokenService_GenerateRefreshToken_Call{Call: _e.mock.On("GenerateRefreshToken")}
+}
+
+func (_c *TokenService_GenerateRefreshToken_Call) Run(run func()) *TokenService_GenerateRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *TokenService_GenerateRefreshToken_Call) Return(_a0 string, _a1 error) *TokenService_GenerateRefreshToken_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TokenService_GenerateRefreshToken_Call) RunAndReturn(run func() (string, error)) *TokenService_GenerateRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ParseAccessToken provides a mock function with given fields: tokenStr
 func (_m *TokenService) ParseAccessToken(tokenStr string) (*entity.Claims, error) {
 	ret := _m.Called(tokenStr)
@@ -96,6 +159,34 @@ func (_m *TokenService) ParseAccessToken(tokenStr string) (*entity.Claims, error
 	}
 
 	return r0, r1
+}
+
+// TokenService_ParseAccessToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ParseAccessToken'
+type TokenService_ParseAccessToken_Call struct {
+	*mock.Call
+}
+
+// ParseAccessToken is a helper method to define mock.On call
+//   - tokenStr string
+func (_e *TokenService_Expecter) ParseAccessToken(tokenStr interface{}) *TokenService_ParseAccessToken_Call {
+	return &TokenService_ParseAccessToken_Call{Call: _e.mock.On("ParseAccessToken", tokenStr)}
+}
+
+func (_c *TokenService_ParseAccessToken_Call) Run(run func(tokenStr string)) *TokenService_ParseAccessToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *TokenService_ParseAccessToken_Call) Return(_a0 *entity.Claims, _a1 error) *TokenService_ParseAccessToken_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TokenService_ParseAccessToken_Call) RunAndReturn(run func(string) (*entity.Claims, error)) *TokenService_ParseAccessToken_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewTokenService creates a new instance of TokenService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

@@ -9,6 +9,14 @@ type PasswordHasher struct {
 	mock.Mock
 }
 
+type PasswordHasher_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *PasswordHasher) EXPECT() *PasswordHasher_Expecter {
+	return &PasswordHasher_Expecter{mock: &_m.Mock}
+}
+
 // CompareHashAndPassword provides a mock function with given fields: hashed, password
 func (_m *PasswordHasher) CompareHashAndPassword(hashed string, password string) error {
 	ret := _m.Called(hashed, password)
@@ -25,6 +33,35 @@ func (_m *PasswordHasher) CompareHashAndPassword(hashed string, password string)
 	}
 
 	return r0
+}
+
+// PasswordHasher_CompareHashAndPassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CompareHashAndPassword'
+type PasswordHasher_CompareHashAndPassword_Call struct {
+	*mock.Call
+}
+
+// CompareHashAndPassword is a helper method to define mock.On call
+//   - hashed string
+//   - password string
+func (_e *PasswordHasher_Expecter) CompareHashAndPassword(hashed interface{}, password interface{}) *PasswordHasher_CompareHashAndPassword_Call {
+	return &PasswordHasher_CompareHashAndPassword_Call{Call: _e.mock.On("CompareHashAndPassword", hashed, password)}
+}
+
+func (_c *PasswordHasher_CompareHashAndPassword_Call) Run(run func(hashed string, password string)) *PasswordHasher_CompareHashAndPassword_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *PasswordHasher_CompareHashAndPassword_Call) Return(_a0 error) *PasswordHasher_CompareHashAndPassword_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *PasswordHasher_CompareHashAndPassword_Call) RunAndReturn(run func(string, string) error) *PasswordHasher_CompareHashAndPassword_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GenerateFromPassword provides a mock function with given fields: password
@@ -53,6 +90,34 @@ func (_m *PasswordHasher) GenerateFromPassword(password string) (string, error) 
 	}
 
 	return r0, r1
+}
+
+// PasswordHasher_GenerateFromPassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateFromPassword'
+type PasswordHasher_GenerateFromPassword_Call struct {
+	*mock.Call
+}
+
+// GenerateFromPassword is a helper method to define mock.On call
+//   - password string
+func (_e *PasswordHasher_Expecter) GenerateFromPassword(password interface{}) *PasswordHasher_GenerateFromPassword_Call {
+	return &PasswordHasher_GenerateFromPassword_Call{Call: _e.mock.On("GenerateFromPassword", password)}
+}
+
+func (_c *PasswordHasher_GenerateFromPassword_Call) Run(run func(password string)) *PasswordHasher_GenerateFromPassword_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *PasswordHasher_GenerateFromPassword_Call) Return(_a0 string, _a1 error) *PasswordHasher_GenerateFromPassword_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *PasswordHasher_GenerateFromPassword_Call) RunAndReturn(run func(string) (string, error)) *PasswordHasher_GenerateFromPassword_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewPasswordHasher creates a new instance of PasswordHasher. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

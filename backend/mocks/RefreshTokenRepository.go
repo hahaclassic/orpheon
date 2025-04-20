@@ -14,6 +14,14 @@ type RefreshTokenRepository struct {
 	mock.Mock
 }
 
+type RefreshTokenRepository_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *RefreshTokenRepository) EXPECT() *RefreshTokenRepository_Expecter {
+	return &RefreshTokenRepository_Expecter{mock: &_m.Mock}
+}
+
 // Delete provides a mock function with given fields: ctx, token
 func (_m *RefreshTokenRepository) Delete(ctx context.Context, token string) error {
 	ret := _m.Called(ctx, token)
@@ -30,6 +38,35 @@ func (_m *RefreshTokenRepository) Delete(ctx context.Context, token string) erro
 	}
 
 	return r0
+}
+
+// RefreshTokenRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type RefreshTokenRepository_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+func (_e *RefreshTokenRepository_Expecter) Delete(ctx interface{}, token interface{}) *RefreshTokenRepository_Delete_Call {
+	return &RefreshTokenRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, token)}
+}
+
+func (_c *RefreshTokenRepository_Delete_Call) Run(run func(ctx context.Context, token string)) *RefreshTokenRepository_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *RefreshTokenRepository_Delete_Call) Return(_a0 error) *RefreshTokenRepository_Delete_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RefreshTokenRepository_Delete_Call) RunAndReturn(run func(context.Context, string) error) *RefreshTokenRepository_Delete_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // Get provides a mock function with given fields: ctx, token
@@ -62,6 +99,35 @@ func (_m *RefreshTokenRepository) Get(ctx context.Context, token string) (*entit
 	return r0, r1
 }
 
+// RefreshTokenRepository_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type RefreshTokenRepository_Get_Call struct {
+	*mock.Call
+}
+
+// Get is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+func (_e *RefreshTokenRepository_Expecter) Get(ctx interface{}, token interface{}) *RefreshTokenRepository_Get_Call {
+	return &RefreshTokenRepository_Get_Call{Call: _e.mock.On("Get", ctx, token)}
+}
+
+func (_c *RefreshTokenRepository_Get_Call) Run(run func(ctx context.Context, token string)) *RefreshTokenRepository_Get_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *RefreshTokenRepository_Get_Call) Return(_a0 *entity.Claims, _a1 error) *RefreshTokenRepository_Get_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RefreshTokenRepository_Get_Call) RunAndReturn(run func(context.Context, string) (*entity.Claims, error)) *RefreshTokenRepository_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Set provides a mock function with given fields: ctx, token, claims
 func (_m *RefreshTokenRepository) Set(ctx context.Context, token string, claims *entity.Claims) error {
 	ret := _m.Called(ctx, token, claims)
@@ -78,6 +144,36 @@ func (_m *RefreshTokenRepository) Set(ctx context.Context, token string, claims 
 	}
 
 	return r0
+}
+
+// RefreshTokenRepository_Set_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Set'
+type RefreshTokenRepository_Set_Call struct {
+	*mock.Call
+}
+
+// Set is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+//   - claims *entity.Claims
+func (_e *RefreshTokenRepository_Expecter) Set(ctx interface{}, token interface{}, claims interface{}) *RefreshTokenRepository_Set_Call {
+	return &RefreshTokenRepository_Set_Call{Call: _e.mock.On("Set", ctx, token, claims)}
+}
+
+func (_c *RefreshTokenRepository_Set_Call) Run(run func(ctx context.Context, token string, claims *entity.Claims)) *RefreshTokenRepository_Set_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(*entity.Claims))
+	})
+	return _c
+}
+
+func (_c *RefreshTokenRepository_Set_Call) Return(_a0 error) *RefreshTokenRepository_Set_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *RefreshTokenRepository_Set_Call) RunAndReturn(run func(context.Context, string, *entity.Claims) error) *RefreshTokenRepository_Set_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewRefreshTokenRepository creates a new instance of RefreshTokenRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

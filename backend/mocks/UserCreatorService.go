@@ -16,6 +16,14 @@ type UserCreatorService struct {
 	mock.Mock
 }
 
+type UserCreatorService_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *UserCreatorService) EXPECT() *UserCreatorService_Expecter {
+	return &UserCreatorService_Expecter{mock: &_m.Mock}
+}
+
 // CreateUser provides a mock function with given fields: ctx, info
 func (_m *UserCreatorService) CreateUser(ctx context.Context, info *entity.UserInfo) (uuid.UUID, error) {
 	ret := _m.Called(ctx, info)
@@ -44,6 +52,35 @@ func (_m *UserCreatorService) CreateUser(ctx context.Context, info *entity.UserI
 	}
 
 	return r0, r1
+}
+
+// UserCreatorService_CreateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateUser'
+type UserCreatorService_CreateUser_Call struct {
+	*mock.Call
+}
+
+// CreateUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - info *entity.UserInfo
+func (_e *UserCreatorService_Expecter) CreateUser(ctx interface{}, info interface{}) *UserCreatorService_CreateUser_Call {
+	return &UserCreatorService_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, info)}
+}
+
+func (_c *UserCreatorService_CreateUser_Call) Run(run func(ctx context.Context, info *entity.UserInfo)) *UserCreatorService_CreateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*entity.UserInfo))
+	})
+	return _c
+}
+
+func (_c *UserCreatorService_CreateUser_Call) Return(_a0 uuid.UUID, _a1 error) *UserCreatorService_CreateUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *UserCreatorService_CreateUser_Call) RunAndReturn(run func(context.Context, *entity.UserInfo) (uuid.UUID, error)) *UserCreatorService_CreateUser_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewUserCreatorService creates a new instance of UserCreatorService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
