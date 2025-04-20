@@ -43,10 +43,22 @@ func (s *SearchService) SearchArtists(ctx context.Context, req *entity.SearchReq
 	return s.repo.SearchArtists(ctx, req)
 }
 
-func (s *SearchService) SearchPlaylists(ctx context.Context, req *entity.SearchRequest) (_ []*entity.PlaylistMeta, err error) {
+func (s *SearchService) SearchPlaylists(ctx context.Context, claims *entity.Claims, req *entity.SearchRequest) (_ []*entity.PlaylistMeta, err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrSearchPlaylists, err)
 	}()
 
-	return s.repo.SearchPlaylists(ctx, req)
+	playlists, err := s.repo.SearchPlaylists(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	availablePlaylists := make([]*entity.PlaylistMeta, 0, len(playlists))
+	for i := range playlists {
+		if !playlists[i].IsPrivate || playlists[i].OwnerID == claims.UserID {
+			availablePlaylists = append(availablePlaylists, playlists[i])
+		}
+	}
+
+	return availablePlaylists, nil
 }
