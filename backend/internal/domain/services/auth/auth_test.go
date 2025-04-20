@@ -106,12 +106,11 @@ func TestAuthService_Logout(t *testing.T) {
 	ctx := context.Background()
 
 	s := NewAuthService(authRepo, refreshRepo, userCreator, hasher, tokenService)
-	userID := uuid.New()
 	refreshToken := "refresh"
 
 	refreshRepo.On("Delete", ctx, refreshToken).Return(nil)
 
-	err := s.Logout(ctx, userID, refreshToken)
+	err := s.Logout(ctx, refreshToken)
 	assert.NoError(t, err)
 }
 

@@ -43,6 +43,8 @@ func (p *PlaylistMetaService) CreateMeta(ctx context.Context, claims *entity.Cla
 		return ErrEmptyPlaylistName
 	}
 
+	playlist.OwnerID = claims.UserID // may be
+
 	return p.repo.Create(ctx, playlist)
 }
 
@@ -58,7 +60,7 @@ func (p *PlaylistMetaService) GetMeta(ctx context.Context, claims *entity.Claims
 	return p.repo.GetByID(ctx, playlistID)
 }
 
-func (p *PlaylistMetaService) GetUserPlaylistsMeta(ctx context.Context, claims *entity.Claims, userID uuid.UUID) (_ []*entity.PlaylistMeta, err error) {
+func (p *PlaylistMetaService) GetUserAllPlaylistsMeta(ctx context.Context, claims *entity.Claims, userID uuid.UUID) (_ []*entity.PlaylistMeta, err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrGetUserPlaylistsMeta, err)
 	}()

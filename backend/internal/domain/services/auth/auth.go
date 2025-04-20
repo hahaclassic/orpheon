@@ -130,7 +130,7 @@ func (a *AuthService) Login(ctx context.Context, credentials *entity.UserCredent
 		Refresh: refreshToken}, nil
 }
 
-func (a *AuthService) Logout(ctx context.Context, userID uuid.UUID, refreshToken string) (err error) {
+func (a *AuthService) Logout(ctx context.Context, refreshToken string) (err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrLogout, err)
 	}()

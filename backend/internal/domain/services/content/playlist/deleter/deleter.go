@@ -9,8 +9,6 @@ import (
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
-type rollback func() error
-
 type MetaDeletionService interface {
 	DeleteMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
 }
@@ -76,6 +74,8 @@ func New(options ...OptionFunc) *PlaylistDeleter {
 
 	return deleter
 }
+
+type rollback func() error
 
 func (p *PlaylistDeleter) DeletePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
 	var rollbacks []rollback

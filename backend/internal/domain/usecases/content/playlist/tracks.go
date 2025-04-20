@@ -17,7 +17,7 @@ var (
 
 type PlaylistTrackService interface {
 	AddTrack(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, trackID uuid.UUID) error
-	GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (tracks []*entity.TrackMeta, err error)
 	DeleteTrack(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, trackID uuid.UUID) error
 	DeleteAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
 }
