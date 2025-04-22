@@ -171,4 +171,4 @@
 
 ## UML диаграммы классов для компонента доступа к данным и компонента с бизнес-логикой
 
-![components](./diagrams/uml/uml.drawio.png)
+![uml](./diagrams/uml/uml.drawio.png)
