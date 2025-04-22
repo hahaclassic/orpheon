@@ -7,5 +7,4 @@ type ArtistMeta struct {
 	Name        string
 	Description string
 	Country     string
-	Rating      int64
 }
