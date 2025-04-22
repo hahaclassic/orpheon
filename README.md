@@ -171,18 +171,4 @@
 
 ## UML диаграммы классов для компонента доступа к данным и компонента с бизнес-логикой
 
-### Сервисы
-
-1. PlaylistService
-
-2. AlbumService
-
-3. 
-
-### Сущности
-
-1. Playlist
-
-2. Album
-
-3. Artist
+![components](./diagrams/uml/uml.drawio.png)
