@@ -25,7 +25,7 @@ type TrackStatRepository interface {
 
 type SegmentStatRepository interface {
 	GetTrackSegments(ctx context.Context, trackID uuid.UUID) ([]*entity.Segment, error)
-	IncrementSegmentPlays(ctx context.Context, trackID uuid.UUID, segments []int) error
+	IncrementSegmentPlays(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int) error
 }
 
 func NewListeningStatService(trackRepo TrackStatRepository, segmentRepo SegmentStatRepository) *ListeningStatService {

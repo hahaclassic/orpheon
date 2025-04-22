@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	MinTotalDuration = 10
+	MinTotalDuration = 15
 )
 
 var (
