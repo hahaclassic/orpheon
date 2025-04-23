@@ -46,26 +46,27 @@ func TestPlaylistMetaService_GetPlaylist(t *testing.T) {
 	playlistID := uuid.New()
 	userID := uuid.New()
 	expected := &entity.PlaylistMeta{ID: playlistID, OwnerID: userID}
+	claims := &entity.Claims{UserID: userID, AccessLvl: entity.User}
 
 	// OK
-	mockPolicy.On("CanView", ctx, &entity.Claims{UserID: userID}, playlistID).Return(true, nil).Once()
+	mockPolicy.On("CanView", ctx, claims, playlistID).Return(true, nil).Once()
 	mockRepo.On("GetByID", ctx, playlistID).Return(expected, nil).Once()
 
-	res, err := service.GetMeta(ctx, &entity.Claims{UserID: userID}, playlistID)
+	res, err := service.GetMeta(ctx, claims, playlistID)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 
 	// нет прав
-	mockPolicy.On("CanView", ctx, &entity.Claims{UserID: userID}, playlistID).Return(false, nil).Once()
-	res, err = service.GetMeta(ctx, &entity.Claims{UserID: userID}, playlistID)
+	mockPolicy.On("CanView", ctx, claims, playlistID).Return(false, nil).Once()
+	res, err = service.GetMeta(ctx, claims, playlistID)
 	assert.Error(t, err)
 	assert.Nil(t, res)
 
 	// ошибка репозитория
-	mockPolicy.On("CanView", ctx, &entity.Claims{UserID: userID}, playlistID).Return(true, nil).Once()
+	mockPolicy.On("CanView", ctx, claims).Return(true, nil).Once()
 	mockRepo.On("GetByID", ctx, playlistID).Return(nil, assert.AnError).Once()
 
-	res, err = service.GetMeta(ctx, &entity.Claims{UserID: userID}, playlistID)
+	res, err = service.GetMeta(ctx, claims, playlistID)
 	assert.Error(t, err)
 	assert.Nil(t, res)
 
@@ -88,13 +89,13 @@ func TestPlaylistMetaService_GetUserPlaylists(t *testing.T) {
 
 	// OK
 	mockRepo.On("GetByUser", ctx, userID).Return(playlists, nil).Once()
-	res, err := service.GetUserPlaylistsMeta(ctx, &entity.Claims{UserID: userID}, userID)
+	res, err := service.GetUserAllPlaylistsMeta(ctx, &entity.Claims{UserID: userID}, userID)
 	assert.NoError(t, err)
 	assert.Equal(t, playlists, res)
 
 	// ошибка из репозитория
 	mockRepo.On("GetByUser", ctx, userID).Return(nil, assert.AnError).Once()
-	res, err = service.GetUserPlaylistsMeta(ctx, &entity.Claims{UserID: userID}, userID)
+	res, err = service.GetUserAllPlaylistsMeta(ctx, &entity.Claims{UserID: userID}, userID)
 	assert.Error(t, err)
 	assert.Nil(t, res)
 
