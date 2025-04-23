@@ -34,10 +34,10 @@ func (p *PlaylistPolicyService) CanView(ctx context.Context, claims *entity.Clai
 	}
 
 	if !meta.IsPrivate || claims.UserID == meta.OwnerID {
-		return usecase.ErrForbidden
+		return nil // ok
 	}
 
-	return nil
+	return usecase.ErrForbidden
 }
 
 func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
@@ -51,10 +51,10 @@ func (p *PlaylistPolicyService) CanEdit(ctx context.Context, claims *entity.Clai
 	}
 
 	if claims.UserID == meta.OwnerID {
-		return usecase.ErrForbidden
+		return nil // ok
 	}
 
-	return nil
+	return usecase.ErrForbidden
 }
 
 func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
@@ -69,8 +69,8 @@ func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Cl
 
 	if claims.UserID == meta.OwnerID ||
 		(claims.AccessLvl == entity.Admin && !meta.IsPrivate) {
-		return usecase.ErrForbidden
+		return nil // ok
 	}
 
-	return nil
+	return usecase.ErrForbidden
 }
