@@ -33,7 +33,6 @@ type PlaylistCoverDeletionService interface {
 }
 
 type PlaylistDeleter struct {
-	policy    usecase.PlaylistPolicyService
 	meta      MetaDeletionService
 	tracks    TrackDeletionService
 	favorites FavoritesDeletionService
@@ -89,10 +88,6 @@ func (p *PlaylistDeleter) DeletePlaylist(ctx context.Context, claims *entity.Cla
 			}
 		}
 	}()
-
-	if err := p.policy.CanDelete(ctx, claims, playlistID); err != nil {
-		return err
-	}
 
 	if p.favorites != nil {
 		rollback, err := p.deleteFavorites(ctx, claims, playlistID)
