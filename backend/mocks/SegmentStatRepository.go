@@ -83,9 +83,9 @@ func (_c *SegmentStatRepository_GetTrackSegments_Call) RunAndReturn(run func(con
 	return _c
 }
 
-// IncrementSegmentPlays provides a mock function with given fields: ctx, trackID, segments
-func (_m *SegmentStatRepository) IncrementSegmentPlays(ctx context.Context, trackID uuid.UUID, segments []int) error {
-	ret := _m.Called(ctx, trackID, segments)
+// IncrementSegmentPlays provides a mock function with given fields: ctx, trackID, segmentsIdxs
+func (_m *SegmentStatRepository) IncrementSegmentPlays(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int) error {
+	ret := _m.Called(ctx, trackID, segmentsIdxs)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IncrementSegmentPlays")
@@ -93,7 +93,7 @@ func (_m *SegmentStatRepository) IncrementSegmentPlays(ctx context.Context, trac
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, []int) error); ok {
-		r0 = rf(ctx, trackID, segments)
+		r0 = rf(ctx, trackID, segmentsIdxs)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -109,12 +109,12 @@ type SegmentStatRepository_IncrementSegmentPlays_Call struct {
 // IncrementSegmentPlays is a helper method to define mock.On call
 //   - ctx context.Context
 //   - trackID uuid.UUID
-//   - segments []int
-func (_e *SegmentStatRepository_Expecter) IncrementSegmentPlays(ctx interface{}, trackID interface{}, segments interface{}) *SegmentStatRepository_IncrementSegmentPlays_Call {
-	return &SegmentStatRepository_IncrementSegmentPlays_Call{Call: _e.mock.On("IncrementSegmentPlays", ctx, trackID, segments)}
+//   - segmentsIdxs []int
+func (_e *SegmentStatRepository_Expecter) IncrementSegmentPlays(ctx interface{}, trackID interface{}, segmentsIdxs interface{}) *SegmentStatRepository_IncrementSegmentPlays_Call {
+	return &SegmentStatRepository_IncrementSegmentPlays_Call{Call: _e.mock.On("IncrementSegmentPlays", ctx, trackID, segmentsIdxs)}
 }
 
-func (_c *SegmentStatRepository_IncrementSegmentPlays_Call) Run(run func(ctx context.Context, trackID uuid.UUID, segments []int)) *SegmentStatRepository_IncrementSegmentPlays_Call {
+func (_c *SegmentStatRepository_IncrementSegmentPlays_Call) Run(run func(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int)) *SegmentStatRepository_IncrementSegmentPlays_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].([]int))
 	})
