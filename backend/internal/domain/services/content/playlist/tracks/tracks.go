@@ -33,8 +33,7 @@ func (s *PlaylistTrackService) AddTrack(ctx context.Context, claims *entity.Clai
 		err = errwrap.WrapIfErr(usecase.ErrAddTrack, err)
 	}()
 
-	err = s.policy.CanEdit(ctx, claims, playlistID)
-	if err != nil {
+	if err = s.policy.CanEdit(ctx, claims, playlistID); err != nil {
 		return err
 	}
 
@@ -46,8 +45,7 @@ func (s *PlaylistTrackService) GetAllTracks(ctx context.Context, claims *entity.
 		err = errwrap.WrapIfErr(usecase.ErrGetAllTracks, err)
 	}()
 
-	err = s.policy.CanView(ctx, claims, playlistID)
-	if err != nil {
+	if err = s.policy.CanView(ctx, claims, playlistID); err != nil {
 		return nil, err
 	}
 
@@ -59,8 +57,7 @@ func (s *PlaylistTrackService) DeleteTrack(ctx context.Context, claims *entity.C
 		err = errwrap.WrapIfErr(usecase.ErrDeleteTrack, err)
 	}()
 
-	err = s.policy.CanEdit(ctx, claims, playlistID)
-	if err != nil {
+	if err = s.policy.CanEdit(ctx, claims, playlistID); err != nil {
 		return err
 	}
 
@@ -72,8 +69,7 @@ func (s *PlaylistTrackService) DeleteAllTracks(ctx context.Context, claims *enti
 		err = errwrap.WrapIfErr(usecase.ErrDeleteAllTracks, err)
 	}()
 
-	err = s.policy.CanEdit(ctx, claims, playlistID)
-	if err != nil {
+	if err = s.policy.CanEdit(ctx, claims, playlistID); err != nil {
 		return err
 	}
 
