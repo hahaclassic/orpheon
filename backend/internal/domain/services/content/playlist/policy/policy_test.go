@@ -1,4 +1,4 @@
-package policy
+package policy_test
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/policy"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 	"github.com/stretchr/testify/assert"
@@ -30,17 +31,15 @@ func TestCanView(t *testing.T) {
 				IsPrivate: true,
 			},
 			claims:  &entity.Claims{UserID: userID},
-			repoErr: nil,
 			wantErr: nil,
 		},
 		{
-			name: "not owner, but playlist is public",
+			name: "not owner, playlist is public",
 			meta: &entity.PlaylistAccessMeta{
 				OwnerID:   uuid.New(),
 				IsPrivate: false,
 			},
 			claims:  &entity.Claims{UserID: userID},
-			repoErr: nil,
 			wantErr: nil,
 		},
 		{
@@ -50,7 +49,6 @@ func TestCanView(t *testing.T) {
 				IsPrivate: true,
 			},
 			claims:  &entity.Claims{UserID: userID},
-			repoErr: nil,
 			wantErr: playlist.ErrForbidden,
 		},
 	}
@@ -60,7 +58,7 @@ func TestCanView(t *testing.T) {
 			mockRepo := mocks.NewPlaylistAccessRepository(t)
 			mockRepo.On("GetAccessMeta", ctx, playlistID).Return(tt.meta, tt.repoErr)
 
-			svc := New(mockRepo)
+			svc := policy.New(mockRepo)
 			err := svc.CanView(ctx, tt.claims, playlistID)
 
 			if tt.wantErr != nil {
@@ -77,31 +75,41 @@ func TestCanEdit(t *testing.T) {
 	userID := uuid.New()
 	playlistID := uuid.New()
 
-	t.Run("owner cannot edit", func(t *testing.T) {
-		meta := &entity.PlaylistAccessMeta{
-			OwnerID: userID,
-		}
-		mockRepo := new(mocks.PlaylistAccessRepository)
-		mockRepo.On("GetAccessMeta", ctx, playlistID).Return(meta, nil)
+	tests := []struct {
+		name    string
+		meta    *entity.PlaylistAccessMeta
+		claims  *entity.Claims
+		wantErr error
+	}{
+		{
+			name:    "owner can edit",
+			meta:    &entity.PlaylistAccessMeta{OwnerID: userID},
+			claims:  &entity.Claims{UserID: userID},
+			wantErr: nil,
+		},
+		{
+			name:    "not owner cannot edit",
+			meta:    &entity.PlaylistAccessMeta{OwnerID: uuid.New()},
+			claims:  &entity.Claims{UserID: userID},
+			wantErr: playlist.ErrForbidden,
+		},
+	}
 
-		svc := New(mockRepo)
-		err := svc.CanEdit(ctx, &entity.Claims{UserID: userID}, playlistID)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := mocks.NewPlaylistAccessRepository(t)
+			mockRepo.On("GetAccessMeta", ctx, playlistID).Return(tt.meta, nil)
 
-		assert.ErrorIs(t, err, playlist.ErrForbidden)
-	})
+			svc := policy.New(mockRepo)
+			err := svc.CanEdit(ctx, tt.claims, playlistID)
 
-	t.Run("non-owner can edit", func(t *testing.T) {
-		meta := &entity.PlaylistAccessMeta{
-			OwnerID: uuid.New(),
-		}
-		mockRepo := mocks.NewPlaylistAccessRepository(t)
-		mockRepo.On("GetAccessMeta", ctx, playlistID).Return(meta, nil)
-
-		svc := New(mockRepo)
-		err := svc.CanEdit(ctx, &entity.Claims{UserID: userID}, playlistID)
-
-		assert.NoError(t, err)
-	})
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func TestCanDelete(t *testing.T) {
@@ -109,51 +117,63 @@ func TestCanDelete(t *testing.T) {
 	userID := uuid.New()
 	playlistID := uuid.New()
 
-	t.Run("owner can delete", func(t *testing.T) {
-		meta := &entity.PlaylistAccessMeta{
-			OwnerID:   userID,
-			IsPrivate: true,
-		}
-		mockRepo := mocks.NewPlaylistAccessRepository(t)
-		mockRepo.On("GetAccessMeta", ctx, playlistID).Return(meta, nil)
+	tests := []struct {
+		name    string
+		meta    *entity.PlaylistAccessMeta
+		claims  *entity.Claims
+		wantErr error
+	}{
+		{
+			name: "owner can delete",
+			meta: &entity.PlaylistAccessMeta{
+				OwnerID:   userID,
+				IsPrivate: true,
+			},
+			claims:  &entity.Claims{UserID: userID},
+			wantErr: nil,
+		},
+		{
+			name: "admin can delete public playlist",
+			meta: &entity.PlaylistAccessMeta{
+				OwnerID:   uuid.New(),
+				IsPrivate: false,
+			},
+			claims:  &entity.Claims{UserID: uuid.New(), AccessLvl: entity.Admin},
+			wantErr: nil,
+		},
+		{
+			name: "admin cannot delete private playlist",
+			meta: &entity.PlaylistAccessMeta{
+				OwnerID:   uuid.New(),
+				IsPrivate: true,
+			},
+			claims:  &entity.Claims{UserID: uuid.New(), AccessLvl: entity.Admin},
+			wantErr: playlist.ErrForbidden,
+		},
+		{
+			name: "user cannot delete others' playlist",
+			meta: &entity.PlaylistAccessMeta{
+				OwnerID:   uuid.New(),
+				IsPrivate: false,
+			},
+			claims:  &entity.Claims{UserID: userID},
+			wantErr: playlist.ErrForbidden,
+		},
+	}
 
-		svc := New(mockRepo)
-		err := svc.CanDelete(ctx, &entity.Claims{UserID: userID}, playlistID)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := mocks.NewPlaylistAccessRepository(t)
+			mockRepo.On("GetAccessMeta", ctx, playlistID).Return(tt.meta, nil)
 
-		assert.ErrorIs(t, err, nil)
-	})
+			svc := policy.New(mockRepo)
+			err := svc.CanDelete(ctx, tt.claims, playlistID)
 
-	t.Run("admin can delete public", func(t *testing.T) {
-		meta := &entity.PlaylistAccessMeta{
-			OwnerID:   uuid.New(),
-			IsPrivate: false,
-		}
-		mockRepo := mocks.NewPlaylistAccessRepository(t)
-		mockRepo.On("GetAccessMeta", ctx, playlistID).Return(meta, nil)
-
-		svc := New(mockRepo)
-		err := svc.CanDelete(ctx, &entity.Claims{
-			UserID:    userID,
-			AccessLvl: entity.Admin,
-		}, playlistID)
-
-		assert.ErrorIs(t, err, playlist.ErrForbidden)
-	})
-
-	t.Run("non-admin non-owner can't delete", func(t *testing.T) {
-		meta := &entity.PlaylistAccessMeta{
-			OwnerID:   uuid.New(),
-			IsPrivate: true,
-		}
-		mockRepo := mocks.NewPlaylistAccessRepository(t)
-		mockRepo.On("GetAccessMeta", ctx, playlistID).Return(meta, nil)
-
-		svc := New(mockRepo)
-		err := svc.CanDelete(ctx, &entity.Claims{
-			UserID:    userID,
-			AccessLvl: entity.User,
-		}, playlistID)
-
-		assert.NoError(t, err)
-	})
+			if tt.wantErr != nil {
+				assert.ErrorIs(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
