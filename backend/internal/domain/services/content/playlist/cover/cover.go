@@ -1,4 +1,4 @@
-package service
+package cover
 
 import (
 	"context"
@@ -20,9 +20,10 @@ type PlaylistCoverService struct {
 	repo   PlaylistCoverRepository
 }
 
-func New(repo PlaylistCoverRepository) *PlaylistCoverService {
+func New(repo PlaylistCoverRepository, policy usecase.PlaylistPolicyService) *PlaylistCoverService {
 	return &PlaylistCoverService{
-		repo: repo,
+		policy: policy,
+		repo:   repo,
 	}
 }
 
