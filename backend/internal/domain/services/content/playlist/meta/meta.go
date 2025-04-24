@@ -84,7 +84,7 @@ func (p *PlaylistMetaService) GetUserAllPlaylistsMeta(ctx context.Context, claim
 		}
 	}
 
-	return publicPlaylists, nil
+	return publicPlaylists[:currIdx], nil
 }
 
 func (p *PlaylistMetaService) UpdateMeta(ctx context.Context, claims *entity.Claims, playlist *entity.PlaylistMeta) (err error) {
