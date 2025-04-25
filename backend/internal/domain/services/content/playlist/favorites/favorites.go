@@ -99,5 +99,5 @@ func (s *PlaylistFavoriteService) AddPlaylistToAllFavorites(ctx context.Context,
 		return err
 	}
 
-	return s.favoriteRepo.DeleteFromAllFavorites(ctx, playlistID)
+	return s.favoriteRepo.RestoreAllFavorites(ctx, userIDs, playlistID)
 }

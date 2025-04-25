@@ -23,7 +23,7 @@ type TrackDeletionService interface {
 type FavoritesDeletionService interface {
 	GetUsersWithFavoritePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]uuid.UUID, error)
 	DeletePlaylistFromAllFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
-	RestoreAllFavorites(ctx context.Context, claims *entity.Claims, userIDs []uuid.UUID, playlistID uuid.UUID) error
+	AddPlaylistToAllFavorites(ctx context.Context, claims *entity.Claims, userIDs []uuid.UUID, playlistID uuid.UUID) error
 }
 
 type PlaylistCoverDeletionService interface {
@@ -135,7 +135,7 @@ func (p *PlaylistDeleter) deleteFavorites(ctx context.Context, claims *entity.Cl
 	}
 
 	return func() error {
-		return p.favorites.RestoreAllFavorites(ctx, claims, userIDs, playlistID)
+		return p.favorites.AddPlaylistToAllFavorites(ctx, claims, userIDs, playlistID)
 	}, nil
 }
 

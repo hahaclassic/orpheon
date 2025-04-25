@@ -6,6 +6,7 @@ import (
 	context "context"
 
 	entity "github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"
@@ -130,9 +131,9 @@ func (_c *PlaylistCoverRepository_GetCover_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// SaveCover provides a mock function with given fields: ctx, cover
-func (_m *PlaylistCoverRepository) SaveCover(ctx context.Context, cover *entity.Cover) error {
-	ret := _m.Called(ctx, cover)
+// SaveCover provides a mock function with given fields: ctx, _a1
+func (_m *PlaylistCoverRepository) SaveCover(ctx context.Context, _a1 *entity.Cover) error {
+	ret := _m.Called(ctx, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveCover")
@@ -140,7 +141,7 @@ func (_m *PlaylistCoverRepository) SaveCover(ctx context.Context, cover *entity.
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *entity.Cover) error); ok {
-		r0 = rf(ctx, cover)
+		r0 = rf(ctx, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -155,12 +156,12 @@ type PlaylistCoverRepository_SaveCover_Call struct {
 
 // SaveCover is a helper method to define mock.On call
 //   - ctx context.Context
-//   - cover *entity.Cover
-func (_e *PlaylistCoverRepository_Expecter) SaveCover(ctx interface{}, cover interface{}) *PlaylistCoverRepository_SaveCover_Call {
-	return &PlaylistCoverRepository_SaveCover_Call{Call: _e.mock.On("SaveCover", ctx, cover)}
+//   - _a1 *entity.Cover
+func (_e *PlaylistCoverRepository_Expecter) SaveCover(ctx interface{}, _a1 interface{}) *PlaylistCoverRepository_SaveCover_Call {
+	return &PlaylistCoverRepository_SaveCover_Call{Call: _e.mock.On("SaveCover", ctx, _a1)}
 }
 
-func (_c *PlaylistCoverRepository_SaveCover_Call) Run(run func(ctx context.Context, cover *entity.Cover)) *PlaylistCoverRepository_SaveCover_Call {
+func (_c *PlaylistCoverRepository_SaveCover_Call) Run(run func(ctx context.Context, _a1 *entity.Cover)) *PlaylistCoverRepository_SaveCover_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(*entity.Cover))
 	})
