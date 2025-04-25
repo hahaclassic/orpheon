@@ -30,7 +30,11 @@ func New(repo ArtistMetaRepository) *ArtistMetaService {
 	return &ArtistMetaService{repo: repo}
 }
 
-func (s *ArtistMetaService) GetArtistMeta(ctx context.Context, artistID uuid.UUID) (*entity.ArtistMeta, error) {
+func (s *ArtistMetaService) GetArtistMeta(ctx context.Context, artistID uuid.UUID) (_ *entity.ArtistMeta, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetArtistMeta, err)
+	}()
+
 	return s.repo.GetByID(ctx, artistID)
 }
 
@@ -43,8 +47,7 @@ func (s *ArtistMetaService) CreateArtistMeta(ctx context.Context, claims *entity
 		return ErrForbidden
 	}
 
-	artist.ID, err = uuid.NewRandom()
-	if err != nil {
+	if artist.ID, err = uuid.NewRandom(); err != nil {
 		return ErrGenerateID
 	}
 

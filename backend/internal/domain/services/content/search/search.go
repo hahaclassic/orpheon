@@ -19,6 +19,12 @@ type SearchService struct {
 	repo SearchRepository
 }
 
+func NewSearchService(repo SearchRepository) *SearchService {
+	return &SearchService{
+		repo: repo,
+	}
+}
+
 func (s *SearchService) SearchTracks(ctx context.Context, req *entity.SearchRequest) (_ []*entity.TrackMeta, err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrSearchTracks, err)

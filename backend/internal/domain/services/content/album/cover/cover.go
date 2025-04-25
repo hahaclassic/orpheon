@@ -35,12 +35,7 @@ func (c *AlbumCoverService) GetCover(ctx context.Context, albumID uuid.UUID) (_ 
 		err = errwrap.WrapIfErr(usecase.ErrGetCover, err)
 	}()
 
-	cover, err := c.repo.GetCover(ctx, albumID)
-	if err != nil {
-		return nil, err
-	}
-
-	return cover, nil
+	return c.repo.GetCover(ctx, albumID)
 }
 
 func (c *AlbumCoverService) UploadCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) (err error) {
