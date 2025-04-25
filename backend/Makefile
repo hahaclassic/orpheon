@@ -17,3 +17,7 @@ clear:
 
 gen-mocks:
 	mockery --all --recursive --output=./mocks --with-expecter
+
+lint: 
+	golangci-lint run
+	

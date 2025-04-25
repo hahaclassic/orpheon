@@ -9,7 +9,7 @@ import (
 )
 
 type ListeningStatService interface {
-	UpdateTrackStat(ctx context.Context, event *entity.ListeningEvent) error
+	UpdateStat(ctx context.Context, event *entity.ListeningEvent) error
 }
 
 type EventBus interface {
@@ -42,5 +42,5 @@ func (c *ListeningEventConsumer) consumeListeningEvent(ctx context.Context, even
 		}
 	}()
 
-	return c.stat.UpdateTrackStat(ctx, event)
+	return c.stat.UpdateStat(ctx, event)
 }
