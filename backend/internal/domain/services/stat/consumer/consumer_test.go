@@ -16,12 +16,12 @@ import (
 func TestListeningEventConsumer_Start(t *testing.T) {
 	tests := []struct {
 		name      string
-		setupMock func(bus *mocks.EventBus)
+		setupMock func(bus *mocks.EventBusSub)
 		expectErr bool
 	}{
 		{
 			name: "success",
-			setupMock: func(bus *mocks.EventBus) {
+			setupMock: func(bus *mocks.EventBusSub) {
 				bus.On("Subscribe", mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
@@ -30,7 +30,7 @@ func TestListeningEventConsumer_Start(t *testing.T) {
 		},
 		{
 			name: "subscribe error",
-			setupMock: func(bus *mocks.EventBus) {
+			setupMock: func(bus *mocks.EventBusSub) {
 				bus.On("Subscribe", mock.Anything, mock.Anything).
 					Return(errors.New("subscribe failed")).
 					Once()
@@ -41,7 +41,7 @@ func TestListeningEventConsumer_Start(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bus := mocks.NewEventBus(t)
+			bus := mocks.NewEventBusSub(t)
 			stat := mocks.NewListeningStatService(t)
 
 			tt.setupMock(bus)
@@ -98,7 +98,7 @@ func TestListeningEventConsumer_consumeListeningEvent(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			bus := mocks.NewEventBus(t)
+			bus := mocks.NewEventBusSub(t)
 			stat := mocks.NewListeningStatService(t)
 
 			tt.setupMock(stat)

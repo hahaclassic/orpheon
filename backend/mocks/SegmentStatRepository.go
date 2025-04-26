@@ -83,12 +83,12 @@ func (_c *SegmentStatRepository_GetTrackSegments_Call) RunAndReturn(run func(con
 	return _c
 }
 
-// IncrementSegmentPlays provides a mock function with given fields: ctx, trackID, segmentsIdxs
-func (_m *SegmentStatRepository) IncrementSegmentPlays(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int) error {
+// IncrementSegmentStreamCount provides a mock function with given fields: ctx, trackID, segmentsIdxs
+func (_m *SegmentStatRepository) IncrementSegmentStreamCount(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int) error {
 	ret := _m.Called(ctx, trackID, segmentsIdxs)
 
 	if len(ret) == 0 {
-		panic("no return value specified for IncrementSegmentPlays")
+		panic("no return value specified for IncrementSegmentStreamCount")
 	}
 
 	var r0 error
@@ -101,32 +101,32 @@ func (_m *SegmentStatRepository) IncrementSegmentPlays(ctx context.Context, trac
 	return r0
 }
 
-// SegmentStatRepository_IncrementSegmentPlays_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IncrementSegmentPlays'
-type SegmentStatRepository_IncrementSegmentPlays_Call struct {
+// SegmentStatRepository_IncrementSegmentStreamCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IncrementSegmentStreamCount'
+type SegmentStatRepository_IncrementSegmentStreamCount_Call struct {
 	*mock.Call
 }
 
-// IncrementSegmentPlays is a helper method to define mock.On call
+// IncrementSegmentStreamCount is a helper method to define mock.On call
 //   - ctx context.Context
 //   - trackID uuid.UUID
 //   - segmentsIdxs []int
-func (_e *SegmentStatRepository_Expecter) IncrementSegmentPlays(ctx interface{}, trackID interface{}, segmentsIdxs interface{}) *SegmentStatRepository_IncrementSegmentPlays_Call {
-	return &SegmentStatRepository_IncrementSegmentPlays_Call{Call: _e.mock.On("IncrementSegmentPlays", ctx, trackID, segmentsIdxs)}
+func (_e *SegmentStatRepository_Expecter) IncrementSegmentStreamCount(ctx interface{}, trackID interface{}, segmentsIdxs interface{}) *SegmentStatRepository_IncrementSegmentStreamCount_Call {
+	return &SegmentStatRepository_IncrementSegmentStreamCount_Call{Call: _e.mock.On("IncrementSegmentStreamCount", ctx, trackID, segmentsIdxs)}
 }
 
-func (_c *SegmentStatRepository_IncrementSegmentPlays_Call) Run(run func(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int)) *SegmentStatRepository_IncrementSegmentPlays_Call {
+func (_c *SegmentStatRepository_IncrementSegmentStreamCount_Call) Run(run func(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int)) *SegmentStatRepository_IncrementSegmentStreamCount_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].([]int))
 	})
 	return _c
 }
 
-func (_c *SegmentStatRepository_IncrementSegmentPlays_Call) Return(_a0 error) *SegmentStatRepository_IncrementSegmentPlays_Call {
+func (_c *SegmentStatRepository_IncrementSegmentStreamCount_Call) Return(_a0 error) *SegmentStatRepository_IncrementSegmentStreamCount_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *SegmentStatRepository_IncrementSegmentPlays_Call) RunAndReturn(run func(context.Context, uuid.UUID, []int) error) *SegmentStatRepository_IncrementSegmentPlays_Call {
+func (_c *SegmentStatRepository_IncrementSegmentStreamCount_Call) RunAndReturn(run func(context.Context, uuid.UUID, []int) error) *SegmentStatRepository_IncrementSegmentStreamCount_Call {
 	_c.Call.Return(run)
 	return _c
 }

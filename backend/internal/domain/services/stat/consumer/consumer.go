@@ -12,16 +12,16 @@ type ListeningStatService interface {
 	UpdateStat(ctx context.Context, event *entity.ListeningEvent) error
 }
 
-type EventBus interface {
+type EventBusSub interface {
 	Subscribe(ctx context.Context, handler func(ctx context.Context, event *entity.ListeningEvent) error) error
 }
 
 type ListeningEventConsumer struct {
-	bus  EventBus
+	bus  EventBusSub
 	stat ListeningStatService
 }
 
-func New(bus EventBus, statService ListeningStatService) *ListeningEventConsumer {
+func New(bus EventBusSub, statService ListeningStatService) *ListeningEventConsumer {
 	return &ListeningEventConsumer{bus: bus, stat: statService}
 }
 

@@ -19,28 +19,16 @@ type ListeningStatService struct {
 }
 
 type TrackStatRepository interface {
-	GetTrackPlays(ctx context.Context, trackID uuid.UUID) (int64, error)
-	IncrementTrackPlays(ctx context.Context, trackID uuid.UUID, userID uuid.UUID) error
+	IncrementTrackStreamCount(ctx context.Context, trackID uuid.UUID, userID uuid.UUID) error
 }
 
 type SegmentStatRepository interface {
 	GetTrackSegments(ctx context.Context, trackID uuid.UUID) ([]*entity.Segment, error)
-	IncrementSegmentPlays(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int) error
+	IncrementSegmentStreamCount(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int) error
 }
 
 func NewListeningStatService(trackRepo TrackStatRepository, segmentRepo SegmentStatRepository) *ListeningStatService {
 	return &ListeningStatService{trackRepo: trackRepo, segmentRepo: segmentRepo}
-}
-
-func (s *ListeningStatService) GetTrackSegments(ctx context.Context, trackID uuid.UUID) (segments []*entity.Segment, err error) {
-	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrGetTrackSegments, err)
-		}
-	}()
-
-	segments, err = s.segmentRepo.GetTrackSegments(ctx, trackID)
-	return segments, err
 }
 
 func (s *ListeningStatService) UpdateStat(ctx context.Context, event *entity.ListeningEvent) (err error) {
@@ -57,12 +45,12 @@ func (s *ListeningStatService) UpdateStat(ctx context.Context, event *entity.Lis
 
 	affectedSegIdx, totalDuration := s.proccessListeningEvent(segments, event)
 
-	if err = s.segmentRepo.IncrementSegmentPlays(ctx, event.TrackID, affectedSegIdx); err != nil {
+	if err = s.segmentRepo.IncrementSegmentStreamCount(ctx, event.TrackID, affectedSegIdx); err != nil {
 		return err
 	}
 
 	if totalDuration > MinSeconds {
-		if err = s.trackRepo.IncrementTrackPlays(ctx, event.TrackID, event.UserID); err != nil {
+		if err = s.trackRepo.IncrementTrackStreamCount(ctx, event.TrackID, event.UserID); err != nil {
 			return err
 		}
 	}
@@ -76,6 +64,10 @@ func (ListeningStatService) proccessListeningEvent(segments []*entity.Segment, e
 	affectedSegIdx := make([]int, 0, len(segments))
 
 	incrementStreamCount := func(segIdx int, lisRange *entity.Range) {
+		if segIdx < 0 || segIdx >= len(segments) {
+			return
+		}
+
 		intersec := intersection(segments[segIdx].Range, lisRange)
 		if float64(intersec.Len()) >= float64(segments[segIdx].Range.Len())/2 {
 			segments[segIdx].StreamCount++
@@ -91,6 +83,9 @@ func (ListeningStatService) proccessListeningEvent(segments []*entity.Segment, e
 		incrementStreamCount(segEndIdx, listenedRange)
 
 		for idx := segStartIdx + 1; idx < segEndIdx; idx++ {
+			if idx < 0 || idx >= len(segments) {
+				continue
+			}
 			segments[idx].StreamCount++
 			affectedSegIdx = append(affectedSegIdx, idx)
 		}

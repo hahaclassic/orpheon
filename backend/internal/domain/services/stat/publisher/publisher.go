@@ -17,15 +17,15 @@ var (
 	ErrShortListeningTime = errors.New("error: the listening time is too short")
 )
 
-type EventBus interface {
+type EventBusPub interface {
 	Publish(ctx context.Context, event *entity.ListeningEvent) error
 }
 
 type ListeningEventPublisher struct {
-	bus EventBus
+	bus EventBusPub
 }
 
-func New(bus EventBus) *ListeningEventPublisher {
+func New(bus EventBusPub) *ListeningEventPublisher {
 	return &ListeningEventPublisher{bus: bus}
 }
 
