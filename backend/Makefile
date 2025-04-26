@@ -15,7 +15,7 @@ cov-v:
 clear:
 	rm -rf ./coverage
 
-gen-mocks:
+mock:
 	mockery --all --recursive --output=./mocks --with-expecter
 
 lint: 
