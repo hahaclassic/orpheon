@@ -23,12 +23,12 @@ func New(hashCost int) *BcryptPasswordHasher {
 }
 
 func (b *BcryptPasswordHasher) GenerateFromPassword(password string) (string, error) {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), b.hashCost)
 
 	return string(hashed), errwrap.WrapIfErr(ErrHash, err)
 }
 
-func (b *BcryptPasswordHasher) CompareHashAndPassword(hashed, password string) error {
+func (BcryptPasswordHasher) CompareHashAndPassword(hashed, password string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password))
 
 	return errwrap.WrapIfErr(ErrCompare, err)
