@@ -13,7 +13,6 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/pressly/goose/v3"
 	"github.com/redis/go-redis/v9"
 )
@@ -45,7 +44,7 @@ func TestMain(m *testing.M) {
 		isErr := false
 		if r := recover(); r != nil {
 			isErr = true
-			fmt.Println(r)
+			fmt.Println("[ERR]", r)
 		}
 
 		teardown(dockerPool, []*dockertest.Resource{dockerPostgres, dockerMinIO, dockerRedis})
@@ -60,6 +59,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(fmt.Sprintf("failed to start docker: %v", err))
 	}
+	dockerPool.MaxWait = 2 * time.Minute
 
 	dockerPostgres, err = setupPostgres(dockerPool)
 	if err != nil {
@@ -109,10 +109,6 @@ func setupPostgres(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 			"POSTGRES_USER=testuser",
 			"POSTGRES_PASSWORD=password",
 			"POSTGRES_DB=testdb",
-		},
-		ExposedPorts: []string{"5432/tcp"},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"5432/tcp": {{HostIP: "0.0.0.0", HostPort: "5432"}},
 		},
 	})
 	if err != nil {
@@ -176,9 +172,8 @@ func runMigrationsDown(dbpool *pgxpool.Pool) error {
 
 func setupRedis(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 	resource, err := dockerPool.RunWithOptions(&dockertest.RunOptions{
-		Repository:   "redis",
-		Tag:          "7", // "latest"
-		ExposedPorts: []string{"6379/tcp"},
+		Repository: "redis",
+		Tag:        "7",
 	})
 	if err != nil {
 		return nil, err
@@ -213,8 +208,7 @@ func setupMinIO(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 			"MINIO_ROOT_USER=minioadmin",
 			"MINIO_ROOT_PASSWORD=minioadmin",
 		},
-		Cmd:          []string{"server", "/data"},
-		ExposedPorts: []string{"9000/tcp"},
+		Cmd: []string{"server", "/data"},
 	})
 	if err != nil {
 		return nil, err
