@@ -1,4 +1,4 @@
-package postgres
+package segment_postgres
 
 import (
 	"context"
