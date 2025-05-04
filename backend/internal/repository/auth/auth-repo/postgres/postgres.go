@@ -19,7 +19,7 @@ func NewAuthRepository(pool *pgxpool.Pool) *AuthRepository {
 
 func (r *AuthRepository) SaveCredentials(ctx context.Context, userID uuid.UUID, credentials *entity.UserCredentials) error {
 	const query = `
-		INSERT INTO user_credentials (user_id, login, password)
+		INSERT INTO credentials (user_id, login, password)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (login) DO NOTHING
 	`
@@ -35,7 +35,7 @@ func (r *AuthRepository) SaveCredentials(ctx context.Context, userID uuid.UUID, 
 func (r *AuthRepository) GetPasswordByLogin(ctx context.Context, login string) (string, error) {
 	const query = `
 		SELECT password
-		FROM user_credentials
+		FROM credentials
 		WHERE login = $1
 	`
 
@@ -51,7 +51,7 @@ func (r *AuthRepository) GetPasswordByLogin(ctx context.Context, login string) (
 func (r *AuthRepository) GetPasswordByID(ctx context.Context, userID uuid.UUID) (string, error) {
 	const query = `
 		SELECT password
-		FROM user_credentials
+		FROM credentials
 		WHERE user_id = $1
 	`
 
@@ -67,7 +67,7 @@ func (r *AuthRepository) GetPasswordByID(ctx context.Context, userID uuid.UUID) 
 func (r *AuthRepository) GetClaimsByLogin(ctx context.Context, login string) (*entity.Claims, error) {
 	const query = `
 		SELECT u.user_id, u.access_lvl
-		FROM user_credentials c
+		FROM credentials c
 		JOIN users u ON u.user_id = c.user_id
 		WHERE c.login = $1
 	`
@@ -83,7 +83,7 @@ func (r *AuthRepository) GetClaimsByLogin(ctx context.Context, login string) (*e
 
 func (r *AuthRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
 	const query = `
-		UPDATE user_credentials
+		UPDATE credentials
 		SET password = $1
 		WHERE user_id = $2
 	`

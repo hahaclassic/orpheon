@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type AudioFileRepository struct {
@@ -16,19 +15,11 @@ type AudioFileRepository struct {
 	bucketName  string
 }
 
-func NewAudioFileRepository(endpoint, accessKey, secretKey, bucket string) (*AudioFileRepository, error) {
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: false, // включи true, если используешь https
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create MinIO client: %w", err)
-	}
-
+func NewAudioFileRepository(client *minio.Client, bucket string) *AudioFileRepository {
 	return &AudioFileRepository{
 		minioClient: client,
 		bucketName:  bucket,
-	}, nil
+	}
 }
 
 func (r *AudioFileRepository) UploadAudioFile(ctx context.Context, chunk *entity.AudioChunk) error {
@@ -40,6 +31,7 @@ func (r *AudioFileRepository) UploadAudioFile(ctx context.Context, chunk *entity
 	if err != nil {
 		return fmt.Errorf("failed to upload audio file: %w", err)
 	}
+
 	return nil
 }
 
