@@ -78,16 +78,6 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: lint
-    services:
-      docker:
-        image: docker:dind
-        options: >-
-          --privileged
-          --env DOCKER_TLS_CERTDIR=
-        ports:
-          - 2375:2375
-    env:
-      DOCKER_HOST: tcp://localhost:2375
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -96,6 +86,9 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.0'
+
+      - name: Show Docker info (для отладки)
+        run: docker info
 
       - name: Run integration tests via make
         working-directory: backend
