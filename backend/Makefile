@@ -13,7 +13,7 @@ cov-v:
 	./scripts/cov.sh -v
 
 integration:
-	go test ./integration-tests/
+	go test -v ./integration-tests/
 
 clear:
 	rm -rf ./coverage

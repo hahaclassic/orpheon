@@ -23,10 +23,11 @@ const (
 )
 
 var (
-	pgxPool              *pgxpool.Pool
-	redisClient          *redis.Client
-	minioClient          *minio.Client
-	minioAudioBucketName string
+	pgxPool     *pgxpool.Pool
+	redisClient *redis.Client
+	minioClient *minio.Client
+
+	minioAudioBucketName string = "audio"
 )
 
 func TestMain(m *testing.M) {
