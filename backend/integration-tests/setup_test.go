@@ -42,11 +42,17 @@ func TestMain(m *testing.M) {
 	)
 
 	defer func() {
+		isErr := false
 		if r := recover(); r != nil {
+			isErr = true
 			fmt.Println(r)
 		}
 
 		teardown(dockerPool, []*dockertest.Resource{dockerPostgres, dockerMinIO, dockerRedis})
+
+		if isErr {
+			os.Exit(1)
+		}
 		os.Exit(code)
 	}()
 
