@@ -14,6 +14,7 @@ type PlaylistMeta struct {
 	IsPrivate   bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Rating      int
 }
 
 type PlaylistAccessMeta struct {
