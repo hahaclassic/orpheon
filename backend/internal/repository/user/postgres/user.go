@@ -1,4 +1,4 @@
-package userrepo
+package user_postgres
 
 import (
 	"context"
@@ -19,16 +19,17 @@ func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *entity.UserInfo) error {
 	query := `
-		INSERT INTO users (id, name, status, registration_date, birth_date)
+		INSERT INTO users (id, name, registration_date, birth_date, access_level)
 		VALUES ($1, $2, $3, $4, $5)
 	`
 	_, err := r.pool.Exec(ctx, query,
 		user.ID,
 		user.Name,
-		user.Status,
 		user.RegistrationDate,
 		user.BirthDate,
+		int(user.AccessLvl),
 	)
+
 	return err
 }
 
@@ -44,9 +45,9 @@ func (r *UserRepository) GetUser(ctx context.Context, userID uuid.UUID) (*entity
 	err := row.Scan(
 		&user.ID,
 		&user.Name,
-		&user.Status,
 		&user.RegistrationDate,
 		&user.BirthDate,
+		&user.AccessLvl,
 	)
 	if err != nil {
 		return nil, err
@@ -63,9 +64,9 @@ func (r *UserRepository) UpdateUser(ctx context.Context, user *entity.UserInfo) 
 	`
 	cmdTag, err := r.pool.Exec(ctx, query,
 		user.Name,
-		user.Status,
 		user.BirthDate,
 		user.ID,
+		user.AccessLvl,
 	)
 	if err != nil {
 		return err
