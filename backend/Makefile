@@ -12,6 +12,9 @@ cov-v:
 	mkdir -p ./coverage
 	./scripts/cov.sh -v
 
+integration:
+	go test ./integration-tests/
+
 clear:
 	rm -rf ./coverage
 
