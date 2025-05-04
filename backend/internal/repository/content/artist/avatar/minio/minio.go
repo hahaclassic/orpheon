@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
@@ -62,7 +63,12 @@ func (r *ArtistAvatarRepository) GetCover(ctx context.Context, artistID uuid.UUI
 	if err != nil {
 		return nil, fmt.Errorf("get artist avatar from minio: %w", err)
 	}
-	defer obj.Close()
+	defer func() {
+		err := obj.Close()
+		if err != nil {
+			slog.Error("err", "object close error", err)
+		}
+	}()
 
 	data, err := io.ReadAll(obj)
 	if err != nil {

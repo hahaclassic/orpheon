@@ -78,7 +78,10 @@ func teardown(pool *dockertest.Pool, resources []*dockertest.Resource) {
 	}
 
 	if redisClient != nil {
-		redisClient.Close()
+		err := redisClient.Close()
+		if err != nil {
+			slog.Error("err", "redis close error", err)
+		}
 	}
 
 	for i := range resources {
@@ -133,7 +136,12 @@ func runMigrationsUp(dbpool *pgxpool.Pool) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		if err != nil {
+			slog.Error("err", "pgx close error", err)
+		}
+	}()
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return err
@@ -146,7 +154,12 @@ func runMigrationsDown(dbpool *pgxpool.Pool) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		if err != nil {
+			slog.Error("err", "pgx close error", err)
+		}
+	}()
 
 	if err := goose.SetDialect("postgres"); err != nil {
 		return err

@@ -3,6 +3,7 @@ package favorites_postgres
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
@@ -122,7 +123,12 @@ func (r *PlaylistFavoriteRepository) RestoreAllFavorites(ctx context.Context, us
 	}
 
 	br := r.pool.SendBatch(ctx, &batch)
-	defer br.Close()
+	defer func() {
+		err := br.Close()
+		if err != nil {
+			slog.Error("err", "batch results close error", err)
+		}
+	}()
 
 	for range userIDs {
 		if _, err := br.Exec(); err != nil {

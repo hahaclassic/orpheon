@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
@@ -54,7 +55,12 @@ func (r *PlaylistCoverRepository) GetCover(ctx context.Context, objectID uuid.UU
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cover from MinIO: %w", err)
 	}
-	defer object.Close()
+	defer func() {
+		err := object.Close()
+		if err != nil {
+			slog.Error("err", "object close error", err)
+		}
+	}()
 
 	data, err := io.ReadAll(object)
 	if err != nil {
