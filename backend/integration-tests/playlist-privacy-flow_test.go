@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// ======================================
+// ==========================================
 //        playlist privacy flow
 //
 // requirements:
@@ -34,7 +34,7 @@ import (
 //    3. get access meta (is_private = false)
 //    4. update playlist privacy
 //    5. get access meta (is_private = true)
-// ======================================
+// ==========================================
 
 func TestPlaylistAccessFlow(t *testing.T) {
 	defer func() {
@@ -47,6 +47,9 @@ func TestPlaylistAccessFlow(t *testing.T) {
 	defer func() {
 		require.NoError(t, runMigrationsDown(pgxPool))
 	}()
+	defer func() {
+		require.NoError(t, clearRedis(redisClient))
+	}()
 
 	ctx := context.Background()
 	localCache, err := access_cache_local.NewAccessCache(128)
@@ -57,7 +60,7 @@ func TestPlaylistAccessFlow(t *testing.T) {
 	accessRepo := access_meta_postgres.NewPlaylistAccessRepository(pgxPool)
 	accessRepoWithCache := access_meta.New(accessRepo, access_meta.WithL1Cache(localCache), access_meta.WithL2Cache(redisCache))
 
-	var userRepo *user_postgres.UserRepository
+	userRepo := user_postgres.NewUserRepository(pgxPool)
 	playlistMetaRepo := playlist_meta_postgres.NewPlaylistMetaRepository(pgxPool)
 
 	// 1.

@@ -23,9 +23,10 @@ const (
 )
 
 var (
-	pgxPool     *pgxpool.Pool
-	redisClient *redis.Client
-	minioClient *minio.Client
+	pgxPool              *pgxpool.Pool
+	redisClient          *redis.Client
+	minioClient          *minio.Client
+	minioAudioBucketName string
 )
 
 func TestMain(m *testing.M) {
@@ -71,30 +72,23 @@ func TestMain(m *testing.M) {
 	code = m.Run()
 }
 
-func runMigrationsUp(dbpool *pgxpool.Pool) error {
-	db, err := sql.Open("pgx", dbpool.Config().ConnString())
-	if err != nil {
-		return err
+func teardown(pool *dockertest.Pool, resources []*dockertest.Resource) {
+	if pgxPool != nil {
+		pgxPool.Close()
 	}
-	defer db.Close()
 
-	if err := goose.SetDialect("postgres"); err != nil {
-		return err
+	if redisClient != nil {
+		redisClient.Close()
 	}
-	return goose.Up(db, migrationsDir)
-}
 
-func runMigrationsDown(dbpool *pgxpool.Pool) error {
-	db, err := sql.Open("pgx", dbpool.Config().ConnString())
-	if err != nil {
-		return err
+	for i := range resources {
+		if resources[i] == nil {
+			continue
+		}
+		if err := pool.Purge(resources[i]); err != nil {
+			slog.Error("failed to purge docker resource", "err", err)
+		}
 	}
-	defer db.Close()
-
-	if err := goose.SetDialect("postgres"); err != nil {
-		return err
-	}
-	return goose.Reset(db, migrationsDir)
 }
 
 func setupPostgres(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
@@ -134,6 +128,32 @@ func setupPostgres(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 	return resource, nil
 }
 
+func runMigrationsUp(dbpool *pgxpool.Pool) error {
+	db, err := sql.Open("pgx", dbpool.Config().ConnString())
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		return err
+	}
+	return goose.Up(db, migrationsDir)
+}
+
+func runMigrationsDown(dbpool *pgxpool.Pool) error {
+	db, err := sql.Open("pgx", dbpool.Config().ConnString())
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		return err
+	}
+	return goose.Reset(db, migrationsDir)
+}
+
 func setupRedis(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 	resource, err := dockerPool.RunWithOptions(&dockertest.RunOptions{
 		Repository:   "redis",
@@ -159,6 +179,10 @@ func setupRedis(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 	}
 
 	return resource, nil
+}
+
+func clearRedis(rdb *redis.Client) error {
+	return rdb.FlushAll(context.Background()).Err()
 }
 
 func setupMinIO(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
@@ -190,9 +214,16 @@ func setupMinIO(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 		if err != nil {
 			return err
 		}
-		_, err = minioClient.ListBuckets(ctx)
-		return err
 
+		err = minioClient.MakeBucket(ctx, minioAudioBucketName, minio.MakeBucketOptions{})
+		if err != nil {
+			exists, errBucketExists := minioClient.BucketExists(ctx, minioAudioBucketName)
+			if errBucketExists != nil || !exists {
+				return fmt.Errorf("could not create bucket: %v", err)
+			}
+		}
+
+		return nil
 	}); err != nil {
 		return nil, err
 	}
@@ -200,21 +231,18 @@ func setupMinIO(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 	return resource, nil
 }
 
-func teardown(pool *dockertest.Pool, resources []*dockertest.Resource) {
-	if pgxPool != nil {
-		pgxPool.Close()
+func clearMinioBucket(ctx context.Context, client *minio.Client, bucketName string) error {
+	opts := minio.ListObjectsOptions{
+		Recursive: true,
 	}
-
-	if redisClient != nil {
-		redisClient.Close()
-	}
-
-	for i := range resources {
-		if resources[i] == nil {
-			continue
+	for obj := range client.ListObjects(ctx, bucketName, opts) {
+		if obj.Err != nil {
+			return obj.Err
 		}
-		if err := pool.Purge(resources[i]); err != nil {
-			slog.Error("failed to purge docker resource", "err", err)
+		err := client.RemoveObject(ctx, bucketName, obj.Key, minio.RemoveObjectOptions{})
+		if err != nil {
+			return err
 		}
 	}
+	return nil
 }

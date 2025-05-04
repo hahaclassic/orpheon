@@ -1,25 +1,81 @@
 package integration_test
 
-// Я хочу протестировать сценарий регистрации-входа-выхода пользователя. В этом у меня участвует несколько репозиториев:
-// type RefreshTokenRepository interface {
-// 	Set(ctx context.Context, token string, claims *entity.Claims) error
-// 	Get(ctx context.Context, token string) (*entity.Claims, error)
-// 	Delete(ctx context.Context, token string) error
-// }
+import (
+	"context"
+	"runtime/debug"
+	"testing"
+	"time"
 
-// type AuthRepository interface {
-// 	SaveCredentials(ctx context.Context, userID uuid.UUID, credentials *entity.UserCredentials) error
-// 	GetPasswordByLogin(ctx context.Context, login string) (string, error)
-// 	GetPasswordByID(ctx context.Context, userID uuid.UUID) (string, error)
-// 	GetClaimsByLogin(ctx context.Context, login string) (*entity.Claims, error)
-// 	UpdatePassword(ctx context.Context, userID uuid.UUID, newPassword string) error
-// }
+	"github.com/google/uuid"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	auth_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/auth/auth-repo/postgres"
+	refresh_redis "github.com/hahaclassic/orpheon/backend/internal/repository/auth/refresh-token/redis"
+	user_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/user/postgres"
+	"github.com/stretchr/testify/require"
+)
 
-// type UserCreatorService interface {
-// 	CreateUser(ctx context.Context, info *entity.UserInfo) (uuid.UUID, error)
-// }
+// ==========================================
+//                auth flow
+//
+// flow:
+//    1. create user
+//    2. save user credentials
+//    3. save refresh token + claims
+//    4. updated password
+//        4.1 check new password
+//    5. get refresh token [fail, short ttl]
+// ==========================================
 
-// По сути, при регистрации мне надо:
-// 1. создать юзера (в постгрес)
-// 2. сохранить его логин/пароль  (в постгрес)
-// 3. автоматический вход, поэтому сохраняется рефреш токен (в редисе)
+func TestAuthFlow(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("panic occurred: %v\n%s", r, debug.Stack())
+		}
+	}()
+
+	require.NoError(t, runMigrationsUp(pgxPool))
+	defer func() {
+		require.NoError(t, runMigrationsDown(pgxPool))
+	}()
+	defer func() {
+		require.NoError(t, clearRedis(redisClient))
+	}()
+
+	userCreator := user_postgres.NewUserRepository(pgxPool)
+	authRepo := auth_postgres.NewAuthRepository(pgxPool)
+	refreshTokenRepo := refresh_redis.NewRefreshTokenRepository(redisClient, 1*time.Second) // short ttl for test
+
+	ctx := context.Background()
+
+	// 1.
+	userInfo := &entity.UserInfo{
+		ID:        uuid.New(),
+		Name:      "test_user",
+		AccessLvl: entity.User,
+	}
+
+	require.NoError(t, userCreator.CreateUser(ctx, userInfo))
+
+	// 2.
+	creds := &entity.UserCredentials{Login: "test_user", Password: "secret123"}
+	require.NoError(t, authRepo.SaveCredentials(ctx, userInfo.ID, creds))
+
+	// 3.
+	refreshToken := "refresh-token-123"
+	claims := &entity.Claims{UserID: userInfo.ID, AccessLvl: entity.User}
+	require.NoError(t, refreshTokenRepo.Set(ctx, refreshToken, claims))
+
+	// 4.
+	newPassword := "newsecret123"
+	require.NoError(t, authRepo.UpdatePassword(ctx, userInfo.ID, newPassword))
+
+	// 4.1
+	savedPwd, err := authRepo.GetPasswordByID(ctx, userInfo.ID)
+	require.NoError(t, err)
+	require.Equal(t, newPassword, savedPwd)
+
+	time.Sleep(2 * time.Second)
+	// 5.
+	_, err = refreshTokenRepo.Get(ctx, refreshToken)
+	require.Error(t, err) // needs errorsIs(ErrCacheMiss)
+}
