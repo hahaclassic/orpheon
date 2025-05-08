@@ -57,8 +57,8 @@ jobs:
         working-directory: backend
         run: golangci-lint run ./...
 
-  test:
-    name: Test
+  unit-test:
+    name: Unit Tests
     runs-on: ubuntu-latest
     needs: lint
     steps:
@@ -70,14 +70,33 @@ jobs:
         with:
           go-version: '1.24.0'
 
-      - name: Run unit tests
+      - name: Run unit tests via make
         working-directory: backend
-        run: go test -v ./...
+        run: make cov-v
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.0'
+
+      - name: Run integration tests via make
+        working-directory: backend
+        run: make integration
 
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: test
+    needs:
+      - unit-test
+      - integration-test
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4

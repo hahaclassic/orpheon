@@ -1,0 +1,140 @@
+package favorites_postgres
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+
+	"github.com/google/uuid"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type PlaylistFavoriteRepository struct {
+	pool *pgxpool.Pool
+}
+
+func NewPlaylistFavoriteRepository(pool *pgxpool.Pool) *PlaylistFavoriteRepository {
+	return &PlaylistFavoriteRepository{pool: pool}
+}
+
+func (r *PlaylistFavoriteRepository) AddToFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error {
+	const query = `
+		INSERT INTO playlist_favorites (user_id, playlist_id)
+		VALUES ($1, $2)
+		ON CONFLICT DO NOTHING
+	`
+
+	_, err := r.pool.Exec(ctx, query, userID, playlistID)
+	if err != nil {
+		return fmt.Errorf("add to favorites: %w", err)
+	}
+	return nil
+}
+
+func (r *PlaylistFavoriteRepository) GetUserFavorites(ctx context.Context, userID uuid.UUID) ([]*entity.PlaylistMeta, error) {
+	const query = `
+		SELECT p.id, p.title, p.description
+		FROM playlist_favorites f
+		JOIN playlists p ON p.id = f.playlist_id
+		WHERE f.user_id = $1
+	`
+
+	rows, err := r.pool.Query(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get user favorites: %w", err)
+	}
+	defer rows.Close()
+
+	var result []*entity.PlaylistMeta
+	for rows.Next() {
+		var meta entity.PlaylistMeta
+		if err := rows.Scan(&meta.ID, &meta.Name, &meta.Description); err != nil {
+			return nil, fmt.Errorf("scan playlist meta: %w", err)
+		}
+		result = append(result, &meta)
+	}
+
+	return result, nil
+}
+
+func (r *PlaylistFavoriteRepository) DeleteFromUserFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error {
+	const query = `
+		DELETE FROM playlist_favorites
+		WHERE user_id = $1 AND playlist_id = $2
+	`
+
+	_, err := r.pool.Exec(ctx, query, userID, playlistID)
+	if err != nil {
+		return fmt.Errorf("delete from user favorites: %w", err)
+	}
+	return nil
+}
+
+func (r *PlaylistFavoriteRepository) GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID) ([]uuid.UUID, error) {
+	const query = `
+		SELECT user_id
+		FROM playlist_favorites
+		WHERE playlist_id = $1
+	`
+
+	rows, err := r.pool.Query(ctx, query, playlistID)
+	if err != nil {
+		return nil, fmt.Errorf("get users with favorite: %w", err)
+	}
+	defer rows.Close()
+
+	var users []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan user id: %w", err)
+		}
+		users = append(users, id)
+	}
+
+	return users, nil
+}
+
+func (r *PlaylistFavoriteRepository) DeleteFromAllFavorites(ctx context.Context, playlistID uuid.UUID) error {
+	const query = `
+		DELETE FROM playlist_favorites
+		WHERE playlist_id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, playlistID)
+	if err != nil {
+		return fmt.Errorf("delete from all favorites: %w", err)
+	}
+	return nil
+}
+
+func (r *PlaylistFavoriteRepository) RestoreAllFavorites(ctx context.Context, userIDs []uuid.UUID, playlistID uuid.UUID) error {
+	const query = `
+		INSERT INTO playlist_favorites (user_id, playlist_id)
+		VALUES ($1, $2)
+		ON CONFLICT DO NOTHING
+	`
+
+	var batch pgx.Batch
+	for _, userID := range userIDs {
+		batch.Queue(query, userID, playlistID)
+	}
+
+	br := r.pool.SendBatch(ctx, &batch)
+	defer func() {
+		err := br.Close()
+		if err != nil {
+			slog.Error("err", "batch results close error", err)
+		}
+	}()
+
+	for range userIDs {
+		if _, err := br.Exec(); err != nil {
+			return fmt.Errorf("restore favorite: %w", err)
+		}
+	}
+
+	return nil
+}
