@@ -43,7 +43,8 @@ func TestAuthFlow(t *testing.T) {
 
 	userCreator := user_postgres.NewUserRepository(pgxPool)
 	authRepo := auth_postgres.NewAuthRepository(pgxPool)
-	refreshTokenRepo := refresh_redis.NewRefreshTokenRepository(redisClient, 1*time.Second) // short ttl for test
+	refreshTokenRepo := refresh_redis.NewRefreshTokenRepository(redisClient,
+		&refresh_redis.TTLConfig{TTL: 1 * time.Second, Jitter: 1 * time.Nanosecond}) // short ttl for test
 
 	ctx := context.Background()
 

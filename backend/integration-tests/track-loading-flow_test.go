@@ -39,13 +39,14 @@ func TestTrackUploadFlow(t *testing.T) {
 		}
 	}()
 
+	ctx := context.Background()
+
 	genreRepo := genre_postgres.NewGenreRepository(pgxPool)
 	licenseRepo := license_postgres.NewLicenseRepository(pgxPool)
 	albumRepo := album_meta_postgres.NewAlbumRepository(pgxPool)
 	trackRepo := track_meta_postgres.NewTrackMetaRepository(pgxPool)
-	audioRepo := audio_minio.NewAudioFileRepository(minioClient, minioAudioBucketName)
-
-	ctx := context.Background()
+	audioRepo, err := audio_minio.NewAudioFileRepository(ctx, minioClient, minioAudioBucketName)
+	require.NoError(t, err)
 
 	require.NoError(t, runMigrationsUp(pgxPool))
 	defer func() {

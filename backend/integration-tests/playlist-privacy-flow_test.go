@@ -55,7 +55,8 @@ func TestPlaylistAccessFlow(t *testing.T) {
 	localCache, err := access_cache_local.NewAccessCache(128)
 	require.NoError(t, err)
 
-	redisCache := access_cache_redis.NewAccessCache(redisClient, 10*time.Minute)
+	redisCache := access_cache_redis.NewAccessCache(redisClient,
+		&access_cache_redis.TTLConfig{TTL: 10 * time.Minute, Jitter: 1 * time.Minute})
 
 	accessRepo := access_meta_postgres.NewPlaylistAccessRepository(pgxPool)
 	accessRepoWithCache := access_meta.New(accessRepo, access_meta.WithL1Cache(localCache), access_meta.WithL2Cache(redisCache))
