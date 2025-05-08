@@ -11,13 +11,13 @@ import (
 )
 
 type PostgresConfig struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-	DBName   string
-	SSLMode  string
-	Timeout  time.Duration
+	Host         string        `env:"POSTGRES_HOST" env-required:"true"`
+	Port         int           `env:"POSTGRES_PORT" env-required:"true"`
+	User         string        `env:"POSTGRES_USER" env-required:"true"`
+	Password     string        `env:"POSTGRES_PASSWORD" env-required:"true"`
+	DBName       string        `env:"POSTGRES_DBNAME" env-required:"true"`
+	SSLMode      string        `env:"POSTGRES_SSLMODE" env-default:"disable"`
+	StartTimeout time.Duration `env:"POSTGRES_START_TIMEOUT" env-default:"5s"`
 }
 
 func (cfg PostgresConfig) DSN() string {
@@ -33,7 +33,7 @@ func (cfg PostgresConfig) DSN() string {
 }
 
 func NewPostgresPool(cfg PostgresConfig) *pgxpool.Pool {
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.StartTimeout)
 	defer cancel()
 
 	pool, err := pgxpool.New(ctx, cfg.DSN())
