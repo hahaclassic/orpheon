@@ -5,21 +5,27 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/redis/go-redis/v9"
 )
 
-type RefreshTokenRepository struct {
-	client *redis.Client
-	ttl    time.Duration
+type TTLConfig struct {
+	TTL    time.Duration `env:"REDIS_TTL" env-required:"true"`
+	Jitter time.Duration `env:"RESID_JITTER" env-required:"true"`
 }
 
-func NewRefreshTokenRepository(client *redis.Client, ttl time.Duration) *RefreshTokenRepository {
+type RefreshTokenRepository struct {
+	client *redis.Client
+	conf   *TTLConfig
+}
+
+func NewRefreshTokenRepository(client *redis.Client, conf *TTLConfig) *RefreshTokenRepository {
 	return &RefreshTokenRepository{
 		client: client,
-		ttl:    ttl,
+		conf:   conf,
 	}
 }
 
@@ -33,7 +39,7 @@ func (r *RefreshTokenRepository) Set(ctx context.Context, token string, claims *
 		return fmt.Errorf("marshal claims: %w", err)
 	}
 
-	if err := r.client.Set(ctx, r.key(token), data, r.ttl).Err(); err != nil {
+	if err := r.client.Set(ctx, r.key(token), data, r.getTTL()).Err(); err != nil {
 		return fmt.Errorf("redis set: %w", err)
 	}
 
@@ -62,4 +68,9 @@ func (r *RefreshTokenRepository) Delete(ctx context.Context, token string) error
 		return fmt.Errorf("redis delete: %w", err)
 	}
 	return nil
+}
+
+func (a *RefreshTokenRepository) getTTL() time.Duration {
+	jitter := time.Duration(rand.Int63n(a.conf.Jitter.Nanoseconds()))
+	return a.conf.TTL + jitter
 }

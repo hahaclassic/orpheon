@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,15 +14,20 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type AccessCache struct {
-	client *redis.Client
-	ttl    time.Duration
+type TTLConfig struct {
+	TTL    time.Duration `env:"REDIS_TTL" env-required:"true"`
+	Jitter time.Duration `env:"RESID_JITTER" env-required:"true"`
 }
 
-func NewAccessCache(client *redis.Client, ttl time.Duration) *AccessCache {
+type AccessCache struct {
+	client *redis.Client
+	conf   *TTLConfig
+}
+
+func NewAccessCache(client *redis.Client, conf *TTLConfig) *AccessCache {
 	return &AccessCache{
 		client: client,
-		ttl:    ttl,
+		conf:   conf,
 	}
 }
 
@@ -35,7 +41,7 @@ func (a *AccessCache) Set(ctx context.Context, playlistID uuid.UUID, meta *entit
 		return fmt.Errorf("failed to marshal playlist access meta: %w", err)
 	}
 
-	if err := a.client.Set(ctx, a.key(playlistID), data, a.ttl).Err(); err != nil {
+	if err := a.client.Set(ctx, a.key(playlistID), data, a.getTTL()).Err(); err != nil {
 		return fmt.Errorf("failed to set playlist access meta in redis: %w", err)
 	}
 
@@ -64,4 +70,9 @@ func (a *AccessCache) Delete(ctx context.Context, playlistID uuid.UUID) error {
 		return fmt.Errorf("failed to delete playlist access meta from redis: %w", err)
 	}
 	return nil
+}
+
+func (a *AccessCache) getTTL() time.Duration {
+	jitter := time.Duration(rand.Int63n(a.conf.Jitter.Nanoseconds()))
+	return a.conf.TTL + jitter
 }

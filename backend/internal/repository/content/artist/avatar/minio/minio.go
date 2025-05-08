@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 type ArtistAvatarRepository struct {
@@ -18,17 +17,7 @@ type ArtistAvatarRepository struct {
 	bucketName string
 }
 
-func NewArtistAvatarRepository(endpoint, accessKey, secretKey, bucketName string, useSSL bool) (*ArtistAvatarRepository, error) {
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: useSSL,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("init minio client: %w", err)
-	}
-
-	// Ensure the bucket exists
-	ctx := context.Background()
+func NewArtistAvatarRepository(ctx context.Context, client *minio.Client, bucketName string) (*ArtistAvatarRepository, error) {
 	exists, err := client.BucketExists(ctx, bucketName)
 	if err != nil {
 		return nil, fmt.Errorf("check bucket: %w", err)

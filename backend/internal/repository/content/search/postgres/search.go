@@ -1,184 +1,162 @@
 package search_postgres
 
-// import (
-// 	"context"
-// 	"fmt"
+import (
+	"context"
+	"fmt"
 
-// 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
-// 	"github.com/jackc/pgx/v5/pgxpool"
-// )
+	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
 
-// type SearchRepositoryPgx struct {
-// 	db *pgxpool.Pool
-// }
+type SearchRepository struct {
+	db *pgxpool.Pool
+}
 
-// // Новый конструктор для SearchRepositoryPgx
-// func NewSearchRepositoryPgx(db *pgxpool.Pool) *SearchRepositoryPgx {
-// 	return &SearchRepositoryPgx{
-// 		db: db,
-// 	}
-// }
+func NewSearchRepository(db *pgxpool.Pool) *SearchRepository {
+	return &SearchRepository{db: db}
+}
 
-// // SearchTracks реализует поиск треков
-// func (r *SearchRepositoryPgx) SearchTracks(ctx context.Context, req *entity.SearchRequest) ([]*entity.TrackMeta, error) {
-// 	query := `
-// 		SELECT t.id, t.name, t.explicit, t.duration, t.stream_count
-// 		FROM tracks t
-// 		WHERE LOWER(t.name) LIKE LOWER($1)
-// 	`
-// 	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
+func (r *SearchRepository) SearchTracks(ctx context.Context, req *entity.SearchRequest) ([]*entity.TrackMeta, error) {
+	query := `
+		SELECT t.id, t.genre_id, t.name, t.duration, t.explicit, t.license_id, t.album_id, t.track_number, t.total_streams
+		FROM tracks t
+		JOIN albums a ON t.album_id = a.id
+		JOIN artists ar ON a.artist_id = ar.id
+		WHERE LOWER(t.name) LIKE LOWER($1)
+	`
+	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
+	argIdx := 2
 
-// 	// Добавляем фильтры по жанру и стране, если они заданы
-// 	if req.Filters.Genre != "" {
-// 		query += " AND t.genre = $2"
-// 		args = append(args, req.Filters.Genre)
-// 	}
-// 	if req.Filters.Country != "" {
-// 		query += " AND t.country = $3"
-// 		args = append(args, req.Filters.Country)
-// 	}
+	if req.Filters.Genre != "" {
+		query += fmt.Sprintf(" AND t.genre_id = $%d", argIdx)
+		args = append(args, req.Filters.Genre)
+		argIdx++
+	}
+	if req.Filters.Country != "" {
+		query += fmt.Sprintf(" AND ar.country = $%d", argIdx)
+		args = append(args, req.Filters.Country)
+		argIdx++
+	}
 
-// 	rows, err := r.db.Query(ctx, query, args...)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to search tracks: %w", err)
-// 	}
-// 	defer rows.Close()
+	query += " ORDER BY t.name LIMIT $" + fmt.Sprint(argIdx) + " OFFSET $" + fmt.Sprint(argIdx+1)
+	args = append(args, req.Limit, req.Offset)
 
-// 	var tracks []*entity.TrackMeta
-// 	for rows.Next() {
-// 		var track entity.TrackMeta
-// 		if err := rows.Scan(&track.ID, &track.Name, &track.Explicit, &track.Duration, &track.StreamCount); err != nil {
-// 			return nil, fmt.Errorf("failed to scan track: %w", err)
-// 		}
-// 		tracks = append(tracks, &track)
-// 	}
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search tracks: %w", err)
+	}
+	defer rows.Close()
 
-// 	if err := rows.Err(); err != nil {
-// 		return nil, fmt.Errorf("failed to read rows: %w", err)
-// 	}
+	var tracks []*entity.TrackMeta
+	for rows.Next() {
+		var track entity.TrackMeta
+		err := rows.Scan(&track.ID, &track.GenreID, &track.Name, &track.Duration, &track.Explicit, &track.LicenseID, &track.AlbumID, &track.TrackNumber, &track.TotalStreams)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan track: %w", err)
+		}
+		tracks = append(tracks, &track)
+	}
 
-// 	return tracks, nil
-// }
+	return tracks, rows.Err()
+}
 
-// // SearchAlbums реализует поиск альбомов
-// func (r *SearchRepositoryPgx) SearchAlbums(ctx context.Context, req *entity.SearchRequest) ([]*entity.AlbumMeta, error) {
-// 	query := `
-// 		SELECT a.id, a.name, a.artist, a.release_date, a.genre
-// 		FROM albums a
-// 		WHERE LOWER(a.name) LIKE LOWER($1)
-// 	`
-// 	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
+func (r *SearchRepository) SearchAlbums(ctx context.Context, req *entity.SearchRequest) ([]*entity.AlbumMeta, error) {
+	query := `
+		SELECT id, title, label, license_id, release_date
+		FROM albums
+		WHERE LOWER(title) LIKE LOWER($1)
+	`
+	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
+	argIdx := 2
 
-// 	// Добавляем фильтры по жанру и стране, если они заданы
-// 	if req.Filters.Genre != "" {
-// 		query += " AND a.genre = $2"
-// 		args = append(args, req.Filters.Genre)
-// 	}
-// 	if req.Filters.Country != "" {
-// 		query += " AND a.country = $3"
-// 		args = append(args, req.Filters.Country)
-// 	}
+	// Жанра у albums напрямую нет, если нужно — делать JOIN с tracks
 
-// 	rows, err := r.db.Query(ctx, query, args...)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to search albums: %w", err)
-// 	}
-// 	defer rows.Close()
+	query += " ORDER BY release_date DESC LIMIT $" + fmt.Sprint(argIdx) + " OFFSET $" + fmt.Sprint(argIdx+1)
+	args = append(args, req.Limit, req.Offset)
 
-// 	var albums []*entity.AlbumMeta
-// 	for rows.Next() {
-// 		var album entity.AlbumMeta
-// 		if err := rows.Scan(&album.ID, &album.T, &album.Artist, &album.ReleaseDate, &album.Genre); err != nil {
-// 			return nil, fmt.Errorf("failed to scan album: %w", err)
-// 		}
-// 		albums = append(albums, &album)
-// 	}
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search albums: %w", err)
+	}
+	defer rows.Close()
 
-// 	if err := rows.Err(); err != nil {
-// 		return nil, fmt.Errorf("failed to read rows: %w", err)
-// 	}
+	var albums []*entity.AlbumMeta
+	for rows.Next() {
+		var album entity.AlbumMeta
+		err := rows.Scan(&album.ID, &album.Title, &album.Label, &album.LicenseID, &album.ReleaseDate)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan album: %w", err)
+		}
+		albums = append(albums, &album)
+	}
 
-// 	return albums, nil
-// }
+	return albums, rows.Err()
+}
 
-// // SearchArtists реализует поиск исполнителей
-// func (r *SearchRepositoryPgx) SearchArtists(ctx context.Context, req *entity.SearchRequest) ([]*entity.ArtistMeta, error) {
-// 	query := `
-// 		SELECT a.id, a.name, a.genre, a.country
-// 		FROM artists a
-// 		WHERE LOWER(a.name) LIKE LOWER($1)
-// 	`
-// 	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
+func (r *SearchRepository) SearchArtists(ctx context.Context, req *entity.SearchRequest) ([]*entity.ArtistMeta, error) {
+	query := `
+		SELECT id, name, country, description
+		FROM artists
+		WHERE LOWER(name) LIKE LOWER($1)
+	`
+	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
+	argIdx := 2
 
-// 	// Добавляем фильтры по жанру и стране, если они заданы
-// 	if req.Genre != "" {
-// 		query += " AND a.genre = $2"
-// 		args = append(args, req.Genre)
-// 	}
-// 	if req.Country != "" {
-// 		query += " AND a.country = $3"
-// 		args = append(args, req.Country)
-// 	}
+	if req.Filters.Country != "" {
+		query += fmt.Sprintf(" AND country = $%d", argIdx)
+		args = append(args, req.Filters.Country)
+		argIdx++
+	}
 
-// 	rows, err := r.db.Query(ctx, query, args...)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to search artists: %w", err)
-// 	}
-// 	defer rows.Close()
+	query += " ORDER BY name LIMIT $" + fmt.Sprint(argIdx) + " OFFSET $" + fmt.Sprint(argIdx+1)
+	args = append(args, req.Limit, req.Offset)
 
-// 	var artists []*entity.ArtistMeta
-// 	for rows.Next() {
-// 		var artist entity.ArtistMeta
-// 		if err := rows.Scan(&artist.ID, &artist.Name, &artist.Genre, &artist.Country); err != nil {
-// 			return nil, fmt.Errorf("failed to scan artist: %w", err)
-// 		}
-// 		artists = append(artists, &artist)
-// 	}
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search artists: %w", err)
+	}
+	defer rows.Close()
 
-// 	if err := rows.Err(); err != nil {
-// 		return nil, fmt.Errorf("failed to read rows: %w", err)
-// 	}
+	var artists []*entity.ArtistMeta
+	for rows.Next() {
+		var artist entity.ArtistMeta
+		err := rows.Scan(&artist.ID, &artist.Name, &artist.Country, &artist.Description)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan artist: %w", err)
+		}
+		artists = append(artists, &artist)
+	}
 
-// 	return artists, nil
-// }
+	return artists, rows.Err()
+}
 
-// // SearchPlaylists реализует поиск плейлистов
-// func (r *SearchRepositoryPgx) SearchPlaylists(ctx context.Context, req *entity.SearchRequest) ([]*entity.PlaylistMeta, error) {
-// 	query := `
-// 		SELECT p.id, p.name, p.owner_id, p.is_private, p.created_at
-// 		FROM playlists p
-// 		WHERE LOWER(p.name) LIKE LOWER($1)
-// 	`
-// 	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
+func (r *SearchRepository) SearchPlaylists(ctx context.Context, req *entity.SearchRequest) ([]*entity.PlaylistMeta, error) {
+	query := `
+		SELECT id, name, description, is_private, owner_id, created_at, updated_at
+		FROM playlists
+		WHERE LOWER(name) LIKE LOWER($1)
+	`
+	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
+	argIdx := 2
 
-// 	// Добавляем фильтры по жанру и стране, если они заданы
-// 	if req.Genre != "" {
-// 		query += " AND p.genre = $2"
-// 		args = append(args, req.Genre)
-// 	}
-// 	if req.Country != "" {
-// 		query += " AND p.country = $3"
-// 		args = append(args, req.Country)
-// 	}
+	query += " ORDER BY created_at DESC LIMIT $" + fmt.Sprint(argIdx) + " OFFSET $" + fmt.Sprint(argIdx+1)
+	args = append(args, req.Limit, req.Offset)
 
-// 	rows, err := r.db.Query(ctx, query, args...)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to search playlists: %w", err)
-// 	}
-// 	defer rows.Close()
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search playlists: %w", err)
+	}
+	defer rows.Close()
 
-// 	var playlists []*entity.PlaylistMeta
-// 	for rows.Next() {
-// 		var playlist entity.PlaylistMeta
-// 		if err := rows.Scan(&playlist.ID, &playlist.Name, &playlist.OwnerID, &playlist.IsPrivate, &playlist.CreatedAt); err != nil {
-// 			return nil, fmt.Errorf("failed to scan playlist: %w", err)
-// 		}
-// 		playlists = append(playlists, &playlist)
-// 	}
+	var playlists []*entity.PlaylistMeta
+	for rows.Next() {
+		var playlist entity.PlaylistMeta
+		err := rows.Scan(&playlist.ID, &playlist.Name, &playlist.Description, &playlist.IsPrivate, &playlist.OwnerID, &playlist.CreatedAt, &playlist.UpdatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan playlist: %w", err)
+		}
+		playlists = append(playlists, &playlist)
+	}
 
-// 	if err := rows.Err(); err != nil {
-// 		return nil, fmt.Errorf("failed to read rows: %w", err)
-// 	}
-
-// 	return playlists, nil
-// }
+	return playlists, rows.Err()
+}
