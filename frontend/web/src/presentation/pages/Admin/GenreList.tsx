@@ -20,26 +20,25 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import axios from 'axios';
+import { api } from '../../../core/infrastructure/services/api';
 
 interface Genre {
-  id: number;
-  name: string;
-  description: string;
+  ID: string;
+  Title: string;
 }
 
 const GenreList = () => {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [open, setOpen] = useState(false);
   const [editingGenre, setEditingGenre] = useState<Genre | null>(null);
-  const [formData, setFormData] = useState({ name: '', description: '' });
+  const [formData, setFormData] = useState({ title: '' });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchGenres = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/v1/genres');
+      const response = await api.get('/genres');
       // Убедимся, что данные являются массивом
       const genresData = Array.isArray(response.data) ? response.data : [];
       setGenres(genresData);
@@ -60,10 +59,10 @@ const GenreList = () => {
   const handleOpen = (genre?: Genre) => {
     if (genre) {
       setEditingGenre(genre);
-      setFormData({ name: genre.name, description: genre.description });
+      setFormData({ title: genre.Title });
     } else {
       setEditingGenre(null);
-      setFormData({ name: '', description: '' });
+      setFormData({ title: '' });
     }
     setOpen(true);
   };
@@ -71,7 +70,7 @@ const GenreList = () => {
   const handleClose = () => {
     setOpen(false);
     setEditingGenre(null);
-    setFormData({ name: '', description: '' });
+    setFormData({ title: '' });
     setError(null);
   };
 
@@ -83,14 +82,13 @@ const GenreList = () => {
     e.preventDefault();
     try {
       const trimmedData = {
-        name: formData.name.trim(),
-        description: formData.description.trim(),
+        Title: formData.title.trim(),
       };
 
       if (editingGenre) {
-        await axios.put(`/api/v1/genres/${editingGenre.id}`, trimmedData);
+        await api.put(`/genres/${editingGenre.ID}`, trimmedData);
       } else {
-        await axios.post('/api/v1/genres', trimmedData);
+        await api.post('/genres', trimmedData);
       }
       handleClose();
       fetchGenres();
@@ -100,10 +98,10 @@ const GenreList = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Вы уверены, что хотите удалить этот жанр?')) {
       try {
-        await axios.delete(`/api/v1/genres/${id}`);
+        await api.delete(`/genres/${id}`);
         fetchGenres();
       } catch (err) {
         setError('Ошибка при удалении жанра');
@@ -115,7 +113,7 @@ const GenreList = () => {
   return (
     <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
       <Paper sx={{ p: 4 }} elevation={3}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2 }}>
           <Typography variant="h5" fontWeight={700}>
             Управление жанрами
           </Typography>
@@ -140,27 +138,25 @@ const GenreList = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>Название</TableCell>
-                  <TableCell>Описание</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {genres.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} align="center">
+                    <TableCell colSpan={2} align="center">
                       Нет доступных жанров
                     </TableCell>
                   </TableRow>
                 ) : (
                   genres.map((genre) => (
-                    <TableRow key={genre.id}>
-                      <TableCell>{genre.name}</TableCell>
-                      <TableCell>{genre.description}</TableCell>
+                    <TableRow key={genre.ID}>
+                      <TableCell>{genre.Title}</TableCell>
                       <TableCell align="right">
                         <IconButton onClick={() => handleOpen(genre)} color="primary">
                           <EditIcon />
                         </IconButton>
-                        <IconButton onClick={() => handleDelete(genre.id)} color="error">
+                        <IconButton onClick={() => handleDelete(genre.ID)} color="error">
                           <DeleteIcon />
                         </IconButton>
                       </TableCell>
@@ -184,20 +180,10 @@ const GenreList = () => {
               margin="dense"
               label="Название"
               fullWidth
-              value={formData.name}
+              value={formData.title}
               onChange={handleChange}
-              name="name"
+              name="title"
               required
-            />
-            <TextField
-              margin="dense"
-              label="Описание"
-              fullWidth
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={handleChange}
-              name="description"
             />
           </DialogContent>
           <DialogActions>
