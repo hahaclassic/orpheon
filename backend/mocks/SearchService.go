@@ -140,9 +140,9 @@ func (_c *SearchService_SearchArtists_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
-// SearchPlaylists provides a mock function with given fields: ctx, request
-func (_m *SearchService) SearchPlaylists(ctx context.Context, request *entity.SearchRequest) ([]*entity.PlaylistMeta, error) {
-	ret := _m.Called(ctx, request)
+// SearchPlaylists provides a mock function with given fields: ctx, claims, request
+func (_m *SearchService) SearchPlaylists(ctx context.Context, claims *entity.Claims, request *entity.SearchRequest) ([]*entity.PlaylistMeta, error) {
+	ret := _m.Called(ctx, claims, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SearchPlaylists")
@@ -150,19 +150,19 @@ func (_m *SearchService) SearchPlaylists(ctx context.Context, request *entity.Se
 
 	var r0 []*entity.PlaylistMeta
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.SearchRequest) ([]*entity.PlaylistMeta, error)); ok {
-		return rf(ctx, request)
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, *entity.SearchRequest) ([]*entity.PlaylistMeta, error)); ok {
+		return rf(ctx, claims, request)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.SearchRequest) []*entity.PlaylistMeta); ok {
-		r0 = rf(ctx, request)
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, *entity.SearchRequest) []*entity.PlaylistMeta); ok {
+		r0 = rf(ctx, claims, request)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*entity.PlaylistMeta)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *entity.SearchRequest) error); ok {
-		r1 = rf(ctx, request)
+	if rf, ok := ret.Get(1).(func(context.Context, *entity.Claims, *entity.SearchRequest) error); ok {
+		r1 = rf(ctx, claims, request)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -177,14 +177,15 @@ type SearchService_SearchPlaylists_Call struct {
 
 // SearchPlaylists is a helper method to define mock.On call
 //   - ctx context.Context
+//   - claims *entity.Claims
 //   - request *entity.SearchRequest
-func (_e *SearchService_Expecter) SearchPlaylists(ctx interface{}, request interface{}) *SearchService_SearchPlaylists_Call {
-	return &SearchService_SearchPlaylists_Call{Call: _e.mock.On("SearchPlaylists", ctx, request)}
+func (_e *SearchService_Expecter) SearchPlaylists(ctx interface{}, claims interface{}, request interface{}) *SearchService_SearchPlaylists_Call {
+	return &SearchService_SearchPlaylists_Call{Call: _e.mock.On("SearchPlaylists", ctx, claims, request)}
 }
 
-func (_c *SearchService_SearchPlaylists_Call) Run(run func(ctx context.Context, request *entity.SearchRequest)) *SearchService_SearchPlaylists_Call {
+func (_c *SearchService_SearchPlaylists_Call) Run(run func(ctx context.Context, claims *entity.Claims, request *entity.SearchRequest)) *SearchService_SearchPlaylists_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*entity.SearchRequest))
+		run(args[0].(context.Context), args[1].(*entity.Claims), args[2].(*entity.SearchRequest))
 	})
 	return _c
 }
@@ -194,7 +195,7 @@ func (_c *SearchService_SearchPlaylists_Call) Return(_a0 []*entity.PlaylistMeta,
 	return _c
 }
 
-func (_c *SearchService_SearchPlaylists_Call) RunAndReturn(run func(context.Context, *entity.SearchRequest) ([]*entity.PlaylistMeta, error)) *SearchService_SearchPlaylists_Call {
+func (_c *SearchService_SearchPlaylists_Call) RunAndReturn(run func(context.Context, *entity.Claims, *entity.SearchRequest) ([]*entity.PlaylistMeta, error)) *SearchService_SearchPlaylists_Call {
 	_c.Call.Return(run)
 	return _c
 }

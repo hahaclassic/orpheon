@@ -119,12 +119,70 @@ func (_c *GenreRepository_Delete_Call) RunAndReturn(run func(context.Context, uu
 	return _c
 }
 
-// Get provides a mock function with given fields: ctx, genreID
-func (_m *GenreRepository) Get(ctx context.Context, genreID uuid.UUID) (*entity.Genre, error) {
+// GetAll provides a mock function with given fields: ctx
+func (_m *GenreRepository) GetAll(ctx context.Context) ([]*entity.Genre, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAll")
+	}
+
+	var r0 []*entity.Genre
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*entity.Genre, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []*entity.Genre); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.Genre)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GenreRepository_GetAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAll'
+type GenreRepository_GetAll_Call struct {
+	*mock.Call
+}
+
+// GetAll is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *GenreRepository_Expecter) GetAll(ctx interface{}) *GenreRepository_GetAll_Call {
+	return &GenreRepository_GetAll_Call{Call: _e.mock.On("GetAll", ctx)}
+}
+
+func (_c *GenreRepository_GetAll_Call) Run(run func(ctx context.Context)) *GenreRepository_GetAll_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *GenreRepository_GetAll_Call) Return(_a0 []*entity.Genre, _a1 error) *GenreRepository_GetAll_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *GenreRepository_GetAll_Call) RunAndReturn(run func(context.Context) ([]*entity.Genre, error)) *GenreRepository_GetAll_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetByID provides a mock function with given fields: ctx, genreID
+func (_m *GenreRepository) GetByID(ctx context.Context, genreID uuid.UUID) (*entity.Genre, error) {
 	ret := _m.Called(ctx, genreID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Get")
+		panic("no return value specified for GetByID")
 	}
 
 	var r0 *entity.Genre
@@ -149,31 +207,31 @@ func (_m *GenreRepository) Get(ctx context.Context, genreID uuid.UUID) (*entity.
 	return r0, r1
 }
 
-// GenreRepository_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
-type GenreRepository_Get_Call struct {
+// GenreRepository_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
+type GenreRepository_GetByID_Call struct {
 	*mock.Call
 }
 
-// Get is a helper method to define mock.On call
+// GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - genreID uuid.UUID
-func (_e *GenreRepository_Expecter) Get(ctx interface{}, genreID interface{}) *GenreRepository_Get_Call {
-	return &GenreRepository_Get_Call{Call: _e.mock.On("Get", ctx, genreID)}
+func (_e *GenreRepository_Expecter) GetByID(ctx interface{}, genreID interface{}) *GenreRepository_GetByID_Call {
+	return &GenreRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, genreID)}
 }
 
-func (_c *GenreRepository_Get_Call) Run(run func(ctx context.Context, genreID uuid.UUID)) *GenreRepository_Get_Call {
+func (_c *GenreRepository_GetByID_Call) Run(run func(ctx context.Context, genreID uuid.UUID)) *GenreRepository_GetByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uuid.UUID))
 	})
 	return _c
 }
 
-func (_c *GenreRepository_Get_Call) Return(_a0 *entity.Genre, _a1 error) *GenreRepository_Get_Call {
+func (_c *GenreRepository_GetByID_Call) Return(_a0 *entity.Genre, _a1 error) *GenreRepository_GetByID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *GenreRepository_Get_Call) RunAndReturn(run func(context.Context, uuid.UUID) (*entity.Genre, error)) *GenreRepository_Get_Call {
+func (_c *GenreRepository_GetByID_Call) RunAndReturn(run func(context.Context, uuid.UUID) (*entity.Genre, error)) *GenreRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
