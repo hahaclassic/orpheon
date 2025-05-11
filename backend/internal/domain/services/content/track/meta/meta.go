@@ -7,12 +7,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
 	ErrGenerateTrackID = errors.New("generate track id error")
-	ErrForbidden       = errors.New("permission denied")
 )
 
 type TrackMetaRepository interface {
@@ -44,7 +44,7 @@ func (s *TrackMetaService) CreateTrackMeta(ctx context.Context, claims *entity.C
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return uuid.Nil, ErrForbidden
+		return uuid.Nil, commonerr.ErrForbidden
 	}
 
 	track.ID, err = uuid.NewRandom()
@@ -65,7 +65,7 @@ func (s *TrackMetaService) UpdateTrackMeta(ctx context.Context, claims *entity.C
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return s.repo.Update(ctx, track)
@@ -77,7 +77,7 @@ func (s *TrackMetaService) DeleteTrackMeta(ctx context.Context, claims *entity.C
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return s.repo.Delete(ctx, trackID)

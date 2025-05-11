@@ -10,6 +10,8 @@ import (
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/genre"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
@@ -39,14 +41,7 @@ func TestCreateGenre(t *testing.T) {
 			claims:    userClaims,
 			genre:     validGenre,
 			mockFn:    func(r *mocks.GenreRepository) {},
-			wantError: genre.ErrForbidden,
-		},
-		{
-			name:      "invalid ID",
-			claims:    adminClaims,
-			genre:     &entity.Genre{ID: uuid.Nil},
-			mockFn:    func(r *mocks.GenreRepository) {},
-			wantError: genre.ErrInvalidGenreID,
+			wantError: commonerr.ErrForbidden,
 		},
 		{
 			name:   "repo error",
@@ -55,7 +50,7 @@ func TestCreateGenre(t *testing.T) {
 			mockFn: func(r *mocks.GenreRepository) {
 				r.On("Create", ctx, validGenre).Return(errors.New("db error"))
 			},
-			wantError: genre.ErrCreateGenre,
+			wantError: usecase.ErrCreateGenre,
 		},
 	}
 
@@ -81,10 +76,10 @@ func TestGetGenre(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		repo := mocks.NewGenreRepository(t)
-		repo.On("Get", ctx, genreID).Return(genreEntity, nil)
+		repo.On("GetByID", ctx, genreID).Return(genreEntity, nil)
 		svc := genre.NewGenreService(repo)
 
-		res, err := svc.GetGenre(ctx, genreID)
+		res, err := svc.GetGenreByID(ctx, genreID)
 		assert.NoError(t, err)
 		assert.Equal(t, genreEntity, res)
 	})
@@ -93,17 +88,17 @@ func TestGetGenre(t *testing.T) {
 		repo := mocks.NewGenreRepository(t)
 		svc := genre.NewGenreService(repo)
 
-		_, err := svc.GetGenre(ctx, uuid.Nil)
+		_, err := svc.GetGenreByID(ctx, uuid.Nil)
 		assert.ErrorIs(t, err, genre.ErrInvalidGenreID)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
 		repo := mocks.NewGenreRepository(t)
-		repo.On("Get", ctx, genreID).Return(nil, errors.New("repo error"))
+		repo.On("GetByID", ctx, genreID).Return(nil, errors.New("repo error"))
 		svc := genre.NewGenreService(repo)
 
-		_, err := svc.GetGenre(ctx, genreID)
-		assert.ErrorIs(t, err, genre.ErrGetGenre)
+		_, err := svc.GetGenreByID(ctx, genreID)
+		assert.ErrorIs(t, err, usecase.ErrGetGenre)
 	})
 }
 
@@ -133,7 +128,7 @@ func TestUpdateGenre(t *testing.T) {
 			claims:    userClaims,
 			genre:     validGenre,
 			mockFn:    func(r *mocks.GenreRepository) {},
-			wantError: genre.ErrForbidden,
+			wantError: commonerr.ErrForbidden,
 		},
 		{
 			name:      "invalid ID",
@@ -149,7 +144,7 @@ func TestUpdateGenre(t *testing.T) {
 			mockFn: func(r *mocks.GenreRepository) {
 				r.On("Update", ctx, validGenre).Return(errors.New("db error"))
 			},
-			wantError: genre.ErrUpdateGenre,
+			wantError: usecase.ErrUpdateGenre,
 		},
 	}
 
@@ -194,7 +189,7 @@ func TestDeleteGenre(t *testing.T) {
 			claims:    userClaims,
 			genreID:   genreID,
 			mockFn:    func(r *mocks.GenreRepository) {},
-			wantError: genre.ErrForbidden,
+			wantError: commonerr.ErrForbidden,
 		},
 		{
 			name:      "invalid ID",
@@ -210,7 +205,7 @@ func TestDeleteGenre(t *testing.T) {
 			mockFn: func(r *mocks.GenreRepository) {
 				r.On("Delete", ctx, genreID).Return(errors.New("repo error"))
 			},
-			wantError: genre.ErrDeleteGenre,
+			wantError: usecase.ErrDeleteGenre,
 		},
 	}
 

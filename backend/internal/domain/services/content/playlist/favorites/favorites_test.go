@@ -10,6 +10,7 @@ import (
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
@@ -26,7 +27,7 @@ func TestAddToUserFavorites(t *testing.T) {
 		wantErr   error
 	}{
 		{"success", nil, nil, nil},
-		{"policy error", usecase.ErrForbidden, nil, usecase.ErrForbidden},
+		{"policy error", commonerr.ErrForbidden, nil, commonerr.ErrForbidden},
 		{"repo error", nil, errors.New("repo error"), usecase.ErrAddToUserFavorites},
 	}
 
@@ -87,7 +88,7 @@ func TestDeleteFromUserFavorites(t *testing.T) {
 		wantErr   error
 	}{
 		{"success", nil, nil, nil},
-		{"policy error", usecase.ErrForbidden, nil, usecase.ErrForbidden},
+		{"policy error", commonerr.ErrForbidden, nil, commonerr.ErrForbidden},
 		{"repo error", nil, errors.New("repo error"), usecase.ErrDeleteFromAllFavorites},
 	}
 
@@ -120,7 +121,7 @@ func TestGetUsersWithFavoritePlaylist(t *testing.T) {
 		wantErr   error
 	}{
 		{"success", nil, userList, nil, nil},
-		{"policy error", usecase.ErrForbidden, nil, nil, usecase.ErrForbidden},
+		{"policy error", commonerr.ErrForbidden, nil, nil, commonerr.ErrForbidden},
 		{"repo error", nil, nil, errors.New("repo error"), usecase.ErrGetUsersWithFavoritePlaylist},
 	}
 
@@ -152,7 +153,7 @@ func TestDeleteFromAllFavorites(t *testing.T) {
 		wantErr   error
 	}{
 		{"success", nil, nil, nil},
-		{"policy error", usecase.ErrForbidden, nil, usecase.ErrForbidden},
+		{"policy error", commonerr.ErrForbidden, nil, commonerr.ErrForbidden},
 		{"repo error", nil, errors.New("repo error"), usecase.ErrDeleteFromAllFavorites},
 	}
 
@@ -184,7 +185,7 @@ func TestAddPlaylistToAllFavorites(t *testing.T) {
 		wantErr   error
 	}{
 		{"success", nil, nil, nil},
-		{"policy error", usecase.ErrForbidden, nil, usecase.ErrForbidden},
+		{"policy error", commonerr.ErrForbidden, nil, commonerr.ErrForbidden},
 		{"repo error", nil, errors.New("repo error"), usecase.ErrAddPlaylistToAllFavorites},
 	}
 

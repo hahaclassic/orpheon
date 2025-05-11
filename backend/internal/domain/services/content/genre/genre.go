@@ -6,24 +6,22 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/genre"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 type GenreRepository interface {
 	Create(ctx context.Context, genre *entity.Genre) error
-	Get(ctx context.Context, genreID uuid.UUID) (*entity.Genre, error)
+	GetByID(ctx context.Context, genreID uuid.UUID) (*entity.Genre, error)
+	GetAll(ctx context.Context) ([]*entity.Genre, error)
 	Update(ctx context.Context, genre *entity.Genre) error
 	Delete(ctx context.Context, genreID uuid.UUID) error
 }
 
 var (
-	ErrCreateGenre = errors.New("failed to create genre")
-	ErrGetGenre    = errors.New("failed to get genre")
-	ErrUpdateGenre = errors.New("failed to update genre")
-	ErrDeleteGenre = errors.New("failed to delete genre")
-
-	ErrForbidden      = errors.New("permission denied error")
 	ErrInvalidGenreID = errors.New("invalid genre ID")
+	ErrGenerateID     = errors.New("generate ID error")
 )
 
 type GenreService struct {
@@ -36,39 +34,48 @@ func NewGenreService(repo GenreRepository) *GenreService {
 
 func (s *GenreService) CreateGenre(ctx context.Context, claims *entity.Claims, genre *entity.Genre) (err error) {
 	defer func() {
-		err = errwrap.WrapIfErr(ErrCreateGenre, err)
+		err = errwrap.WrapIfErr(usecase.ErrCreateGenre, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
-	if genre.ID == uuid.Nil {
-		return ErrInvalidGenreID
+	genre.ID, err = uuid.NewRandom()
+	if err != nil {
+		return ErrGenerateID
 	}
 
 	return s.repo.Create(ctx, genre)
 }
 
-func (s *GenreService) GetGenre(ctx context.Context, genreID uuid.UUID) (_ *entity.Genre, err error) {
+func (s *GenreService) GetGenreByID(ctx context.Context, genreID uuid.UUID) (_ *entity.Genre, err error) {
 	defer func() {
-		err = errwrap.WrapIfErr(ErrGetGenre, err)
+		err = errwrap.WrapIfErr(usecase.ErrGetGenre, err)
 	}()
 
 	if genreID == uuid.Nil {
 		return nil, ErrInvalidGenreID
 	}
 
-	return s.repo.Get(ctx, genreID)
+	return s.repo.GetByID(ctx, genreID)
+}
+
+func (s *GenreService) GetAllGenres(ctx context.Context) (_ []*entity.Genre, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetAllGenres, err)
+	}()
+
+	return s.repo.GetAll(ctx)
 }
 
 func (s *GenreService) UpdateGenre(ctx context.Context, claims *entity.Claims, genre *entity.Genre) (err error) {
 	defer func() {
-		err = errwrap.WrapIfErr(ErrUpdateGenre, err)
+		err = errwrap.WrapIfErr(usecase.ErrUpdateGenre, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	if genre.ID == uuid.Nil {
@@ -80,11 +87,11 @@ func (s *GenreService) UpdateGenre(ctx context.Context, claims *entity.Claims, g
 
 func (s *GenreService) DeleteGenre(ctx context.Context, claims *entity.Claims, genreID uuid.UUID) (err error) {
 	defer func() {
-		err = errwrap.WrapIfErr(ErrDeleteGenre, err)
+		err = errwrap.WrapIfErr(usecase.ErrDeleteGenre, err)
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	if genreID == uuid.Nil {

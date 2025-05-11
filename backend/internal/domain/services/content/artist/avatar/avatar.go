@@ -2,16 +2,12 @@ package avatar
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
-)
-
-var (
-	ErrForbidden = errors.New("permission denied")
 )
 
 type ArtistAvatarRepository interface {
@@ -44,7 +40,7 @@ func (s *ArtistCoverService) UploadCover(ctx context.Context, claims *entity.Cla
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return s.repo.SaveCover(ctx, cover)
@@ -56,7 +52,7 @@ func (s *ArtistCoverService) DeleteCover(ctx context.Context, claims *entity.Cla
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return s.repo.DeleteCover(ctx, artistID)

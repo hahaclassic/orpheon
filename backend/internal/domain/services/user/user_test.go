@@ -50,7 +50,7 @@ func TestUserService_CreateUser(t *testing.T) {
 			if tt.setupMock != nil {
 				tt.setupMock(repo)
 			}
-			err := service.CreateUser(context.Background(), tt.prepare())
+			_, err := service.CreateUser(context.Background(), tt.prepare())
 			if tt.expectsErr {
 				assert.Error(t, err)
 			} else {

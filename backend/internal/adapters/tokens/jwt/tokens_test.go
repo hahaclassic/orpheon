@@ -12,12 +12,12 @@ import (
 )
 
 func TestCreateAccessToken(t *testing.T) {
-	secretKey := []byte("supersecretkey")
 	config := AccessTokenConfig{
-		TTL:    time.Minute * 15,
-		Jitter: time.Second * 5,
+		TTL:       time.Minute * 15,
+		Jitter:    time.Second * 5,
+		SecretKey: []byte("supersecretkey"),
 	}
-	tokenService := New(config, secretKey)
+	tokenService := New(config)
 
 	claims := &entity.Claims{
 		UserID:    uuid.New(),
@@ -35,12 +35,12 @@ func TestCreateAccessToken(t *testing.T) {
 }
 
 func TestTokenExpired(t *testing.T) {
-	secretKey := []byte("supersecretkey")
 	config := AccessTokenConfig{
-		TTL:    time.Second,
-		Jitter: time.Second * 2,
+		TTL:       time.Second,
+		Jitter:    time.Second * 2,
+		SecretKey: []byte("supersecretkey"),
 	}
-	tokenService := New(config, secretKey)
+	tokenService := New(config)
 
 	claims := &entity.Claims{
 		UserID:    uuid.New(),
@@ -58,12 +58,12 @@ func TestTokenExpired(t *testing.T) {
 }
 
 func TestInvalidClaims(t *testing.T) {
-	secretKey := []byte("supersecretkey")
 	config := AccessTokenConfig{
-		TTL:    time.Minute * 15,
-		Jitter: time.Second * 5,
+		TTL:       time.Minute * 15,
+		Jitter:    time.Second * 5,
+		SecretKey: []byte("supersecretkey"),
 	}
-	tokenService := New(config, secretKey)
+	tokenService := New(config)
 
 	claims := &entity.Claims{
 		UserID:    uuid.New(),
@@ -81,12 +81,12 @@ func TestInvalidClaims(t *testing.T) {
 }
 
 func TestTokenParsingError(t *testing.T) {
-	secretKey := []byte("supersecretkey")
 	config := AccessTokenConfig{
-		TTL:    time.Minute * 15,
-		Jitter: time.Second * 5,
+		TTL:       time.Minute * 15,
+		Jitter:    time.Second * 5,
+		SecretKey: []byte("supersecretkey"),
 	}
-	tokenService := New(config, secretKey)
+	tokenService := New(config)
 
 	_, err := tokenService.ParseAccessToken("invalid.token.string")
 	assert.Error(t, err)
@@ -94,12 +94,12 @@ func TestTokenParsingError(t *testing.T) {
 }
 
 func TestTokenFromDifferentSource(t *testing.T) {
-	secretKey := []byte("supersecretkey")
 	config := AccessTokenConfig{
-		TTL:    time.Minute * 15,
-		Jitter: time.Second * 5,
+		TTL:       time.Minute * 15,
+		Jitter:    time.Second * 5,
+		SecretKey: []byte("supersecretkey"),
 	}
-	tokenService := New(config, secretKey)
+	tokenService := New(config)
 
 	claims := &entity.Claims{
 		UserID:    uuid.New(),

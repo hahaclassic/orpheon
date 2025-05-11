@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/meta"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -80,10 +80,10 @@ func TestGetMeta(t *testing.T) {
 		{
 			name: "forbidden",
 			setup: func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanView", ctx, mock.Anything, playlistID).Return(playlist.ErrForbidden)
+				policy.On("CanView", ctx, mock.Anything, playlistID).Return(commonerr.ErrForbidden)
 			},
 			want:    nil,
-			wantErr: playlist.ErrForbidden,
+			wantErr: commonerr.ErrForbidden,
 		},
 	}
 
@@ -171,9 +171,9 @@ func TestUpdateMeta(t *testing.T) {
 		{
 			name: "forbidden",
 			setup: func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, mock.Anything, playlistID).Return(playlist.ErrForbidden)
+				policy.On("CanEdit", ctx, mock.Anything, playlistID).Return(commonerr.ErrForbidden)
 			},
-			wantErr: playlist.ErrForbidden,
+			wantErr: commonerr.ErrForbidden,
 		},
 	}
 
@@ -213,9 +213,9 @@ func TestDeleteMeta(t *testing.T) {
 		{
 			name: "forbidden",
 			setup: func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanDelete", ctx, mock.Anything, playlistID).Return(playlist.ErrForbidden)
+				policy.On("CanDelete", ctx, mock.Anything, playlistID).Return(commonerr.ErrForbidden)
 			},
-			wantErr: playlist.ErrForbidden,
+			wantErr: commonerr.ErrForbidden,
 		},
 	}
 

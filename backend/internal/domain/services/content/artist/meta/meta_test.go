@@ -12,6 +12,7 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/meta"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
@@ -68,7 +69,7 @@ func TestCreateArtistMeta(t *testing.T) {
 		svc := meta.New(repo)
 		err := svc.CreateArtistMeta(ctx, admin, artist)
 
-		assert.ErrorIs(t, err, meta.ErrForbidden)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 }
 
@@ -94,7 +95,7 @@ func TestUpdateArtistMeta(t *testing.T) {
 		svc := meta.New(repo)
 		err := svc.UpdateArtistMeta(ctx, admin, artist)
 
-		assert.ErrorIs(t, err, meta.ErrForbidden)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
@@ -130,7 +131,7 @@ func TestDeleteArtistMeta(t *testing.T) {
 		svc := meta.New(repo)
 		err := svc.DeleteArtistMeta(ctx, user, artistID)
 
-		assert.ErrorIs(t, err, meta.ErrForbidden)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 
 	t.Run("repo error", func(t *testing.T) {

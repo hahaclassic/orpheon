@@ -9,8 +9,6 @@ import (
 )
 
 var (
-	ErrForbidden = errors.New("permission denied error")
-
 	ErrCanView   = errors.New("couldn't verify viewing permissions")
 	ErrCanEdit   = errors.New("couldn't verify edition permissions")
 	ErrCanDelete = errors.New("couldn't verify deletion permissions")

@@ -24,7 +24,7 @@ func (r *GenreRepository) Create(ctx context.Context, genre *entity.Genre) error
 	return err
 }
 
-func (r *GenreRepository) Get(ctx context.Context, genreID uuid.UUID) (*entity.Genre, error) {
+func (r *GenreRepository) GetByID(ctx context.Context, genreID uuid.UUID) (*entity.Genre, error) {
 	query := `SELECT id, title FROM genres WHERE id = $1`
 	row := r.pool.QueryRow(ctx, query, genreID)
 
@@ -34,6 +34,31 @@ func (r *GenreRepository) Get(ctx context.Context, genreID uuid.UUID) (*entity.G
 		return nil, fmt.Errorf("genre not found: %w", err)
 	}
 	return &g, nil
+}
+
+func (r *GenreRepository) GetAll(ctx context.Context) ([]*entity.Genre, error) {
+	query := `SELECT id, title FROM genres`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all genres: %w", err)
+	}
+	defer rows.Close()
+
+	var genres []*entity.Genre
+	for rows.Next() {
+		var g entity.Genre
+		err := rows.Scan(&g.ID, &g.Title)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan genre: %w", err)
+		}
+		genres = append(genres, &g)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	return genres, nil
 }
 
 func (r *GenreRepository) Update(ctx context.Context, genre *entity.Genre) error {

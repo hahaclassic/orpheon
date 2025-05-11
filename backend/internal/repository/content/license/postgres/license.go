@@ -24,7 +24,7 @@ func (r *LicenseRepository) Create(ctx context.Context, license *entity.License)
 	return err
 }
 
-func (r *LicenseRepository) Get(ctx context.Context, licenseID uuid.UUID) (*entity.License, error) {
+func (r *LicenseRepository) GetByID(ctx context.Context, licenseID uuid.UUID) (*entity.License, error) {
 	query := `SELECT id, title, description FROM licenses WHERE id = $1`
 	row := r.pool.QueryRow(ctx, query, licenseID)
 
@@ -34,6 +34,31 @@ func (r *LicenseRepository) Get(ctx context.Context, licenseID uuid.UUID) (*enti
 		return nil, fmt.Errorf("license not found: %w", err)
 	}
 	return &l, nil
+}
+
+func (r *LicenseRepository) GetAll(ctx context.Context) ([]*entity.License, error) {
+	query := `SELECT id, title, description FROM licenses`
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all licenses: %w", err)
+	}
+	defer rows.Close()
+
+	var licenses []*entity.License
+	for rows.Next() {
+		var l entity.License
+		err := rows.Scan(&l.ID, &l.Title, &l.Description)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan license: %w", err)
+		}
+		licenses = append(licenses, &l)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	return licenses, nil
 }
 
 func (r *LicenseRepository) Update(ctx context.Context, license *entity.License) error {

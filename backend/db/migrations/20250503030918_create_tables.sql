@@ -13,7 +13,7 @@ CREATE TABLE genres (
 
 CREATE TABLE users (
     id UUID PRIMARY KEY,
-    name TEXT NOT NULL CHECK (length(name) > 2), -- Имя должно быть хотя бы 3 символа
+    name TEXT UNIQUE NOT NULL CHECK (length(name) > 2), -- Имя должно быть хотя бы 3 символа
     registration_date TIMESTAMP NOT NULL DEFAULT NOW(), -- Дата регистрации по умолчанию
     birth_date DATE CHECK (birth_date < NOW()), -- Дата рождения не может быть в будущем
     access_level INT NOT NULL CHECK (access_level IN (1, 2)) -- Ограничиваем возможные роли

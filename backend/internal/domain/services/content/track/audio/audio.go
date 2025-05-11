@@ -7,11 +7,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
-	ErrForbidden          = errors.New("permission denied")
 	ErrInvalidChunkParams = errors.New("invalid chunk parameters")
 )
 
@@ -56,7 +56,7 @@ func (a *AudioFileService) UploadAudioFile(ctx context.Context, claims *entity.C
 
 	switch {
 	case claims.AccessLvl != entity.Admin:
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	case chunk.End <= chunk.Start || chunk.Start != 0 || chunk.End != uint64(len(chunk.Data)):
 		return ErrInvalidChunkParams
 	}
@@ -75,7 +75,7 @@ func (a *AudioFileService) DeleteAudioFile(ctx context.Context, claims *entity.C
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return a.repo.DeleteFile(ctx, trackID)

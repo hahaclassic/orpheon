@@ -7,12 +7,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
 	ErrGenerateID = errors.New("id generation error")
-	ErrForbidden  = errors.New("permission denied error")
 )
 
 type AlbumRepository interface {
@@ -37,7 +37,7 @@ func (a *AlbumService) CreateAlbum(ctx context.Context, claims *entity.Claims, a
 		err = errwrap.WrapIfErr(usecase.ErrCreateAlbum, err)
 	}()
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	album.ID, err = uuid.NewRandom()
@@ -62,7 +62,7 @@ func (a *AlbumService) UpdateAlbum(ctx context.Context, claims *entity.Claims, a
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return a.repo.UpdateAlbum(ctx, album)
@@ -74,7 +74,7 @@ func (a *AlbumService) DeleteAlbum(ctx context.Context, claims *entity.Claims, a
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return a.repo.DeleteAlbum(ctx, albumID)

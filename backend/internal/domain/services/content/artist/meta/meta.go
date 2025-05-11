@@ -7,11 +7,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
-	ErrForbidden  = errors.New("permission denied error")
 	ErrGenerateID = errors.New("id generation error")
 )
 
@@ -44,7 +44,7 @@ func (s *ArtistMetaService) CreateArtistMeta(ctx context.Context, claims *entity
 	}()
 
 	if claims.AccessLvl == entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	if artist.ID, err = uuid.NewRandom(); err != nil {
@@ -60,7 +60,7 @@ func (s *ArtistMetaService) UpdateArtistMeta(ctx context.Context, claims *entity
 	}()
 
 	if claims.AccessLvl == entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return s.repo.Update(ctx, artist)
@@ -72,7 +72,7 @@ func (s *ArtistMetaService) DeleteArtistMeta(ctx context.Context, claims *entity
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return s.repo.Delete(ctx, artistID)

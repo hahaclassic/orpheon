@@ -2,16 +2,12 @@ package assign
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
-)
-
-var (
-	ErrForbidden = errors.New("permission denied error")
 )
 
 type ArtistAssignRepository interface {
@@ -35,7 +31,7 @@ func (a *ArtistAssignService) AssignArtistToTrack(ctx context.Context, claims *e
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return a.repo.AssignArtistToTrack(ctx, artistID, trackID)
@@ -47,7 +43,7 @@ func (a *ArtistAssignService) AssignArtistToAlbum(ctx context.Context, claims *e
 	}()
 
 	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+		return commonerr.ErrForbidden
 	}
 
 	return a.repo.AssignArtistToAlbum(ctx, artistID, albumID)
