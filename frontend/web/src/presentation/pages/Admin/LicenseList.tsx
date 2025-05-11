@@ -1,0 +1,235 @@
+import { useState, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Alert,
+  CircularProgress,
+} from '@mui/material';
+import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { api } from '../../../core/infrastructure/services/api';
+import axios from 'axios';
+
+interface License {
+  ID: string;
+  Title: string;
+  Description: string;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+}
+
+const LicenseList = () => {
+  const [licenses, setLicenses] = useState<License[]>([]);
+  const [open, setOpen] = useState(false);
+  const [editingLicense, setEditingLicense] = useState<License | null>(null);
+  const [formData, setFormData] = useState({ title: '', description: '' });
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchLicenses = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/licenses');
+      console.log('Received licenses data:', response.data);
+      // Убедимся, что данные являются массивом
+      const licensesData = Array.isArray(response.data) ? response.data : [];
+      console.log('Processed licenses data:', licensesData);
+      setLicenses(licensesData);
+      setError(null);
+    } catch (err) {
+      setError('Ошибка при загрузке лицензий');
+      console.error('Error fetching licenses:', err);
+      setLicenses([]); // Устанавливаем пустой массив в случае ошибки
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLicenses();
+  }, []);
+
+  const handleOpen = (license?: License) => {
+    if (license) {
+      setEditingLicense(license);
+      setFormData({ title: license.Title, description: license.Description });
+    } else {
+      setEditingLicense(null);
+      setFormData({ title: '', description: '' });
+    }
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setEditingLicense(null);
+    setFormData({ title: '', description: '' });
+    setError(null);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const trimmedData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+      };
+
+      console.log('Sending data:', trimmedData);
+      console.log('Auth token:', localStorage.getItem('access_token'));
+
+      if (editingLicense) {
+        const response = await api.put(`/licenses/${editingLicense.ID}`, trimmedData);
+        console.log('Update response:', response);
+      } else {
+        const response = await api.post('/licenses/', trimmedData);
+        console.log('Create response:', response);
+      }
+      handleClose();
+      fetchLicenses();
+    } catch (err) {
+      console.error('Full error object:', err);
+      if (axios.isAxiosError(err)) {
+        console.error('Response data:', err.response?.data);
+        console.error('Response status:', err.response?.status);
+        console.error('Response headers:', err.response?.headers);
+      }
+      setError('Ошибка при сохранении лицензии');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Вы уверены, что хотите удалить эту лицензию?')) {
+      try {
+        await api.delete(`/licenses/${id}`);
+        fetchLicenses();
+      } catch (err) {
+        setError('Ошибка при удалении лицензии');
+        console.error('Error deleting license:', err);
+      }
+    }
+  };
+
+  return (
+    <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
+      <Paper sx={{ p: 4 }} elevation={3}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5" fontWeight={700}>
+            Управление лицензиями
+          </Typography>
+          <Button variant="contained" color="primary" onClick={() => handleOpen()}>
+            Добавить лицензию
+          </Button>
+        </Box>
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Название</TableCell>
+                  <TableCell>Описание</TableCell>
+                  <TableCell align="right">Действия</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {licenses.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      Нет доступных лицензий
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  licenses.map((license) => {
+                    console.log('Rendering license:', license);
+                    return (
+                      <TableRow key={license.ID}>
+                        <TableCell>{license.ID}</TableCell>
+                        <TableCell>{license.Title}</TableCell>
+                        <TableCell>{license.Description}</TableCell>
+                        <TableCell align="right">
+                          <IconButton onClick={() => handleOpen(license)} color="primary">
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton onClick={() => handleDelete(license.ID)} color="error">
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Paper>
+
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {editingLicense ? 'Редактировать лицензию' : 'Добавить лицензию'}
+        </DialogTitle>
+        <form onSubmit={handleSubmit}>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Название"
+              fullWidth
+              value={formData.title}
+              onChange={handleChange}
+              name="title"
+              required
+            />
+            <TextField
+              margin="dense"
+              label="Описание"
+              fullWidth
+              multiline
+              rows={3}
+              value={formData.description}
+              onChange={handleChange}
+              name="description"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Отмена</Button>
+            <Button type="submit" variant="contained" color="primary">
+              {editingLicense ? 'Сохранить' : 'Добавить'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+    </Box>
+  );
+};
+
+export default LicenseList; 
