@@ -120,6 +120,64 @@ func (_c *ArtistMetaService_DeleteArtistMeta_Call) RunAndReturn(run func(context
 	return _c
 }
 
+// GetAllArtistMeta provides a mock function with given fields: ctx
+func (_m *ArtistMetaService) GetAllArtistMeta(ctx context.Context) ([]*entity.ArtistMeta, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllArtistMeta")
+	}
+
+	var r0 []*entity.ArtistMeta
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*entity.ArtistMeta, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []*entity.ArtistMeta); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.ArtistMeta)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ArtistMetaService_GetAllArtistMeta_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllArtistMeta'
+type ArtistMetaService_GetAllArtistMeta_Call struct {
+	*mock.Call
+}
+
+// GetAllArtistMeta is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *ArtistMetaService_Expecter) GetAllArtistMeta(ctx interface{}) *ArtistMetaService_GetAllArtistMeta_Call {
+	return &ArtistMetaService_GetAllArtistMeta_Call{Call: _e.mock.On("GetAllArtistMeta", ctx)}
+}
+
+func (_c *ArtistMetaService_GetAllArtistMeta_Call) Run(run func(ctx context.Context)) *ArtistMetaService_GetAllArtistMeta_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *ArtistMetaService_GetAllArtistMeta_Call) Return(_a0 []*entity.ArtistMeta, _a1 error) *ArtistMetaService_GetAllArtistMeta_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ArtistMetaService_GetAllArtistMeta_Call) RunAndReturn(run func(context.Context) ([]*entity.ArtistMeta, error)) *ArtistMetaService_GetAllArtistMeta_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetArtistMeta provides a mock function with given fields: ctx, artistID
 func (_m *ArtistMetaService) GetArtistMeta(ctx context.Context, artistID uuid.UUID) (*entity.ArtistMeta, error) {
 	ret := _m.Called(ctx, artistID)

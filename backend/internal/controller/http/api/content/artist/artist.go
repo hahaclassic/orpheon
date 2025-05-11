@@ -28,6 +28,7 @@ func (c *ArtistController) RegisterRoutes(router *gin.RouterGroup) {
 	artists := router.Group("/artists")
 	{
 		artists.GET("/:id", c.GetArtist)
+		artists.GET("", c.GetAllArtists)
 
 		protected := artists.Group("")
 		protected.Use(c.authMiddleware)
@@ -66,6 +67,16 @@ func (c *ArtistController) GetArtist(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, artist)
 }
 
+func (c *ArtistController) GetAllArtists(ctx *gin.Context) {
+	artists, err := c.artistService.GetAllArtistMeta(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get all artists"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, artists)
+}
+
 // CreateArtist godoc
 // @Summary Create a new artist
 // @Description Create a new artist with the provided details
@@ -93,7 +104,11 @@ func (c *ArtistController) CreateArtist(ctx *gin.Context) {
 
 	err := c.artistService.CreateArtistMeta(ctx.Request.Context(), claims, &artist)
 	if err != nil {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to create artist"})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to create artist"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create artist"})
+		}
 		return
 	}
 
@@ -138,10 +153,9 @@ func (c *ArtistController) UpdateArtist(ctx *gin.Context) {
 	if err != nil {
 		if errors.Is(err, commonerr.ErrForbidden) {
 			ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to update artist"})
-			return
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update artist"})
 		}
-
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update artist"})
 		return
 	}
 
@@ -177,10 +191,9 @@ func (c *ArtistController) DeleteArtist(ctx *gin.Context) {
 	if err != nil {
 		if errors.Is(err, commonerr.ErrForbidden) {
 			ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to delete artist"})
-			return
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete artist"})
 		}
-
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete artist"})
 		return
 	}
 

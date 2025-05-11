@@ -119,6 +119,64 @@ func (_c *ArtistMetaRepository_Delete_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
+// GetAll provides a mock function with given fields: ctx
+func (_m *ArtistMetaRepository) GetAll(ctx context.Context) ([]*entity.ArtistMeta, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAll")
+	}
+
+	var r0 []*entity.ArtistMeta
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*entity.ArtistMeta, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []*entity.ArtistMeta); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.ArtistMeta)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ArtistMetaRepository_GetAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAll'
+type ArtistMetaRepository_GetAll_Call struct {
+	*mock.Call
+}
+
+// GetAll is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *ArtistMetaRepository_Expecter) GetAll(ctx interface{}) *ArtistMetaRepository_GetAll_Call {
+	return &ArtistMetaRepository_GetAll_Call{Call: _e.mock.On("GetAll", ctx)}
+}
+
+func (_c *ArtistMetaRepository_GetAll_Call) Run(run func(ctx context.Context)) *ArtistMetaRepository_GetAll_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *ArtistMetaRepository_GetAll_Call) Return(_a0 []*entity.ArtistMeta, _a1 error) *ArtistMetaRepository_GetAll_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ArtistMetaRepository_GetAll_Call) RunAndReturn(run func(context.Context) ([]*entity.ArtistMeta, error)) *ArtistMetaRepository_GetAll_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByID provides a mock function with given fields: ctx, id
 func (_m *ArtistMetaRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.ArtistMeta, error) {
 	ret := _m.Called(ctx, id)

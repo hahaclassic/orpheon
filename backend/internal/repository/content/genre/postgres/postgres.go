@@ -62,7 +62,7 @@ func (r *GenreRepository) GetAll(ctx context.Context) ([]*entity.Genre, error) {
 }
 
 func (r *GenreRepository) Update(ctx context.Context, genre *entity.Genre) error {
-	query := `UPDATE genres SET description = $1 WHERE id = $2`
+	query := `UPDATE genres SET title = $1 WHERE id = $2`
 	_, err := r.pool.Exec(ctx, query, genre.Title, genre.ID)
 	return err
 }

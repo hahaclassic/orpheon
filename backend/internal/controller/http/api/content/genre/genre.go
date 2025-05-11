@@ -30,7 +30,8 @@ func (c *GenreController) RegisterRoutes(router *gin.RouterGroup) {
 		genres.GET("/:id", c.GetGenre)
 		genres.GET("", c.GetAllGenres)
 
-		protected := genres.Group("/").Use(c.authMiddleware)
+		protected := genres.Group("")
+		protected.Use(c.authMiddleware)
 		{
 			protected.POST("", c.CreateGenre)
 			protected.PUT("/:id", c.UpdateGenre)

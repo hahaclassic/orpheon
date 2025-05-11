@@ -17,6 +17,7 @@ var (
 
 type ArtistMetaRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*entity.ArtistMeta, error)
+	GetAll(ctx context.Context) ([]*entity.ArtistMeta, error)
 	Create(ctx context.Context, artist *entity.ArtistMeta) error
 	Update(ctx context.Context, artist *entity.ArtistMeta) error
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -38,12 +39,20 @@ func (s *ArtistMetaService) GetArtistMeta(ctx context.Context, artistID uuid.UUI
 	return s.repo.GetByID(ctx, artistID)
 }
 
+func (s *ArtistMetaService) GetAllArtistMeta(ctx context.Context) (_ []*entity.ArtistMeta, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetAllArtistMeta, err)
+	}()
+
+	return s.repo.GetAll(ctx)
+}
+
 func (s *ArtistMetaService) CreateArtistMeta(ctx context.Context, claims *entity.Claims, artist *entity.ArtistMeta) (err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrCreateArtistMeta, err)
 	}()
 
-	if claims.AccessLvl == entity.Admin {
+	if claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -59,7 +68,7 @@ func (s *ArtistMetaService) UpdateArtistMeta(ctx context.Context, claims *entity
 		err = errwrap.WrapIfErr(usecase.ErrUpdateArtistMeta, err)
 	}()
 
-	if claims.AccessLvl == entity.Admin {
+	if claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
