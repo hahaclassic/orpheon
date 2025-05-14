@@ -9,11 +9,20 @@ import (
 )
 
 var (
-	ErrAssignArtistOnTrack = errors.New("failed to assign artist on track")
-	ErrAssignArtistOnAlbum = errors.New("failed to assign artist on album")
+	ErrGetArtistAlbums         = errors.New("failed to get artist albums")
+	ErrGetArtistTracks         = errors.New("failed to get artist tracks")
+	ErrAssignArtistOnTrack     = errors.New("failed to assign artist on track")
+	ErrAssignArtistOnAlbum     = errors.New("failed to assign artist on album")
+	ErrUnassignArtistFromTrack = errors.New("failed to unassign artist from track")
+	ErrUnassignArtistFromAlbum = errors.New("failed to unassign artist from album")
 )
 
 type ArtistAssignService interface {
+	GetArtistAlbums(ctx context.Context, artistID uuid.UUID) ([]*entity.AlbumMeta, error)
+	GetArtistTracks(ctx context.Context, artistID uuid.UUID) ([]*entity.TrackMeta, error)
+
 	AssignArtistToTrack(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, trackID uuid.UUID) error
 	AssignArtistToAlbum(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, albumID uuid.UUID) error
+	UnassignArtistFromTrack(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, trackID uuid.UUID) error
+	UnassignArtistFromAlbum(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, albumID uuid.UUID) error
 }

@@ -74,12 +74,12 @@ func (_c *FavoritesDeletionService_AddPlaylistToAllFavorites_Call) RunAndReturn(
 	return _c
 }
 
-// DeletePlaylistFromAllFavorites provides a mock function with given fields: ctx, claims, playlistID
-func (_m *FavoritesDeletionService) DeletePlaylistFromAllFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
+// DeleteFromAllFavorites provides a mock function with given fields: ctx, claims, playlistID
+func (_m *FavoritesDeletionService) DeleteFromAllFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error {
 	ret := _m.Called(ctx, claims, playlistID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeletePlaylistFromAllFavorites")
+		panic("no return value specified for DeleteFromAllFavorites")
 	}
 
 	var r0 error
@@ -92,32 +92,32 @@ func (_m *FavoritesDeletionService) DeletePlaylistFromAllFavorites(ctx context.C
 	return r0
 }
 
-// FavoritesDeletionService_DeletePlaylistFromAllFavorites_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeletePlaylistFromAllFavorites'
-type FavoritesDeletionService_DeletePlaylistFromAllFavorites_Call struct {
+// FavoritesDeletionService_DeleteFromAllFavorites_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteFromAllFavorites'
+type FavoritesDeletionService_DeleteFromAllFavorites_Call struct {
 	*mock.Call
 }
 
-// DeletePlaylistFromAllFavorites is a helper method to define mock.On call
+// DeleteFromAllFavorites is a helper method to define mock.On call
 //   - ctx context.Context
 //   - claims *entity.Claims
 //   - playlistID uuid.UUID
-func (_e *FavoritesDeletionService_Expecter) DeletePlaylistFromAllFavorites(ctx interface{}, claims interface{}, playlistID interface{}) *FavoritesDeletionService_DeletePlaylistFromAllFavorites_Call {
-	return &FavoritesDeletionService_DeletePlaylistFromAllFavorites_Call{Call: _e.mock.On("DeletePlaylistFromAllFavorites", ctx, claims, playlistID)}
+func (_e *FavoritesDeletionService_Expecter) DeleteFromAllFavorites(ctx interface{}, claims interface{}, playlistID interface{}) *FavoritesDeletionService_DeleteFromAllFavorites_Call {
+	return &FavoritesDeletionService_DeleteFromAllFavorites_Call{Call: _e.mock.On("DeleteFromAllFavorites", ctx, claims, playlistID)}
 }
 
-func (_c *FavoritesDeletionService_DeletePlaylistFromAllFavorites_Call) Run(run func(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID)) *FavoritesDeletionService_DeletePlaylistFromAllFavorites_Call {
+func (_c *FavoritesDeletionService_DeleteFromAllFavorites_Call) Run(run func(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID)) *FavoritesDeletionService_DeleteFromAllFavorites_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(*entity.Claims), args[2].(uuid.UUID))
 	})
 	return _c
 }
 
-func (_c *FavoritesDeletionService_DeletePlaylistFromAllFavorites_Call) Return(_a0 error) *FavoritesDeletionService_DeletePlaylistFromAllFavorites_Call {
+func (_c *FavoritesDeletionService_DeleteFromAllFavorites_Call) Return(_a0 error) *FavoritesDeletionService_DeleteFromAllFavorites_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *FavoritesDeletionService_DeletePlaylistFromAllFavorites_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) error) *FavoritesDeletionService_DeletePlaylistFromAllFavorites_Call {
+func (_c *FavoritesDeletionService_DeleteFromAllFavorites_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) error) *FavoritesDeletionService_DeleteFromAllFavorites_Call {
 	_c.Call.Return(run)
 	return _c
 }

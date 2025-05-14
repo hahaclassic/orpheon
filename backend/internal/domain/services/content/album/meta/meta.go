@@ -20,6 +20,7 @@ type AlbumRepository interface {
 	GetAlbum(ctx context.Context, id uuid.UUID) (*entity.AlbumMeta, error)
 	UpdateAlbum(ctx context.Context, album *entity.AlbumMeta) error
 	DeleteAlbum(ctx context.Context, id uuid.UUID) error
+	GetAllAlbums(ctx context.Context) ([]*entity.AlbumMeta, error)
 }
 
 type AlbumService struct {
@@ -54,6 +55,14 @@ func (a *AlbumService) GetAlbum(ctx context.Context, albumID uuid.UUID) (_ *enti
 	}()
 
 	return a.repo.GetAlbum(ctx, albumID)
+}
+
+func (a *AlbumService) GetAllAlbums(ctx context.Context) (_ []*entity.AlbumMeta, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetAllAlbums, err)
+	}()
+
+	return a.repo.GetAllAlbums(ctx)
 }
 
 func (a *AlbumService) UpdateAlbum(ctx context.Context, claims *entity.Claims, album *entity.AlbumMeta) (err error) {

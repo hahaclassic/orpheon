@@ -22,6 +22,10 @@ type PlaylistMetaRepository interface {
 	Delete(ctx context.Context, playlistID uuid.UUID) error
 }
 
+type PlaylistAccessRepository interface {
+	DeleteAccessMeta(ctx context.Context, playlistID uuid.UUID) error
+}
+
 type PlaylistMetaService struct {
 	repo   PlaylistMetaRepository
 	policy usecase.PlaylistPolicyService
@@ -43,7 +47,11 @@ func (p *PlaylistMetaService) CreateMeta(ctx context.Context, claims *entity.Cla
 		return ErrEmptyPlaylistName
 	}
 
-	playlist.OwnerID = claims.UserID // may be
+	playlist.ID, err = uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+	playlist.OwnerID = claims.UserID
 
 	return p.repo.Create(ctx, playlist)
 }
@@ -92,7 +100,7 @@ func (p *PlaylistMetaService) UpdateMeta(ctx context.Context, claims *entity.Cla
 		err = errwrap.WrapIfErr(usecase.ErrUpdateMeta, err)
 	}()
 
-	if err = p.policy.CanEdit(ctx, claims, playlist.ID); err != nil {
+	if err = p.policy.UpdatePrivacy(ctx, claims, playlist.ID, playlist.IsPrivate); err != nil {
 		return err
 	}
 
@@ -104,7 +112,7 @@ func (p *PlaylistMetaService) DeleteMeta(ctx context.Context, claims *entity.Cla
 		err = errwrap.WrapIfErr(usecase.ErrDeletePlaylist, err)
 	}()
 
-	if err = p.policy.CanDelete(ctx, claims, playlistID); err != nil {
+	if err = p.policy.DeletePolicy(ctx, claims, playlistID); err != nil {
 		return err
 	}
 

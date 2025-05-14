@@ -56,7 +56,7 @@ func (s *PlaylistFavoriteService) GetUserFavorites(ctx context.Context, claims *
 
 func (s *PlaylistFavoriteService) DeleteFromUserFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
 	defer func() {
-		err = errwrap.WrapIfErr(usecase.ErrDeleteFromAllFavorites, err)
+		err = errwrap.WrapIfErr(usecase.ErrDeleteFromUserFavorites, err)
 	}()
 
 	if err = s.policyService.CanDelete(ctx, claims, playlistID); err != nil {

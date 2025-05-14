@@ -12,6 +12,8 @@ import (
 
 type PlaylistAccessRepository interface {
 	GetAccessMeta(ctx context.Context, playlistID uuid.UUID) (*entity.PlaylistAccessMeta, error)
+	UpdatePrivacy(ctx context.Context, playlistID uuid.UUID, isPrivate bool) error
+	DeleteAccessMeta(ctx context.Context, playlistID uuid.UUID) error
 }
 
 type PlaylistPolicyService struct {
@@ -74,4 +76,30 @@ func (p *PlaylistPolicyService) CanDelete(ctx context.Context, claims *entity.Cl
 	}
 
 	return commonerr.ErrForbidden
+}
+
+func (p *PlaylistPolicyService) UpdatePrivacy(ctx context.Context, claims *entity.Claims,
+	playlistID uuid.UUID, isPrivate bool) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrCanUpdatePrivacy, err)
+	}()
+
+	meta, err := p.accessRepo.GetAccessMeta(ctx, playlistID)
+	if err != nil {
+		return err
+	}
+
+	if claims.UserID != meta.OwnerID {
+		return commonerr.ErrForbidden
+	}
+
+	return p.accessRepo.UpdatePrivacy(ctx, playlistID, isPrivate)
+}
+
+func (p *PlaylistPolicyService) DeletePolicy(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrCanDelete, err)
+	}()
+
+	return p.accessRepo.DeleteAccessMeta(ctx, playlistID)
 }

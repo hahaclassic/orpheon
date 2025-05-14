@@ -28,14 +28,14 @@ type PostgresConfig struct {
 }
 
 type MinIOConfig struct {
-	Endpoint       string `env:"MINIO_ENDPOINT"`
-	AccessKey      string `env:"MINIO_ACCESS_KEY"`
-	SecretKey      string `env:"MINIO_SECRET_KEY"`
-	Secure         bool   `env:"MINIO_SECURE"`
-	BucketPlaylist string `env:"MINIO_BUCKET_PLAYLIST_COVERS"`
-	BucketAlbum    string `env:"MINIO_BUCKET_ALBUM_COVERS"`
-	BucketProfile  string `env:"MINIO_BUCKET_PROFILE_PHOTOS"`
-	BucketAudio    string `env:"MINIO_BUCKET_AUDIO_FILES"`
+	Endpoint           string `env:"MINIO_ENDPOINT"`
+	AccessKey          string `env:"MINIO_ROOT_USER"`
+	SecretKey          string `env:"MINIO_ROOT_PASSWORD"`
+	Secure             bool   `env:"MINIO_SECURE"`
+	BucketPlaylist     string `env:"MINIO_BUCKET_PLAYLIST_COVERS"`
+	BucketAlbum        string `env:"MINIO_BUCKET_ALBUM_COVERS"`
+	BucketArtistAvatar string `env:"MINIO_BUCKET_ARTIST_AVATARS"`
+	BucketAudio        string `env:"MINIO_BUCKET_AUDIO_FILES"`
 }
 
 type RedisConfig struct {

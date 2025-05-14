@@ -99,7 +99,7 @@ func TestTrackUploadFlow(t *testing.T) {
 	require.NoError(t, audioRepo.UploadAudioFile(ctx, &entity.AudioChunk{
 		TrackID: track.ID,
 		Start:   0,
-		End:     uint64(len(audioBytes) - 1),
+		End:     int64(len(audioBytes) - 1),
 		Data:    audioBytes,
 	}))
 

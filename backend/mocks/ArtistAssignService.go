@@ -122,6 +122,222 @@ func (_c *ArtistAssignService_AssignArtistToTrack_Call) RunAndReturn(run func(co
 	return _c
 }
 
+// GetArtistAlbums provides a mock function with given fields: ctx, artistID
+func (_m *ArtistAssignService) GetArtistAlbums(ctx context.Context, artistID uuid.UUID) ([]*entity.AlbumMeta, error) {
+	ret := _m.Called(ctx, artistID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetArtistAlbums")
+	}
+
+	var r0 []*entity.AlbumMeta
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.AlbumMeta, error)); ok {
+		return rf(ctx, artistID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.AlbumMeta); ok {
+		r0 = rf(ctx, artistID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.AlbumMeta)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, artistID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ArtistAssignService_GetArtistAlbums_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetArtistAlbums'
+type ArtistAssignService_GetArtistAlbums_Call struct {
+	*mock.Call
+}
+
+// GetArtistAlbums is a helper method to define mock.On call
+//   - ctx context.Context
+//   - artistID uuid.UUID
+func (_e *ArtistAssignService_Expecter) GetArtistAlbums(ctx interface{}, artistID interface{}) *ArtistAssignService_GetArtistAlbums_Call {
+	return &ArtistAssignService_GetArtistAlbums_Call{Call: _e.mock.On("GetArtistAlbums", ctx, artistID)}
+}
+
+func (_c *ArtistAssignService_GetArtistAlbums_Call) Run(run func(ctx context.Context, artistID uuid.UUID)) *ArtistAssignService_GetArtistAlbums_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *ArtistAssignService_GetArtistAlbums_Call) Return(_a0 []*entity.AlbumMeta, _a1 error) *ArtistAssignService_GetArtistAlbums_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ArtistAssignService_GetArtistAlbums_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.AlbumMeta, error)) *ArtistAssignService_GetArtistAlbums_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetArtistTracks provides a mock function with given fields: ctx, artistID
+func (_m *ArtistAssignService) GetArtistTracks(ctx context.Context, artistID uuid.UUID) ([]*entity.TrackMeta, error) {
+	ret := _m.Called(ctx, artistID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetArtistTracks")
+	}
+
+	var r0 []*entity.TrackMeta
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.TrackMeta, error)); ok {
+		return rf(ctx, artistID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.TrackMeta); ok {
+		r0 = rf(ctx, artistID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.TrackMeta)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, artistID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ArtistAssignService_GetArtistTracks_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetArtistTracks'
+type ArtistAssignService_GetArtistTracks_Call struct {
+	*mock.Call
+}
+
+// GetArtistTracks is a helper method to define mock.On call
+//   - ctx context.Context
+//   - artistID uuid.UUID
+func (_e *ArtistAssignService_Expecter) GetArtistTracks(ctx interface{}, artistID interface{}) *ArtistAssignService_GetArtistTracks_Call {
+	return &ArtistAssignService_GetArtistTracks_Call{Call: _e.mock.On("GetArtistTracks", ctx, artistID)}
+}
+
+func (_c *ArtistAssignService_GetArtistTracks_Call) Run(run func(ctx context.Context, artistID uuid.UUID)) *ArtistAssignService_GetArtistTracks_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *ArtistAssignService_GetArtistTracks_Call) Return(_a0 []*entity.TrackMeta, _a1 error) *ArtistAssignService_GetArtistTracks_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ArtistAssignService_GetArtistTracks_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.TrackMeta, error)) *ArtistAssignService_GetArtistTracks_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UnassignArtistFromAlbum provides a mock function with given fields: ctx, claims, artistID, albumID
+func (_m *ArtistAssignService) UnassignArtistFromAlbum(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, albumID uuid.UUID) error {
+	ret := _m.Called(ctx, claims, artistID, albumID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UnassignArtistFromAlbum")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID, uuid.UUID) error); ok {
+		r0 = rf(ctx, claims, artistID, albumID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ArtistAssignService_UnassignArtistFromAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UnassignArtistFromAlbum'
+type ArtistAssignService_UnassignArtistFromAlbum_Call struct {
+	*mock.Call
+}
+
+// UnassignArtistFromAlbum is a helper method to define mock.On call
+//   - ctx context.Context
+//   - claims *entity.Claims
+//   - artistID uuid.UUID
+//   - albumID uuid.UUID
+func (_e *ArtistAssignService_Expecter) UnassignArtistFromAlbum(ctx interface{}, claims interface{}, artistID interface{}, albumID interface{}) *ArtistAssignService_UnassignArtistFromAlbum_Call {
+	return &ArtistAssignService_UnassignArtistFromAlbum_Call{Call: _e.mock.On("UnassignArtistFromAlbum", ctx, claims, artistID, albumID)}
+}
+
+func (_c *ArtistAssignService_UnassignArtistFromAlbum_Call) Run(run func(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, albumID uuid.UUID)) *ArtistAssignService_UnassignArtistFromAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*entity.Claims), args[2].(uuid.UUID), args[3].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *ArtistAssignService_UnassignArtistFromAlbum_Call) Return(_a0 error) *ArtistAssignService_UnassignArtistFromAlbum_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ArtistAssignService_UnassignArtistFromAlbum_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID, uuid.UUID) error) *ArtistAssignService_UnassignArtistFromAlbum_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UnassignArtistFromTrack provides a mock function with given fields: ctx, claims, artistID, trackID
+func (_m *ArtistAssignService) UnassignArtistFromTrack(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, trackID uuid.UUID) error {
+	ret := _m.Called(ctx, claims, artistID, trackID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UnassignArtistFromTrack")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID, uuid.UUID) error); ok {
+		r0 = rf(ctx, claims, artistID, trackID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ArtistAssignService_UnassignArtistFromTrack_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UnassignArtistFromTrack'
+type ArtistAssignService_UnassignArtistFromTrack_Call struct {
+	*mock.Call
+}
+
+// UnassignArtistFromTrack is a helper method to define mock.On call
+//   - ctx context.Context
+//   - claims *entity.Claims
+//   - artistID uuid.UUID
+//   - trackID uuid.UUID
+func (_e *ArtistAssignService_Expecter) UnassignArtistFromTrack(ctx interface{}, claims interface{}, artistID interface{}, trackID interface{}) *ArtistAssignService_UnassignArtistFromTrack_Call {
+	return &ArtistAssignService_UnassignArtistFromTrack_Call{Call: _e.mock.On("UnassignArtistFromTrack", ctx, claims, artistID, trackID)}
+}
+
+func (_c *ArtistAssignService_UnassignArtistFromTrack_Call) Run(run func(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, trackID uuid.UUID)) *ArtistAssignService_UnassignArtistFromTrack_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*entity.Claims), args[2].(uuid.UUID), args[3].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *ArtistAssignService_UnassignArtistFromTrack_Call) Return(_a0 error) *ArtistAssignService_UnassignArtistFromTrack_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ArtistAssignService_UnassignArtistFromTrack_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID, uuid.UUID) error) *ArtistAssignService_UnassignArtistFromTrack_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewArtistAssignService creates a new instance of ArtistAssignService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewArtistAssignService(t interface {

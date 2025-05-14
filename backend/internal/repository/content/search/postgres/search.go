@@ -20,13 +20,19 @@ func (r *SearchRepository) SearchTracks(ctx context.Context, req *entity.SearchR
 	query := `
 		SELECT t.id, t.genre_id, t.name, t.duration, t.explicit, t.license_id, t.album_id, t.track_number, t.total_streams
 		FROM tracks t
-		JOIN albums a ON t.album_id = a.id
-		JOIN artists ar ON a.artist_id = ar.id
-		WHERE LOWER(t.name) LIKE LOWER($1)
+		LEFT JOIN albums a ON t.album_id = a.id
+		LEFT JOIN artist_albums aa ON a.id = aa.album_id
+		LEFT JOIN artists ar ON aa.artist_id = ar.id
+		WHERE true
 	`
-	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
-	argIdx := 2
+	args := []any{}
+	argIdx := 1
 
+	if req.Query != "" {
+		query += fmt.Sprintf(" AND LOWER(t.name) LIKE LOWER($%d)", argIdx)
+		args = append(args, fmt.Sprintf("%%%s%%", req.Query))
+		argIdx++
+	}
 	if req.Filters.Genre != "" {
 		query += fmt.Sprintf(" AND t.genre_id = $%d", argIdx)
 		args = append(args, req.Filters.Genre)
@@ -38,7 +44,7 @@ func (r *SearchRepository) SearchTracks(ctx context.Context, req *entity.SearchR
 		argIdx++
 	}
 
-	query += " ORDER BY t.name LIMIT $" + fmt.Sprint(argIdx) + " OFFSET $" + fmt.Sprint(argIdx+1)
+	query += fmt.Sprintf(" ORDER BY t.name LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
 	args = append(args, req.Limit, req.Offset)
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -62,16 +68,26 @@ func (r *SearchRepository) SearchTracks(ctx context.Context, req *entity.SearchR
 
 func (r *SearchRepository) SearchAlbums(ctx context.Context, req *entity.SearchRequest) ([]*entity.AlbumMeta, error) {
 	query := `
-		SELECT id, title, label, license_id, release_date
-		FROM albums
-		WHERE LOWER(title) LIKE LOWER($1)
+		SELECT DISTINCT a.id, a.title, a.label, a.license_id, a.release_date
+		FROM albums a
+		LEFT JOIN tracks t ON a.id = t.album_id
+		WHERE true
 	`
-	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
-	argIdx := 2
+	args := []any{}
+	argIdx := 1
 
-	// Жанра у albums напрямую нет, если нужно — делать JOIN с tracks
+	if req.Query != "" {
+		query += fmt.Sprintf(" AND LOWER(a.title) LIKE LOWER($%d)", argIdx)
+		args = append(args, fmt.Sprintf("%%%s%%", req.Query))
+		argIdx++
+	}
+	if req.Filters.Genre != "" {
+		query += fmt.Sprintf(" AND t.genre_id = $%d", argIdx)
+		args = append(args, req.Filters.Genre)
+		argIdx++
+	}
 
-	query += " ORDER BY release_date DESC LIMIT $" + fmt.Sprint(argIdx) + " OFFSET $" + fmt.Sprint(argIdx+1)
+	query += fmt.Sprintf(" ORDER BY a.release_date DESC LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
 	args = append(args, req.Limit, req.Offset)
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -95,20 +111,33 @@ func (r *SearchRepository) SearchAlbums(ctx context.Context, req *entity.SearchR
 
 func (r *SearchRepository) SearchArtists(ctx context.Context, req *entity.SearchRequest) ([]*entity.ArtistMeta, error) {
 	query := `
-		SELECT id, name, country, description
-		FROM artists
-		WHERE LOWER(name) LIKE LOWER($1)
+		SELECT DISTINCT a.id, a.name, a.country, a.description
+		FROM artists a
+		LEFT JOIN artist_albums aa ON a.id = aa.artist_id
+		LEFT JOIN albums al ON aa.album_id = al.id
+		LEFT JOIN tracks t ON al.id = t.album_id
+		WHERE true
 	`
-	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
-	argIdx := 2
+	args := []any{}
+	argIdx := 1
 
+	if req.Query != "" {
+		query += fmt.Sprintf(" AND LOWER(a.name) LIKE LOWER($%d)", argIdx)
+		args = append(args, fmt.Sprintf("%%%s%%", req.Query))
+		argIdx++
+	}
 	if req.Filters.Country != "" {
-		query += fmt.Sprintf(" AND country = $%d", argIdx)
+		query += fmt.Sprintf(" AND a.country = $%d", argIdx)
 		args = append(args, req.Filters.Country)
 		argIdx++
 	}
+	if req.Filters.Genre != "" {
+		query += fmt.Sprintf(" AND t.genre_id = $%d", argIdx)
+		args = append(args, req.Filters.Genre)
+		argIdx++
+	}
 
-	query += " ORDER BY name LIMIT $" + fmt.Sprint(argIdx) + " OFFSET $" + fmt.Sprint(argIdx+1)
+	query += fmt.Sprintf(" ORDER BY a.name LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
 	args = append(args, req.Limit, req.Offset)
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -132,14 +161,27 @@ func (r *SearchRepository) SearchArtists(ctx context.Context, req *entity.Search
 
 func (r *SearchRepository) SearchPlaylists(ctx context.Context, req *entity.SearchRequest) ([]*entity.PlaylistMeta, error) {
 	query := `
-		SELECT id, name, description, is_private, owner_id, created_at, updated_at
-		FROM playlists
-		WHERE LOWER(name) LIKE LOWER($1)
+		SELECT DISTINCT p.id, p.name, p.description, p.is_private, p.owner_id, p.created_at, p.updated_at
+		FROM playlists p
+		LEFT JOIN playlist_tracks pt ON p.id = pt.playlist_id
+		LEFT JOIN tracks t ON pt.track_id = t.id
+		WHERE true
 	`
-	args := []interface{}{fmt.Sprintf("%%%s%%", req.Query)}
-	argIdx := 2
+	args := []any{}
+	argIdx := 1
 
-	query += " ORDER BY created_at DESC LIMIT $" + fmt.Sprint(argIdx) + " OFFSET $" + fmt.Sprint(argIdx+1)
+	if req.Query != "" {
+		query += fmt.Sprintf(" AND LOWER(p.name) LIKE LOWER($%d)", argIdx)
+		args = append(args, fmt.Sprintf("%%%s%%", req.Query))
+		argIdx++
+	}
+	if req.Filters.Genre != "" {
+		query += fmt.Sprintf(" AND t.genre_id = $%d", argIdx)
+		args = append(args, req.Filters.Genre)
+		argIdx++
+	}
+
+	query += fmt.Sprintf(" ORDER BY p.created_at DESC LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
 	args = append(args, req.Limit, req.Offset)
 
 	rows, err := r.db.Query(ctx, query, args...)

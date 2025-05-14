@@ -1,8 +1,13 @@
 package app
 
 import (
+	"context"
 	"log/slog"
 	"net"
+	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
 
 	bcrypt_hasher "github.com/hahaclassic/orpheon/backend/internal/adapters/password-hasher/bcrypt-hasher"
 	jwttokens "github.com/hahaclassic/orpheon/backend/internal/adapters/tokens/jwt"
@@ -106,13 +111,40 @@ func Run(conf *config.Config) {
 		albumController,
 		artistController,
 		genreController,
-		// playlistController,q
+		// playlistController
 		searchController,
 		licenseController,
 	)
 
+	// addr := net.JoinHostPort(conf.HTTP.Host, conf.HTTP.Port)
+	// if err := router.Run(addr); err != nil {
+	// 	slog.Error("failed to start HTTP server", "err", err)
+	// }
 	addr := net.JoinHostPort(conf.HTTP.Host, conf.HTTP.Port)
-	if err := router.Run(addr); err != nil {
-		slog.Error("failed to start HTTP server", "err", err)
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: router,
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		slog.Info("starting server", "addr", addr)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("server error", "err", err)
+		}
+	}()
+
+	<-ctx.Done()
+	slog.Info("shutdown signal received")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Error("server forced to shutdown", "err", err)
+	} else {
+		slog.Info("server exited properly")
 	}
 }

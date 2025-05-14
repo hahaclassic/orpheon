@@ -17,7 +17,7 @@ func NewPlaylistTracksRepository(pool *pgxpool.Pool) *PlaylistTracksRepository {
 	return &PlaylistTracksRepository{pool: pool}
 }
 
-func (r *PlaylistTracksRepository) AddTrackToPlaylist(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID) error {
+func (r *PlaylistTracksRepository) AddTrackToPlaylist(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
 	const query = `
 		INSERT INTO playlist_tracks (playlist_id, track_id, position)
 		VALUES ($1, $2, COALESCE(
@@ -26,7 +26,7 @@ func (r *PlaylistTracksRepository) AddTrackToPlaylist(ctx context.Context, playl
 		ON CONFLICT (playlist_id, track_id) DO NOTHING
 	`
 
-	_, err := r.pool.Exec(ctx, query, playlistID, trackID)
+	_, err := r.pool.Exec(ctx, query, playlistTrack.PlaylistID, playlistTrack.TrackID)
 	if err != nil {
 		return fmt.Errorf("add track to playlist: %w", err)
 	}
@@ -34,18 +34,25 @@ func (r *PlaylistTracksRepository) AddTrackToPlaylist(ctx context.Context, playl
 	return nil
 }
 
-func (r *PlaylistTracksRepository) DeleteTrackFromPlaylist(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID) error {
+func (r *PlaylistTracksRepository) DeleteTrackFromPlaylist(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
 	const query = `
-		DELETE FROM playlist_tracks
-		WHERE playlist_id = $1 AND track_id = $2
+		WITH deleted_track AS (
+			DELETE FROM playlist_tracks
+			WHERE playlist_id = $1 AND track_id = $2
+			RETURNING position
+		)
+		UPDATE playlist_tracks
+		SET position = position - 1
+		WHERE playlist_id = $1 
+		AND position > (SELECT position FROM deleted_track)
 	`
 
-	ct, err := r.pool.Exec(ctx, query, playlistID, trackID)
+	ct, err := r.pool.Exec(ctx, query, playlistTrack.PlaylistID, playlistTrack.TrackID)
 	if err != nil {
 		return fmt.Errorf("delete track from playlist: %w", err)
 	}
 	if ct.RowsAffected() == 0 {
-		return fmt.Errorf("track %s not found in playlist %s", trackID, playlistID)
+		return fmt.Errorf("track %s not found in playlist %s", playlistTrack.TrackID, playlistTrack.PlaylistID)
 	}
 
 	return nil
@@ -105,4 +112,29 @@ func (r *PlaylistTracksRepository) GetAllPlaylistTracks(ctx context.Context, pla
 	}
 
 	return tracks, nil
+}
+
+func (r *PlaylistTracksRepository) ChangeTrackPosition(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
+	const query = `
+		WITH current_pos AS (
+			SELECT position 
+			FROM playlist_tracks 
+			WHERE playlist_id = $1 AND track_id = $2
+		)
+		UPDATE playlist_tracks
+		SET position = CASE
+			WHEN playlist_id = $1 AND track_id = $2 THEN $3
+			WHEN playlist_id = $1 AND position >= $3 AND position < (SELECT position FROM current_pos) THEN position + 1
+			WHEN playlist_id = $1 AND position <= $3 AND position > (SELECT position FROM current_pos) THEN position - 1
+			ELSE position
+		END
+		WHERE playlist_id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, playlistTrack.PlaylistID, playlistTrack.TrackID, playlistTrack.Position)
+	if err != nil {
+		return fmt.Errorf("change track position: %w", err)
+	}
+
+	return nil
 }

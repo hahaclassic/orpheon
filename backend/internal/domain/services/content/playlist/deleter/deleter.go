@@ -14,7 +14,7 @@ type MetaDeletionService interface {
 }
 
 type TrackDeletionService interface {
-	GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]uuid.UUID, error)
+	GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]*entity.TrackMeta, error)
 	DeleteAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
 	RestoreAllTracks(ctx context.Context, claims *entity.Claims,
 		playlistID uuid.UUID, trackIDs []uuid.UUID) error
@@ -22,14 +22,14 @@ type TrackDeletionService interface {
 
 type FavoritesDeletionService interface {
 	GetUsersWithFavoritePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]uuid.UUID, error)
-	DeletePlaylistFromAllFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	DeleteFromAllFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
 	AddPlaylistToAllFavorites(ctx context.Context, claims *entity.Claims, userIDs []uuid.UUID, playlistID uuid.UUID) error
 }
 
 type PlaylistCoverDeletionService interface {
 	GetCover(ctx context.Context, claims *entity.Claims, objectID uuid.UUID) (*entity.Cover, error)
 	DeleteCover(ctx context.Context, claims *entity.Claims, objectID uuid.UUID) error
-	SaveCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) error
+	UploadCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) error
 }
 
 type PlaylistDeleter struct {
@@ -129,7 +129,7 @@ func (p *PlaylistDeleter) deleteFavorites(ctx context.Context, claims *entity.Cl
 		return nil, err
 	}
 
-	err = p.favorites.DeletePlaylistFromAllFavorites(ctx, claims, playlistID)
+	err = p.favorites.DeleteFromAllFavorites(ctx, claims, playlistID)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func (p *PlaylistDeleter) deleteFavorites(ctx context.Context, claims *entity.Cl
 }
 
 func (p *PlaylistDeleter) deleteAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (rollback, error) {
-	trackIDs, err := p.tracks.GetAllTracks(ctx, claims, playlistID)
+	tracks, err := p.tracks.GetAllTracks(ctx, claims, playlistID)
 	if err != nil {
 		return nil, err
 	}
@@ -151,6 +151,11 @@ func (p *PlaylistDeleter) deleteAllTracks(ctx context.Context, claims *entity.Cl
 	}
 
 	return func() error {
+		trackIDs := make([]uuid.UUID, len(tracks))
+		for i := range tracks {
+			trackIDs[i] = tracks[i].ID
+		}
+
 		return p.tracks.RestoreAllTracks(ctx, claims, playlistID, trackIDs)
 	}, nil
 }
@@ -167,7 +172,7 @@ func (p *PlaylistDeleter) deleteCover(ctx context.Context, claims *entity.Claims
 	}
 
 	return func() error {
-		return p.cover.SaveCover(ctx, claims, cover)
+		return p.cover.UploadCover(ctx, claims, cover)
 	}, nil
 }
 

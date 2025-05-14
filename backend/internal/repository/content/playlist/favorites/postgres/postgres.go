@@ -35,7 +35,7 @@ func (r *PlaylistFavoriteRepository) AddToFavorites(ctx context.Context, userID 
 
 func (r *PlaylistFavoriteRepository) GetUserFavorites(ctx context.Context, userID uuid.UUID) ([]*entity.PlaylistMeta, error) {
 	const query = `
-		SELECT p.id, p.title, p.description
+		SELECT p.id, p.owner_id, p.name, p.description, p.is_private, p.created_at, p.updated_at, p.rating
 		FROM playlist_favorites f
 		JOIN playlists p ON p.id = f.playlist_id
 		WHERE f.user_id = $1
@@ -50,7 +50,8 @@ func (r *PlaylistFavoriteRepository) GetUserFavorites(ctx context.Context, userI
 	var result []*entity.PlaylistMeta
 	for rows.Next() {
 		var meta entity.PlaylistMeta
-		if err := rows.Scan(&meta.ID, &meta.Name, &meta.Description); err != nil {
+		if err := rows.Scan(&meta.ID, &meta.OwnerID, &meta.Name, &meta.Description,
+			&meta.IsPrivate, &meta.CreatedAt, &meta.UpdatedAt, &meta.Rating); err != nil {
 			return nil, fmt.Errorf("scan playlist meta: %w", err)
 		}
 		result = append(result, &meta)

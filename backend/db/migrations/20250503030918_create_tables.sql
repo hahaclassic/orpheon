@@ -22,7 +22,7 @@ CREATE TABLE users (
 CREATE TABLE credentials (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     login TEXT NOT NULL UNIQUE CHECK (length(login) > 3), -- Логин должен быть длиннее 3 символов
-    password TEXT NOT NULL CHECK (length(password) >= 8) -- Минимальная длина пароля 8 символов
+    password TEXT NOT NULL--- хешированный пароль
 );
 
 CREATE TABLE artists (
@@ -35,7 +35,7 @@ CREATE TABLE artists (
 CREATE TABLE albums (
     id UUID PRIMARY KEY,
     title TEXT NOT NULL CHECK (length(title) > 1),
-    label TEXT NOT NULL CHECK (length(label) > 1),
+    label TEXT,
     license_id UUID REFERENCES licenses(id) ON DELETE SET NULL, -- Если лицензия удалена, оставляем NULL
     release_date DATE NOT NULL CHECK (release_date <= NOW()) -- Альбом не может выйти в будущем
 );
@@ -88,13 +88,21 @@ CREATE TABLE playlist_tracks (
     playlist_id UUID NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
     track_id UUID NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
     position INT NOT NULL CHECK (position >= 0), -- Позиция трека в плейлисте начинается с 0
-    PRIMARY KEY (playlist_id, track_id)
+    PRIMARY KEY (playlist_id, track_id),
+    UNIQUE (playlist_id, position)
+);
+
+CREATE TABLE favorite_playlists (
+    playlist_id UUID NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (playlist_id, user_id)
 );
 
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+DROP TABLE IF EXISTS favorite_playlists;
 DROP TABLE IF EXISTS playlist_tracks;
 DROP TABLE IF EXISTS artist_tracks;
 DROP TABLE IF EXISTS artist_albums;

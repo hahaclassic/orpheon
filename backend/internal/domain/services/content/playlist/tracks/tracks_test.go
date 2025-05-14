@@ -57,7 +57,10 @@ func TestPlaylistTrackService_AddTrack(t *testing.T) {
 			tc.setup(repo, policy)
 
 			svc := tracks.NewPlaylistTrackService(repo, policy)
-			err := svc.AddTrack(ctx, claims, playlistID, trackID)
+			err := svc.AddTrack(ctx, claims, &entity.PlaylistTrack{
+				PlaylistID: playlistID,
+				TrackID:    trackID,
+			})
 
 			if tc.expectErr == nil {
 				assert.NoError(t, err)
@@ -172,7 +175,10 @@ func TestPlaylistTrackService_DeleteTrack(t *testing.T) {
 			tc.setup(repo, policy)
 
 			svc := tracks.NewPlaylistTrackService(repo, policy)
-			err := svc.DeleteTrack(ctx, claims, playlistID, trackID)
+			err := svc.DeleteTrack(ctx, claims, &entity.PlaylistTrack{
+				PlaylistID: playlistID,
+				TrackID:    trackID,
+			})
 
 			if tc.expectErr == nil {
 				assert.NoError(t, err)

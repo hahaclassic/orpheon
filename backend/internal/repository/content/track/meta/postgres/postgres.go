@@ -48,8 +48,14 @@ func (r *TrackMetaRepository) GetByID(ctx context.Context, trackID uuid.UUID) (*
 
 func (r *TrackMetaRepository) Create(ctx context.Context, track *entity.TrackMeta) error {
 	query := `
+		WITH max_track_number AS (
+			SELECT COALESCE(MAX(track_number), -1) + 1 as next_number
+			FROM tracks
+			WHERE album_id = $7
+		)
 		INSERT INTO tracks (id, genre_id, name, duration, explicit, license_id, album_id, track_number, total_streams)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		SELECT $1, $2, $3, $4, $5, $6, $7, next_number, $8
+		FROM max_track_number
 	`
 
 	_, err := r.pool.Exec(ctx, query,
@@ -60,8 +66,7 @@ func (r *TrackMetaRepository) Create(ctx context.Context, track *entity.TrackMet
 		track.Explicit,
 		track.LicenseID,
 		track.AlbumID,
-		track.TrackNumber,
-		track.TotalStreams,
+		0,
 	)
 
 	if err != nil {
@@ -78,10 +83,7 @@ func (r *TrackMetaRepository) Update(ctx context.Context, track *entity.TrackMet
 			name = $3,
 			duration = $4,
 			explicit = $5,
-			license_id = $6,
-			album_id = $7,
-			track_number = $8,
-			total_streams = $9
+			license_id = $6
 		WHERE id = $1
 	`
 
@@ -92,9 +94,6 @@ func (r *TrackMetaRepository) Update(ctx context.Context, track *entity.TrackMet
 		track.Duration,
 		track.Explicit,
 		track.LicenseID,
-		track.AlbumID,
-		track.TrackNumber,
-		track.TotalStreams,
 	)
 
 	if err != nil {
@@ -106,8 +105,15 @@ func (r *TrackMetaRepository) Update(ctx context.Context, track *entity.TrackMet
 
 func (r *TrackMetaRepository) Delete(ctx context.Context, trackID uuid.UUID) error {
 	query := `
-		DELETE FROM tracks
-		WHERE id = $1
+		WITH deleted_track AS (
+			DELETE FROM tracks
+			WHERE id = $1
+			RETURNING album_id, track_number
+		)
+		UPDATE tracks
+		SET track_number = track_number - 1
+		WHERE album_id = (SELECT album_id FROM deleted_track)
+		AND track_number > (SELECT track_number FROM deleted_track)
 	`
 
 	_, err := r.pool.Exec(ctx, query, trackID)

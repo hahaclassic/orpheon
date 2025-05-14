@@ -13,6 +13,10 @@ import (
 type ArtistAssignRepository interface {
 	AssignArtistToTrack(ctx context.Context, artistID uuid.UUID, trackID uuid.UUID) error
 	AssignArtistToAlbum(ctx context.Context, artistID uuid.UUID, albumID uuid.UUID) error
+	GetArtistAlbums(ctx context.Context, artistID uuid.UUID) ([]*entity.AlbumMeta, error)
+	GetArtistTracks(ctx context.Context, artistID uuid.UUID) ([]*entity.TrackMeta, error)
+	UnassignArtistFromTrack(ctx context.Context, artistID uuid.UUID, trackID uuid.UUID) error
+	UnassignArtistFromAlbum(ctx context.Context, artistID uuid.UUID, albumID uuid.UUID) error
 }
 
 type ArtistAssignService struct {
@@ -47,4 +51,54 @@ func (a *ArtistAssignService) AssignArtistToAlbum(ctx context.Context, claims *e
 	}
 
 	return a.repo.AssignArtistToAlbum(ctx, artistID, albumID)
+}
+
+func (a *ArtistAssignService) GetArtistAlbums(ctx context.Context, artistID uuid.UUID) (albums []*entity.AlbumMeta, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetArtistAlbums, err)
+	}()
+
+	albums, err = a.repo.GetArtistAlbums(ctx, artistID)
+	if err != nil {
+		return nil, err
+	}
+
+	return albums, nil
+}
+
+func (a *ArtistAssignService) GetArtistTracks(ctx context.Context, artistID uuid.UUID) (tracks []*entity.TrackMeta, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetArtistTracks, err)
+	}()
+
+	tracks, err = a.repo.GetArtistTracks(ctx, artistID)
+	if err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
+}
+
+func (a *ArtistAssignService) UnassignArtistFromTrack(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, trackID uuid.UUID) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrUnassignArtistFromTrack, err)
+	}()
+
+	if claims.AccessLvl != entity.Admin {
+		return commonerr.ErrForbidden
+	}
+
+	return a.repo.UnassignArtistFromTrack(ctx, artistID, trackID)
+}
+
+func (a *ArtistAssignService) UnassignArtistFromAlbum(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, albumID uuid.UUID) (err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrUnassignArtistFromAlbum, err)
+	}()
+
+	if claims.AccessLvl != entity.Admin {
+		return commonerr.ErrForbidden
+	}
+
+	return a.repo.UnassignArtistFromAlbum(ctx, artistID, albumID)
 }

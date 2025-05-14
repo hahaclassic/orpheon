@@ -178,6 +178,64 @@ func (_c *AlbumRepository_GetAlbum_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
+// GetAllAlbums provides a mock function with given fields: ctx
+func (_m *AlbumRepository) GetAllAlbums(ctx context.Context) ([]*entity.AlbumMeta, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllAlbums")
+	}
+
+	var r0 []*entity.AlbumMeta
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*entity.AlbumMeta, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []*entity.AlbumMeta); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.AlbumMeta)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AlbumRepository_GetAllAlbums_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllAlbums'
+type AlbumRepository_GetAllAlbums_Call struct {
+	*mock.Call
+}
+
+// GetAllAlbums is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *AlbumRepository_Expecter) GetAllAlbums(ctx interface{}) *AlbumRepository_GetAllAlbums_Call {
+	return &AlbumRepository_GetAllAlbums_Call{Call: _e.mock.On("GetAllAlbums", ctx)}
+}
+
+func (_c *AlbumRepository_GetAllAlbums_Call) Run(run func(ctx context.Context)) *AlbumRepository_GetAllAlbums_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *AlbumRepository_GetAllAlbums_Call) Return(_a0 []*entity.AlbumMeta, _a1 error) *AlbumRepository_GetAllAlbums_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AlbumRepository_GetAllAlbums_Call) RunAndReturn(run func(context.Context) ([]*entity.AlbumMeta, error)) *AlbumRepository_GetAllAlbums_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateAlbum provides a mock function with given fields: ctx, album
 func (_m *AlbumRepository) UpdateAlbum(ctx context.Context, album *entity.AlbumMeta) error {
 	ret := _m.Called(ctx, album)

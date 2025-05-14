@@ -57,7 +57,7 @@ func (a *AudioFileService) UploadAudioFile(ctx context.Context, claims *entity.C
 	switch {
 	case claims.AccessLvl != entity.Admin:
 		return commonerr.ErrForbidden
-	case chunk.End <= chunk.Start || chunk.Start != 0 || chunk.End != uint64(len(chunk.Data)):
+	case chunk.End <= chunk.Start || chunk.Start != 0 || chunk.End != int64(len(chunk.Data)):
 		return ErrInvalidChunkParams
 	}
 

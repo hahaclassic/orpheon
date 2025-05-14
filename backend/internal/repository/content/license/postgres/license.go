@@ -62,8 +62,8 @@ func (r *LicenseRepository) GetAll(ctx context.Context) ([]*entity.License, erro
 }
 
 func (r *LicenseRepository) Update(ctx context.Context, license *entity.License) error {
-	query := `UPDATE licenses SET description = $1 WHERE id = $2`
-	_, err := r.pool.Exec(ctx, query, license.Description, license.ID)
+	query := `UPDATE licenses SET title = $1, description = $2 WHERE id = $3`
+	_, err := r.pool.Exec(ctx, query, license.Title, license.Description, license.ID)
 	return err
 }
 

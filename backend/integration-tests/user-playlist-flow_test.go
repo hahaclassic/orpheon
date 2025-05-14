@@ -120,7 +120,10 @@ func TestUserPlaylistFlow(t *testing.T) {
 	assert.Equal(t, playlist.ID, playlists[0].ID, "IDs should be equal") // 1.1
 
 	// 2. add track to playlist
-	require.NoError(t, playlistTrackRepo.AddTrackToPlaylist(ctx, playlist.ID, track.ID))
+	require.NoError(t, playlistTrackRepo.AddTrackToPlaylist(ctx, &entity.PlaylistTrack{
+		PlaylistID: playlist.ID,
+		TrackID:    track.ID,
+	}))
 
 	// 2.2
 	tracks, err := playlistTrackRepo.GetAllPlaylistTracks(ctx, playlist.ID)
@@ -128,7 +131,10 @@ func TestUserPlaylistFlow(t *testing.T) {
 	assert.Len(t, tracks, 1, "Only one track should be in playlist!")
 
 	// 3. delete track from playlist
-	require.NoError(t, playlistTrackRepo.DeleteTrackFromPlaylist(ctx, playlist.ID, track.ID))
+	require.NoError(t, playlistTrackRepo.DeleteTrackFromPlaylist(ctx, &entity.PlaylistTrack{
+		PlaylistID: playlist.ID,
+		TrackID:    track.ID,
+	}))
 
 	// 3.1
 	tracks, err = playlistTrackRepo.GetAllPlaylistTracks(ctx, playlist.ID)
