@@ -20,9 +20,8 @@ func (r *SearchRepository) SearchTracks(ctx context.Context, req *entity.SearchR
 	query := `
 		SELECT t.id, t.genre_id, t.name, t.duration, t.explicit, t.license_id, t.album_id, t.track_number, t.total_streams
 		FROM tracks t
-		LEFT JOIN albums a ON t.album_id = a.id
-		LEFT JOIN artist_albums aa ON a.id = aa.album_id
-		LEFT JOIN artists ar ON aa.artist_id = ar.id
+		LEFT JOIN artist_tracks at ON t.id = at.track_id
+		LEFT JOIN artists ar ON at.artist_id = ar.id
 		WHERE true
 	`
 	args := []any{}

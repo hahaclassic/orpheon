@@ -11,7 +11,6 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/output"
 	cmdrouter "github.com/hahaclassic/orpheon/backend/internal/controller/cli/router"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/session"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/user"
 )
 
@@ -89,24 +88,29 @@ func (c *UserController) updateUser(ctx context.Context) error {
 		return nil
 	}
 
-	scanner := bufio.NewScanner(os.Stdin)
-
-	fmt.Print("Enter new user name: ")
-	scanner.Scan()
-	name := scanner.Text()
-
-	fmt.Print("Enter new birth date (YYYY-MM-DD): ")
-	scanner.Scan()
-	birthDateStr := scanner.Text()
-	birthDate, err := time.Parse("2006-01-02", birthDateStr)
+	user, err := c.userService.GetUser(ctx, session.Claims().UserID)
 	if err != nil {
-		return fmt.Errorf("failed to parse birth date: %w", err)
+		return fmt.Errorf("failed to get user info: %w", err)
 	}
 
-	user := &entity.UserInfo{
-		ID:        session.Claims().UserID,
-		Name:      name,
-		BirthDate: birthDate,
+	scanner := bufio.NewScanner(os.Stdin)
+
+	fmt.Print("Enter new user name (enter 'space' to skip): ")
+	scanner.Scan()
+	name := scanner.Text()
+	if name != "" {
+		user.Name = name
+	}
+
+	fmt.Print("Enter new birth date [YYYY-MM-DD] (enter 'space' to skip): ")
+	scanner.Scan()
+	birthDateStr := scanner.Text()
+	if birthDateStr != "" {
+		birthDate, err := time.Parse("2006-01-02", birthDateStr)
+		if err != nil {
+			return fmt.Errorf("failed to parse birth date: %w", err)
+		}
+		user.BirthDate = birthDate
 	}
 
 	err = c.userService.UpdateUser(ctx, session.Claims(), user)

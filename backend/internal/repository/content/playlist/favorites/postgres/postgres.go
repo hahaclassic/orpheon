@@ -21,7 +21,7 @@ func NewPlaylistFavoriteRepository(pool *pgxpool.Pool) *PlaylistFavoriteReposito
 
 func (r *PlaylistFavoriteRepository) AddToFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error {
 	const query = `
-		INSERT INTO playlist_favorites (user_id, playlist_id)
+		INSERT INTO favorite_playlists (user_id, playlist_id)
 		VALUES ($1, $2)
 		ON CONFLICT DO NOTHING
 	`
@@ -36,7 +36,7 @@ func (r *PlaylistFavoriteRepository) AddToFavorites(ctx context.Context, userID 
 func (r *PlaylistFavoriteRepository) GetUserFavorites(ctx context.Context, userID uuid.UUID) ([]*entity.PlaylistMeta, error) {
 	const query = `
 		SELECT p.id, p.owner_id, p.name, p.description, p.is_private, p.created_at, p.updated_at, p.rating
-		FROM playlist_favorites f
+		FROM favorite_playlists f
 		JOIN playlists p ON p.id = f.playlist_id
 		WHERE f.user_id = $1
 	`
@@ -62,7 +62,7 @@ func (r *PlaylistFavoriteRepository) GetUserFavorites(ctx context.Context, userI
 
 func (r *PlaylistFavoriteRepository) DeleteFromUserFavorites(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) error {
 	const query = `
-		DELETE FROM playlist_favorites
+		DELETE FROM favorite_playlists
 		WHERE user_id = $1 AND playlist_id = $2
 	`
 
@@ -76,7 +76,7 @@ func (r *PlaylistFavoriteRepository) DeleteFromUserFavorites(ctx context.Context
 func (r *PlaylistFavoriteRepository) GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID) ([]uuid.UUID, error) {
 	const query = `
 		SELECT user_id
-		FROM playlist_favorites
+		FROM favorite_playlists
 		WHERE playlist_id = $1
 	`
 
@@ -100,7 +100,7 @@ func (r *PlaylistFavoriteRepository) GetUsersWithFavoritePlaylist(ctx context.Co
 
 func (r *PlaylistFavoriteRepository) DeleteFromAllFavorites(ctx context.Context, playlistID uuid.UUID) error {
 	const query = `
-		DELETE FROM playlist_favorites
+		DELETE FROM favorite_playlists
 		WHERE playlist_id = $1
 	`
 
@@ -113,7 +113,7 @@ func (r *PlaylistFavoriteRepository) DeleteFromAllFavorites(ctx context.Context,
 
 func (r *PlaylistFavoriteRepository) RestoreAllFavorites(ctx context.Context, userIDs []uuid.UUID, playlistID uuid.UUID) error {
 	const query = `
-		INSERT INTO playlist_favorites (user_id, playlist_id)
+		INSERT INTO favorite_playlists (user_id, playlist_id)
 		VALUES ($1, $2)
 		ON CONFLICT DO NOTHING
 	`
