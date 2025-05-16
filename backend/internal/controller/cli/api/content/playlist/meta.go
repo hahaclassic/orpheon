@@ -8,21 +8,24 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/output"
-	cmdrouter "github.com/hahaclassic/orpheon/backend/internal/controller/cli/router"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/session"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	"github.com/hahaclassic/orpheon/backend/pkg/cmdrouter"
 )
 
 type PlaylistMetaController struct {
 	playlistService playlist.PlaylistMetaService
+	privacyChanger  playlist.PlaylistPrivacyChanger
 	deleter         playlist.PlaylistDeletionService
 }
 
 func NewPlaylistMetaController(playlistService playlist.PlaylistMetaService,
+	privacyChanger playlist.PlaylistPrivacyChanger,
 	deleter playlist.PlaylistDeletionService) *PlaylistMetaController {
 	return &PlaylistMetaController{
 		playlistService: playlistService,
+		privacyChanger:  privacyChanger,
 		deleter:         deleter,
 	}
 }
@@ -48,6 +51,10 @@ func (c *PlaylistMetaController) Menu() []cmdrouter.OptionHandler {
 		{
 			Name: "Update playlist info",
 			Run:  c.updatePlaylist,
+		},
+		{
+			Name: "Change playlist privacy",
+			Run:  c.changePlaylistPrivacy,
 		},
 		{
 			Name: "Delete playlist",
@@ -96,6 +103,11 @@ func (c *PlaylistMetaController) createPlaylist(ctx context.Context) error {
 }
 
 func (c *PlaylistMetaController) getMyPlaylists(ctx context.Context) error {
+	if !session.IsAuthenticated() {
+		fmt.Println("Login to get your playlists.")
+		return nil
+	}
+
 	playlists, err := c.playlistService.GetUserAllPlaylistsMeta(ctx, session.Claims(), session.Claims().UserID)
 	if err != nil {
 		return fmt.Errorf("failed to get user playlists: %w", err)
@@ -172,7 +184,6 @@ func (c *PlaylistMetaController) updatePlaylist(ctx context.Context) error {
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
-
 	fmt.Print("Enter new playlist name (leave empty to skip): ")
 	scanner.Scan()
 	name := scanner.Text()
@@ -180,12 +191,6 @@ func (c *PlaylistMetaController) updatePlaylist(ctx context.Context) error {
 	fmt.Print("Enter new playlist description (leave empty to skip): ")
 	scanner.Scan()
 	description := scanner.Text()
-
-	fmt.Print("Is playlist private? (y/n or leave empty to skip): ")
-	scanner.Scan()
-	if scanner.Text() != "" {
-		playlist.IsPrivate = (scanner.Text() == "y")
-	}
 
 	if name != "" {
 		playlist.Name = name
@@ -201,6 +206,40 @@ func (c *PlaylistMetaController) updatePlaylist(ctx context.Context) error {
 	}
 
 	fmt.Println("Playlist updated successfully")
+	return nil
+}
+
+func (c *PlaylistMetaController) changePlaylistPrivacy(ctx context.Context) error {
+	if !session.IsAuthenticated() {
+		fmt.Println("Login to change playlist privacy.")
+		return nil
+	}
+
+	var id string
+	fmt.Print("Enter playlist ID: ")
+	if _, err := fmt.Scan(&id); err != nil {
+		return fmt.Errorf("failed to read playlist ID: %w", err)
+	}
+
+	playlistID, err := uuid.Parse(id)
+	if err != nil {
+		return fmt.Errorf("failed to parse playlist ID: %w", err)
+	}
+
+	scanner := bufio.NewScanner(os.Stdin)
+	var isPrivate bool
+	fmt.Print("Is playlist private? (y/n): ")
+	scanner.Scan()
+	if scanner.Text() == "y" {
+		isPrivate = true
+	}
+
+	err = c.privacyChanger.ChangePrivacy(ctx, session.Claims(), playlistID, isPrivate)
+	if err != nil {
+		return fmt.Errorf("failed to change playlist privacy: %w", err)
+	}
+
+	fmt.Println("Playlist privacy changed successfully")
 	return nil
 }
 

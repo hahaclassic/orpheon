@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/output"
-	cmdrouter "github.com/hahaclassic/orpheon/backend/internal/controller/cli/router"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
+	"github.com/hahaclassic/orpheon/backend/pkg/cmdrouter"
 )
 
 type TrackSegmentController struct {

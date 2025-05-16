@@ -3,13 +3,14 @@ package playlist_cli_ctrl
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/output"
-	cmdrouter "github.com/hahaclassic/orpheon/backend/internal/controller/cli/router"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/session"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	"github.com/hahaclassic/orpheon/backend/pkg/cmdrouter"
 )
 
 type PlaylistTrackController struct {
@@ -35,6 +36,10 @@ func (c *PlaylistTrackController) Menu() []cmdrouter.OptionHandler {
 		{
 			Name: "Remove track from playlist",
 			Run:  c.removeTrack,
+		},
+		{
+			Name: "Change track position",
+			Run:  c.changeTrackPosition,
 		},
 	}
 }
@@ -135,5 +140,50 @@ func (c *PlaylistTrackController) getTracks(ctx context.Context) error {
 	}
 
 	output.PrintTracks(tracks)
+	return nil
+}
+
+func (c *PlaylistTrackController) changeTrackPosition(ctx context.Context) error {
+	var playlistID, trackID, newPosition string
+	fmt.Print("Enter playlist ID: ")
+	if _, err := fmt.Scan(&playlistID); err != nil {
+		return fmt.Errorf("failed to read playlist ID: %w", err)
+	}
+
+	playlistUUID, err := uuid.Parse(playlistID)
+	if err != nil {
+		return fmt.Errorf("failed to parse playlist ID: %w", err)
+	}
+
+	fmt.Print("Enter track ID: ")
+	if _, err := fmt.Scan(&trackID); err != nil {
+		return fmt.Errorf("failed to read track ID: %w", err)
+	}
+
+	trackUUID, err := uuid.Parse(trackID)
+	if err != nil {
+		return fmt.Errorf("failed to parse track ID: %w", err)
+	}
+
+	fmt.Print("Enter new position: ")
+	if _, err := fmt.Scan(&newPosition); err != nil {
+		return fmt.Errorf("failed to read new position: %w", err)
+	}
+
+	newPositionInt, err := strconv.Atoi(newPosition)
+	if err != nil {
+		return fmt.Errorf("failed to parse new position: %w", err)
+	}
+
+	err = c.playlistTrackService.ChangeTrackPosition(ctx, session.Claims(), &entity.PlaylistTrack{
+		PlaylistID: playlistUUID,
+		TrackID:    trackUUID,
+		Position:   newPositionInt,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to change track position: %w", err)
+	}
+
+	fmt.Println("[OK] Track position changed successfully")
 	return nil
 }

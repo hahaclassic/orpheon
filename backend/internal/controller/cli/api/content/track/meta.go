@@ -8,10 +8,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/output"
-	cmdrouter "github.com/hahaclassic/orpheon/backend/internal/controller/cli/router"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/session"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
+	"github.com/hahaclassic/orpheon/backend/pkg/cmdrouter"
 )
 
 type TrackMetaController struct {
@@ -97,12 +97,12 @@ func (c *TrackMetaController) createTrackMeta(ctx context.Context) error {
 		AlbumID:   albumID,
 	}
 
-	_, err = c.trackMetaService.CreateTrackMeta(ctx, session.Claims(), track)
+	trackID, err := c.trackMetaService.CreateTrackMeta(ctx, session.Claims(), track)
 	if err != nil {
 		return fmt.Errorf("failed to create track: %w", err)
 	}
 
-	fmt.Println("Track created successfully")
+	fmt.Printf("[OK] Track created successfully with ID: %s\n", trackID)
 	return nil
 }
 

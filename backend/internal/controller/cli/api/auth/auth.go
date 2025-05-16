@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"os"
 
-	cmdrouter "github.com/hahaclassic/orpheon/backend/internal/controller/cli/router"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/session"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/auth"
+	"github.com/hahaclassic/orpheon/backend/pkg/cmdrouter"
 )
 
 type AuthController struct {
@@ -42,7 +42,7 @@ func (c *AuthController) Menu() []cmdrouter.OptionHandler {
 		},
 		{
 			Name: "Refresh Token",
-			Run:  c.refreshToken,
+			Run:  c.RefreshToken,
 		},
 	}
 }
@@ -167,13 +167,18 @@ func (c *AuthController) logout(ctx context.Context) error {
 	return nil
 }
 
-func (c *AuthController) refreshToken(ctx context.Context) error {
+func (c *AuthController) RefreshToken(ctx context.Context) error {
 	tokens, err := c.authService.RefreshTokens(ctx, session.Tokens().Refresh)
 	if err != nil {
 		return fmt.Errorf("failed to refresh token: %w", err)
 	}
 
-	session.UpdateTokens(tokens)
+	claims, err := c.authService.GetClaims(ctx, tokens.Access)
+	if err != nil {
+		return fmt.Errorf("failed to get claims: %w", err)
+	}
+
+	session.StartSession(claims, tokens)
 
 	fmt.Println("Tokens refreshed successfully")
 

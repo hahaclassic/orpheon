@@ -12,6 +12,7 @@ import (
 	"github.com/faiface/beep"
 	"github.com/faiface/beep/mp3"
 	"github.com/faiface/beep/speaker"
+	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/output"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
 )
@@ -64,16 +65,18 @@ func (s *streamBuffer) Close() error {
 }
 
 type Player struct {
-	Queue            []*entity.TrackMeta
-	Current          int
-	IsPlaying        bool
-	audioFileService track.AudioFileService
-	streamer         beep.StreamSeekCloser
-	ctrl             *beep.Ctrl
-	format           beep.Format
-	done             chan struct{}
-	mu               sync.Mutex
-	cancelPlayback   context.CancelFunc
+	Queue                []*entity.TrackMeta
+	Current              int
+	CurrentSecond        int
+	IsPlaying            bool
+	audioFileService     track.AudioFileService
+	streamer             beep.StreamSeekCloser
+	ctrl                 *beep.Ctrl
+	format               beep.Format
+	done                 chan struct{}
+	mu                   sync.Mutex
+	cancelPlayback       context.CancelFunc
+	progressTickerCancel context.CancelFunc
 }
 
 func NewPlayer(audioFileService track.AudioFileService) *Player {
@@ -92,9 +95,11 @@ func (c *Player) Play(ctx context.Context) {
 	track := c.Queue[c.Current]
 	c.done = make(chan struct{})
 	c.IsPlaying = true
+	c.CurrentSecond = 0
 	c.mu.Unlock()
 
-	fmt.Println("Playing track:", track.Name)
+	output.PrintTrack(track)
+	//fmt.Println("Playing track:", track.Name, "with duration:", track.Duration)
 
 	ctx, cancel := context.WithCancel(ctx)
 	c.mu.Lock()
@@ -104,16 +109,19 @@ func (c *Player) Play(ctx context.Context) {
 	sb := newStreamBuffer()
 	ready := make(chan struct{}, 1)
 
-	go c.streamAudio(ctx, track, sb, ready)
+	go c.streamAudio(ctx, track, sb, ready, int64(c.CurrentSecond))
 	<-ready
 
 	if err := c.startPlayback(sb); err != nil {
 		log.Printf("playback error: %v", err)
+		return
 	}
+
+	go c.trackProgress(ctx, track)
 }
 
-func (c *Player) streamAudio(ctx context.Context, track *entity.TrackMeta, sb *streamBuffer, ready chan struct{}) {
-	var offset int64
+func (c *Player) streamAudio(ctx context.Context, track *entity.TrackMeta, sb *streamBuffer, ready chan struct{}, startSecond int64) {
+	var offset int64 = startSecond * 44100 * 4 // 44.1kHz * 4 bytes per frame (estimate)
 	var total int
 
 	for {
@@ -177,6 +185,32 @@ func (c *Player) startPlayback(sb *streamBuffer) error {
 	return nil
 }
 
+func (c *Player) trackProgress(ctx context.Context, track *entity.TrackMeta) {
+	tickerCtx, cancel := context.WithCancel(ctx)
+	c.mu.Lock()
+	c.progressTickerCancel = cancel
+	c.mu.Unlock()
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-tickerCtx.Done():
+			return
+		case <-ticker.C:
+			c.mu.Lock()
+			if c.IsPlaying {
+				c.CurrentSecond++
+				if c.CurrentSecond >= int(track.Duration) {
+					c.CurrentSecond = int(track.Duration)
+				}
+			}
+			c.mu.Unlock()
+		}
+	}
+}
+
 func (c *Player) Pause() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -190,7 +224,7 @@ func (c *Player) Resume() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.ctrl != nil && !c.IsPlaying {
-		fmt.Println("Playing track:", c.Queue[c.Current].Name)
+		fmt.Println("Resuming track:", c.Queue[c.Current].Name)
 		c.ctrl.Paused = false
 		c.IsPlaying = true
 	}
@@ -204,6 +238,10 @@ func (c *Player) Stop() {
 	}
 	if c.cancelPlayback != nil {
 		c.cancelPlayback()
+	}
+	if c.progressTickerCancel != nil {
+		c.progressTickerCancel()
+		c.progressTickerCancel = nil
 	}
 	if c.ctrl != nil {
 		c.ctrl.Paused = true
@@ -229,6 +267,7 @@ func (c *Player) Next() {
 	c.mu.Lock()
 	if c.Current < len(c.Queue)-1 {
 		c.Current++
+		c.CurrentSecond = 0
 	}
 	c.mu.Unlock()
 	go c.Play(context.Background())
@@ -239,6 +278,7 @@ func (c *Player) Previous() {
 	c.mu.Lock()
 	if c.Current > 0 {
 		c.Current--
+		c.CurrentSecond = 0
 	}
 	c.mu.Unlock()
 	go c.Play(context.Background())
@@ -253,36 +293,15 @@ func (c *Player) AddToQueue(tracks []*entity.TrackMeta) {
 	c.Queue = append(c.Queue, tracks...)
 }
 
-func (c *Player) SeekForward(seconds int) {
+func (c *Player) SeekTo(second int) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.streamer == nil || c.format.SampleRate == 0 {
+	if c.Current >= len(c.Queue) || second < 0 || second >= int(c.Queue[c.Current].Duration) {
+		c.mu.Unlock()
 		return
 	}
+	c.CurrentSecond = second
+	c.mu.Unlock()
 
-	newPos := c.streamer.Position() + c.format.SampleRate.N(time.Second*time.Duration(seconds))
-	if newPos > c.streamer.Len() {
-		newPos = c.streamer.Len()
-	}
-	if err := c.streamer.Seek(newPos); err != nil {
-		log.Printf("seek forward error: %v", err)
-	}
-}
-
-func (c *Player) SeekBackward(seconds int) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if c.streamer == nil || c.format.SampleRate == 0 {
-		return
-	}
-
-	newPos := c.streamer.Position() - c.format.SampleRate.N(time.Second*time.Duration(seconds))
-	if newPos < 0 {
-		newPos = 0
-	}
-	if err := c.streamer.Seek(newPos); err != nil {
-		log.Printf("seek backward error: %v", err)
-	}
+	c.Stop()
+	go c.Play(context.Background())
 }

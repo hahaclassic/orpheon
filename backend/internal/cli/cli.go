@@ -22,7 +22,6 @@ import (
 	player_cli_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/player"
 	user_cli_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/user"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/player"
-	cmdrouter "github.com/hahaclassic/orpheon/backend/internal/controller/cli/router"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/session"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/auth"
 	album_cover_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/cover"
@@ -38,6 +37,7 @@ import (
 	playlist_favorites_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/favorites"
 	playlist_meta_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/meta"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/policy"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/privacy"
 	playlist_tracks_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/tracks"
 	search_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/search"
 	audio_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/audio"
@@ -70,6 +70,7 @@ import (
 	track_meta_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/track/meta/postgres"
 	segment_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/track/segment/postgres"
 	user_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/user/postgres"
+	"github.com/hahaclassic/orpheon/backend/pkg/cmdrouter"
 	tableoutput "github.com/hahaclassic/orpheon/backend/pkg/table"
 )
 
@@ -157,15 +158,20 @@ func Run(conf *config.Config) {
 	trackService := track_meta_service.NewTrackMetaService(trackRepo, segmentService)
 	trackAudioService := audio_service.New(audioRepo, audioconverter.New())
 	artistMetaService := artist_meta_service.New(artistMetaRepo)
-	playlistMetaService := playlist_meta_service.NewPlaylistMetaService(playlistRepo, playlistPolicyService)
+	playlistMetaService := playlist_meta_service.NewPlaylistMetaService(playlistRepo, playlistPolicyService, playlistAccessRepo)
 	playlistTrackService := playlist_tracks_service.NewPlaylistTrackService(playlistTrackRepo, playlistPolicyService)
 	playlistFavoriteService := playlist_favorites_service.NewPlaylistFavoriteService(playlistFavoriteRepo, playlistPolicyService)
 	playlistCoverService := playlist_cover_service.New(playlistCoverRepo, playlistPolicyService)
 	playlistDeletionService := playlist_deletion_service.New(
 		playlist_deletion_service.WithMetaDeletion(playlistMetaService),
-		playlist_deletion_service.WIthCoverDeletion(playlistCoverService),
+		playlist_deletion_service.WithCoverDeletion(playlistCoverService),
 		playlist_deletion_service.WithTracksDeletion(playlistTrackService),
 		playlist_deletion_service.WithFavoritesDeletion(playlistFavoriteService),
+	)
+	playlistPrivacyService := privacy.NewPlaylistPrivacyChanger(
+		playlistPolicyService,
+		playlistFavoriteService,
+		playlistAccessRepo,
 	)
 	genreService := genre_service.NewGenreService(genreRepo)
 	licenseService := license_service.NewLicenseService(licenseRepo)
@@ -190,17 +196,20 @@ func Run(conf *config.Config) {
 	trackAudioController := track_cli_ctrl.NewTrackAudioController(trackAudioService)
 	searchController := search_cli_ctrl.NewSearchController(searchService)
 	userController := user_cli_ctrl.NewUserController(userService)
-	playlistMetaController := playlist_cli_ctrl.NewPlaylistMetaController(playlistMetaService, playlistDeletionService)
+	playlistMetaController := playlist_cli_ctrl.NewPlaylistMetaController(playlistMetaService,
+		playlistPrivacyService, playlistDeletionService,
+	)
 	playlistCoverController := playlist_cli_ctrl.NewPlaylistCoverController(playlistCoverService)
 	playlistTrackController := playlist_cli_ctrl.NewPlaylistTrackController(playlistTrackService)
 	playlistFavoriteController := playlist_cli_ctrl.NewPlaylistFavoriteController(playlistFavoriteService)
 	trackSegmentController := track_cli_ctrl.NewTrackSegmentController(segmentService)
 
 	player := player.NewPlayer(trackAudioService)
-	playerController := player_cli_ctrl.NewPlayerController(player, albumTrackService, playlistTrackService, trackService)
+	playerController := player_cli_ctrl.NewPlayerController(player, albumTrackService,
+		playlistTrackService, trackService)
 
 	tablePrinter := tableoutput.NewTablePrinter()
-	router := cmdrouter.NewCmdRouterV2("Orpheon", tablePrinter)
+	router := cmdrouter.NewCmdRouter("Orpheon", tablePrinter)
 
 	contentGroup := router.Group("Content")
 
@@ -238,8 +247,15 @@ func Run(conf *config.Config) {
 	ctx, stop := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
+	fmt.Println("Orpheon. CLI")
+	if err := authController.RefreshToken(ctx); err == nil {
+		userInfo, err := userService.GetUser(ctx, session.Claims().UserID)
+		if err == nil {
+			fmt.Printf("You are logged in as '%s'\n", userInfo.Name)
+		}
+	}
+
 	go func() {
-		fmt.Println("Orpheon. CLI")
 		router.Run(ctx)
 		stop()
 	}()

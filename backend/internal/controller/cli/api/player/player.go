@@ -10,12 +10,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/player"
-	cmdrouter "github.com/hahaclassic/orpheon/backend/internal/controller/cli/router"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/session"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
+	"github.com/hahaclassic/orpheon/backend/pkg/cmdrouter"
 )
 
 type PlayerController struct {
@@ -25,7 +25,8 @@ type PlayerController struct {
 	trackService   track.TrackMetaService
 }
 
-func NewPlayerController(player *player.Player, albumTracks album.AlbumTrackService, playlistTracks playlist.PlaylistTrackService, trackService track.TrackMetaService) *PlayerController {
+func NewPlayerController(player *player.Player, albumTracks album.AlbumTrackService,
+	playlistTracks playlist.PlaylistTrackService, trackService track.TrackMetaService) *PlayerController {
 	return &PlayerController{
 		player:         player,
 		albumTracks:    albumTracks,
@@ -45,12 +46,8 @@ func (c *PlayerController) Menu() []cmdrouter.OptionHandler {
 			Run:  c.pause,
 		},
 		{
-			Name: "Seek Forward",
-			Run:  c.seekForward,
-		},
-		{
-			Name: "Seek Backward",
-			Run:  c.seekBackward,
+			Name: "Seek",
+			Run:  c.seekTo,
 		},
 		{
 			Name: "Next",
@@ -168,13 +165,13 @@ func (c *PlayerController) previous(ctx context.Context) error {
 	return nil
 }
 
-func (c *PlayerController) seekForward(ctx context.Context) error {
+func (c *PlayerController) seekTo(ctx context.Context) error {
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print("Enter seconds to seek forward (default 10): ")
+	fmt.Print("Enter position to seek: ")
 	scanner.Scan()
 	input := scanner.Text()
 
-	seconds := 10 // default value
+	seconds := 0 // default value
 	if input != "" {
 		var err error
 		seconds, err = strconv.Atoi(input)
@@ -183,27 +180,7 @@ func (c *PlayerController) seekForward(ctx context.Context) error {
 		}
 	}
 
-	c.player.SeekForward(seconds)
-	time.Sleep(5 * time.Millisecond)
-	return nil
-}
-
-func (c *PlayerController) seekBackward(ctx context.Context) error {
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print("Enter seconds to seek backward (default 10): ")
-	scanner.Scan()
-	input := scanner.Text()
-
-	seconds := 10 // default value
-	if input != "" {
-		var err error
-		seconds, err = strconv.Atoi(input)
-		if err != nil {
-			return fmt.Errorf("invalid input: %w", err)
-		}
-	}
-
-	c.player.SeekBackward(seconds)
+	c.player.SeekTo(seconds)
 	time.Sleep(5 * time.Millisecond)
 	return nil
 }
