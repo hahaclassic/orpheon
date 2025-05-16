@@ -23,15 +23,21 @@ type PlaylistMetaRepository interface {
 	Delete(ctx context.Context, playlistID uuid.UUID) error
 }
 
-type PlaylistMetaService struct {
-	repo   PlaylistMetaRepository
-	policy usecase.PlaylistPolicyService
+type PlaylistAccessMetaDeleter interface {
+	DeleteAccessMeta(ctx context.Context, playlistID uuid.UUID) error
 }
 
-func NewPlaylistMetaService(repo PlaylistMetaRepository, policy usecase.PlaylistPolicyService) *PlaylistMetaService {
+type PlaylistMetaService struct {
+	repo       PlaylistMetaRepository
+	policy     usecase.PlaylistPolicyService
+	accessRepo PlaylistAccessMetaDeleter
+}
+
+func NewPlaylistMetaService(repo PlaylistMetaRepository, policy usecase.PlaylistPolicyService, accessRepo PlaylistAccessMetaDeleter) *PlaylistMetaService {
 	return &PlaylistMetaService{
-		repo:   repo,
-		policy: policy,
+		repo:       repo,
+		policy:     policy,
+		accessRepo: accessRepo,
 	}
 }
 
@@ -78,7 +84,7 @@ func (p *PlaylistMetaService) GetUserAllPlaylistsMeta(ctx context.Context, claim
 		return nil, err
 	}
 
-	// if user is owner, show all playlists
+	// if user is owner, show all playlists (user can see all his playlists)
 	if claims.UserID == userID {
 		return playlists, nil
 	}
@@ -100,21 +106,25 @@ func (p *PlaylistMetaService) UpdateMeta(ctx context.Context, claims *entity.Cla
 		err = errwrap.WrapIfErr(usecase.ErrUpdateMeta, err)
 	}()
 
-	playlist.UpdatedAt = time.Now()
-
-	if err = p.policy.UpdatePrivacy(ctx, claims, playlist.ID, playlist.IsPrivate); err != nil {
+	if err = p.policy.CanEdit(ctx, claims, playlist.ID); err != nil {
 		return err
 	}
+
+	playlist.UpdatedAt = time.Now()
 
 	return p.repo.Update(ctx, playlist)
 }
 
 func (p *PlaylistMetaService) DeleteMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
 	defer func() {
-		err = errwrap.WrapIfErr(usecase.ErrDeletePlaylist, err)
+		err = errwrap.WrapIfErr(usecase.ErrDeleteMeta, err)
 	}()
 
-	if err = p.policy.DeletePolicy(ctx, claims, playlistID); err != nil {
+	if err = p.policy.CanDelete(ctx, claims, playlistID); err != nil {
+		return err
+	}
+
+	if err = p.accessRepo.DeleteAccessMeta(ctx, playlistID); err != nil {
 		return err
 	}
 

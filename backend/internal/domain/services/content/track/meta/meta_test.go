@@ -23,17 +23,18 @@ func TestTrackMetaService_CreateTrackMeta(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		mockSetup  func(repo *mocks.TrackMetaRepository)
+		mockSetup  func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService)
 		expectsErr bool
 	}{
 		{
 			name: "success",
 			args: args{
 				claims: &entity.Claims{AccessLvl: entity.Admin},
-				track:  &entity.TrackMeta{},
+				track:  &entity.TrackMeta{Duration: 180},
 			},
-			mockSetup: func(repo *mocks.TrackMetaRepository) {
+			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
 				repo.On("Create", mock.Anything, mock.Anything).Return(nil)
+				segmentService.On("CreateSegments", mock.Anything, mock.Anything, 180).Return(nil)
 			},
 			expectsErr: false,
 		},
@@ -43,17 +44,29 @@ func TestTrackMetaService_CreateTrackMeta(t *testing.T) {
 				claims: &entity.Claims{AccessLvl: entity.User},
 				track:  &entity.TrackMeta{},
 			},
-			mockSetup:  func(repo *mocks.TrackMetaRepository) {},
+			mockSetup:  func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {},
 			expectsErr: true,
 		},
 		{
 			name: "repo error",
 			args: args{
 				claims: &entity.Claims{AccessLvl: entity.Admin},
-				track:  &entity.TrackMeta{},
+				track:  &entity.TrackMeta{Duration: 180},
 			},
-			mockSetup: func(repo *mocks.TrackMetaRepository) {
+			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
 				repo.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error"))
+			},
+			expectsErr: true,
+		},
+		{
+			name: "segment service error",
+			args: args{
+				claims: &entity.Claims{AccessLvl: entity.Admin},
+				track:  &entity.TrackMeta{Duration: 180},
+			},
+			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
+				repo.On("Create", mock.Anything, mock.Anything).Return(nil)
+				segmentService.On("CreateSegments", mock.Anything, mock.Anything, 180).Return(errors.New("segment error"))
 			},
 			expectsErr: true,
 		},
@@ -65,7 +78,7 @@ func TestTrackMetaService_CreateTrackMeta(t *testing.T) {
 			segmentService := mocks.NewTrackSegmentService(t)
 			service := meta.NewTrackMetaService(repo, segmentService)
 			if tt.mockSetup != nil {
-				tt.mockSetup(repo)
+				tt.mockSetup(repo, segmentService)
 			}
 			_, err := service.CreateTrackMeta(context.Background(), tt.args.claims, tt.args.track)
 			if tt.expectsErr {
@@ -73,6 +86,7 @@ func TestTrackMetaService_CreateTrackMeta(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				repo.AssertCalled(t, "Create", mock.Anything, mock.Anything)
+				segmentService.AssertCalled(t, "CreateSegments", mock.Anything, mock.Anything, 180)
 			}
 		})
 	}
@@ -151,14 +165,15 @@ func TestTrackMetaService_DeleteTrackMeta(t *testing.T) {
 		name       string
 		claims     *entity.Claims
 		trackID    uuid.UUID
-		mockSetup  func(repo *mocks.TrackMetaRepository)
+		mockSetup  func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService)
 		expectsErr bool
 	}{
 		{
 			name:    "success",
 			claims:  &entity.Claims{AccessLvl: entity.Admin},
 			trackID: uuid.New(),
-			mockSetup: func(repo *mocks.TrackMetaRepository) {
+			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
+				segmentService.On("DeleteSegments", mock.Anything, mock.Anything).Return(nil)
 				repo.On("Delete", mock.Anything, mock.Anything).Return(nil)
 			},
 			expectsErr: false,
@@ -167,14 +182,24 @@ func TestTrackMetaService_DeleteTrackMeta(t *testing.T) {
 			name:       "permission denied",
 			claims:     &entity.Claims{AccessLvl: entity.User},
 			trackID:    uuid.New(),
-			mockSetup:  func(repo *mocks.TrackMetaRepository) {},
+			mockSetup:  func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {},
+			expectsErr: true,
+		},
+		{
+			name:    "segment service error",
+			claims:  &entity.Claims{AccessLvl: entity.Admin},
+			trackID: uuid.New(),
+			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
+				segmentService.On("DeleteSegments", mock.Anything, mock.Anything).Return(errors.New("segment error"))
+			},
 			expectsErr: true,
 		},
 		{
 			name:    "repo error",
 			claims:  &entity.Claims{AccessLvl: entity.Admin},
 			trackID: uuid.New(),
-			mockSetup: func(repo *mocks.TrackMetaRepository) {
+			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
+				segmentService.On("DeleteSegments", mock.Anything, mock.Anything).Return(nil)
 				repo.On("Delete", mock.Anything, mock.Anything).Return(errors.New("db error"))
 			},
 			expectsErr: true,
@@ -186,13 +211,14 @@ func TestTrackMetaService_DeleteTrackMeta(t *testing.T) {
 			segmentService := mocks.NewTrackSegmentService(t)
 			service := meta.NewTrackMetaService(repo, segmentService)
 			if tt.mockSetup != nil {
-				tt.mockSetup(repo)
+				tt.mockSetup(repo, segmentService)
 			}
 			err := service.DeleteTrackMeta(context.Background(), tt.claims, tt.trackID)
 			if tt.expectsErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
+				segmentService.AssertCalled(t, "DeleteSegments", mock.Anything, mock.Anything)
 				repo.AssertCalled(t, "Delete", mock.Anything, mock.Anything)
 			}
 		})

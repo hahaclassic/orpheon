@@ -2,10 +2,12 @@ package deleter
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
@@ -21,8 +23,8 @@ type TrackDeletionService interface {
 }
 
 type FavoritesDeletionService interface {
-	GetUsersWithFavoritePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]uuid.UUID, error)
-	DeleteFromAllFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	GetUsersWithFavoritePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, withOwner bool) ([]uuid.UUID, error)
+	DeleteFromAllFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, withOwner bool) error
 	AddPlaylistToAllFavorites(ctx context.Context, claims *entity.Claims, userIDs []uuid.UUID, playlistID uuid.UUID) error
 }
 
@@ -59,7 +61,7 @@ func WithFavoritesDeletion(favoriteService FavoritesDeletionService) OptionFunc 
 	}
 }
 
-func WIthCoverDeletion(coverService PlaylistCoverDeletionService) OptionFunc {
+func WithCoverDeletion(coverService PlaylistCoverDeletionService) OptionFunc {
 	return func(pd *PlaylistDeleter) {
 		pd.cover = coverService
 	}
@@ -124,12 +126,12 @@ func (p *PlaylistDeleter) DeletePlaylist(ctx context.Context, claims *entity.Cla
 }
 
 func (p *PlaylistDeleter) deleteFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (rollback, error) {
-	userIDs, err := p.favorites.GetUsersWithFavoritePlaylist(ctx, claims, playlistID)
+	userIDs, err := p.favorites.GetUsersWithFavoritePlaylist(ctx, claims, playlistID, true)
 	if err != nil {
 		return nil, err
 	}
 
-	err = p.favorites.DeleteFromAllFavorites(ctx, claims, playlistID)
+	err = p.favorites.DeleteFromAllFavorites(ctx, claims, playlistID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +148,11 @@ func (p *PlaylistDeleter) deleteAllTracks(ctx context.Context, claims *entity.Cl
 	}
 
 	err = p.tracks.DeleteAllTracks(ctx, claims, playlistID)
+	if errors.Is(err, commonerr.ErrNotFound) {
+		return func() error {
+			return nil
+		}, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -162,6 +169,11 @@ func (p *PlaylistDeleter) deleteAllTracks(ctx context.Context, claims *entity.Cl
 
 func (p *PlaylistDeleter) deleteCover(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (rollback, error) {
 	cover, err := p.cover.GetCover(ctx, claims, playlistID)
+	if errors.Is(err, commonerr.ErrNotFound) {
+		return func() error {
+			return nil
+		}, nil
+	}
 	if err != nil {
 		return nil, err
 	}

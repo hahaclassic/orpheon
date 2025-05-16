@@ -15,11 +15,9 @@ var (
 	ErrCanUpdatePrivacy = errors.New("couldn't update permissions")
 )
 
+// this service responsible only for checking if user has access to playlist
 type PlaylistPolicyService interface {
 	CanDelete(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
 	CanEdit(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
 	CanView(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
-
-	UpdatePrivacy(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, isPrivate bool) error
-	DeletePolicy(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
 }

@@ -19,6 +19,10 @@ func TestPlaylistTrackService_AddTrack(t *testing.T) {
 	playlistID := uuid.New()
 	trackID := uuid.New()
 	claims := &entity.Claims{UserID: userID}
+	playlistTrack := &entity.PlaylistTrack{
+		PlaylistID: playlistID,
+		TrackID:    trackID,
+	}
 
 	cases := []struct {
 		name      string
@@ -29,7 +33,7 @@ func TestPlaylistTrackService_AddTrack(t *testing.T) {
 			name: "success",
 			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
 				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("AddTrackToPlaylist", ctx, playlistID, trackID).Return(nil)
+				repo.On("AddTrackToPlaylist", ctx, playlistTrack).Return(nil)
 			},
 			expectErr: nil,
 		},
@@ -44,7 +48,7 @@ func TestPlaylistTrackService_AddTrack(t *testing.T) {
 			name: "repo error",
 			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
 				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("AddTrackToPlaylist", ctx, playlistID, trackID).Return(errors.New("db error"))
+				repo.On("AddTrackToPlaylist", ctx, playlistTrack).Return(errors.New("db error"))
 			},
 			expectErr: errors.New("db error"),
 		},
@@ -57,10 +61,7 @@ func TestPlaylistTrackService_AddTrack(t *testing.T) {
 			tc.setup(repo, policy)
 
 			svc := tracks.NewPlaylistTrackService(repo, policy)
-			err := svc.AddTrack(ctx, claims, &entity.PlaylistTrack{
-				PlaylistID: playlistID,
-				TrackID:    trackID,
-			})
+			err := svc.AddTrack(ctx, claims, playlistTrack)
 
 			if tc.expectErr == nil {
 				assert.NoError(t, err)
@@ -137,6 +138,10 @@ func TestPlaylistTrackService_DeleteTrack(t *testing.T) {
 	playlistID := uuid.New()
 	trackID := uuid.New()
 	claims := &entity.Claims{UserID: userID}
+	playlistTrack := &entity.PlaylistTrack{
+		PlaylistID: playlistID,
+		TrackID:    trackID,
+	}
 
 	cases := []struct {
 		name      string
@@ -147,7 +152,7 @@ func TestPlaylistTrackService_DeleteTrack(t *testing.T) {
 			name: "success",
 			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
 				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("DeleteTrackFromPlaylist", ctx, playlistID, trackID).Return(nil)
+				repo.On("DeleteTrackFromPlaylist", ctx, playlistTrack).Return(nil)
 			},
 			expectErr: nil,
 		},
@@ -162,7 +167,7 @@ func TestPlaylistTrackService_DeleteTrack(t *testing.T) {
 			name: "repo error",
 			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
 				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("DeleteTrackFromPlaylist", ctx, playlistID, trackID).Return(errors.New("db error"))
+				repo.On("DeleteTrackFromPlaylist", ctx, playlistTrack).Return(errors.New("db error"))
 			},
 			expectErr: errors.New("db error"),
 		},
@@ -175,10 +180,7 @@ func TestPlaylistTrackService_DeleteTrack(t *testing.T) {
 			tc.setup(repo, policy)
 
 			svc := tracks.NewPlaylistTrackService(repo, policy)
-			err := svc.DeleteTrack(ctx, claims, &entity.PlaylistTrack{
-				PlaylistID: playlistID,
-				TrackID:    trackID,
-			})
+			err := svc.DeleteTrack(ctx, claims, playlistTrack)
 
 			if tc.expectErr == nil {
 				assert.NoError(t, err)

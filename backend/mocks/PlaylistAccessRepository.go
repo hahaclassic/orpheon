@@ -24,53 +24,6 @@ func (_m *PlaylistAccessRepository) EXPECT() *PlaylistAccessRepository_Expecter 
 	return &PlaylistAccessRepository_Expecter{mock: &_m.Mock}
 }
 
-// DeleteAccessMeta provides a mock function with given fields: ctx, playlistID
-func (_m *PlaylistAccessRepository) DeleteAccessMeta(ctx context.Context, playlistID uuid.UUID) error {
-	ret := _m.Called(ctx, playlistID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteAccessMeta")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
-		r0 = rf(ctx, playlistID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// PlaylistAccessRepository_DeleteAccessMeta_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAccessMeta'
-type PlaylistAccessRepository_DeleteAccessMeta_Call struct {
-	*mock.Call
-}
-
-// DeleteAccessMeta is a helper method to define mock.On call
-//   - ctx context.Context
-//   - playlistID uuid.UUID
-func (_e *PlaylistAccessRepository_Expecter) DeleteAccessMeta(ctx interface{}, playlistID interface{}) *PlaylistAccessRepository_DeleteAccessMeta_Call {
-	return &PlaylistAccessRepository_DeleteAccessMeta_Call{Call: _e.mock.On("DeleteAccessMeta", ctx, playlistID)}
-}
-
-func (_c *PlaylistAccessRepository_DeleteAccessMeta_Call) Run(run func(ctx context.Context, playlistID uuid.UUID)) *PlaylistAccessRepository_DeleteAccessMeta_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *PlaylistAccessRepository_DeleteAccessMeta_Call) Return(_a0 error) *PlaylistAccessRepository_DeleteAccessMeta_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *PlaylistAccessRepository_DeleteAccessMeta_Call) RunAndReturn(run func(context.Context, uuid.UUID) error) *PlaylistAccessRepository_DeleteAccessMeta_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetAccessMeta provides a mock function with given fields: ctx, playlistID
 func (_m *PlaylistAccessRepository) GetAccessMeta(ctx context.Context, playlistID uuid.UUID) (*entity.PlaylistAccessMeta, error) {
 	ret := _m.Called(ctx, playlistID)
