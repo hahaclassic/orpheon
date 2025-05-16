@@ -6,15 +6,24 @@ import (
 	"log/slog"
 )
 
-type CmdRouterV2 struct {
+type TablePrinter interface {
+	PrintTable(headers []string, rows [][]any)
+}
+
+type OptionHandler struct {
+	Name string                          // name of the operation, e.g. "login"
+	Run  func(ctx context.Context) error // function to run the operation
+}
+
+type CmdRouter struct {
 	name         string
 	handlers     []OptionHandler
 	tablePrinter TablePrinter
 	isGroup      bool
 }
 
-func NewCmdRouterV2(name string, tablePrinter TablePrinter, handlers ...OptionHandler) *CmdRouterV2 {
-	return &CmdRouterV2{
+func NewCmdRouter(name string, tablePrinter TablePrinter, handlers ...OptionHandler) *CmdRouter {
+	return &CmdRouter{
 		name:         name,
 		handlers:     handlers,
 		tablePrinter: tablePrinter,
@@ -22,8 +31,8 @@ func NewCmdRouterV2(name string, tablePrinter TablePrinter, handlers ...OptionHa
 	}
 }
 
-func (c *CmdRouterV2) Group(name string, handlers ...OptionHandler) *CmdRouterV2 {
-	group := &CmdRouterV2{
+func (c *CmdRouter) Group(name string, handlers ...OptionHandler) *CmdRouter {
+	group := &CmdRouter{
 		name:         name,
 		handlers:     handlers,
 		tablePrinter: c.tablePrinter,
@@ -38,11 +47,11 @@ func (c *CmdRouterV2) Group(name string, handlers ...OptionHandler) *CmdRouterV2
 	return group
 }
 
-func (c *CmdRouterV2) SetOptionHandlers(handlers ...OptionHandler) {
+func (c *CmdRouter) SetOptionHandlers(handlers ...OptionHandler) {
 	c.handlers = append(c.handlers, handlers...)
 }
 
-func (c *CmdRouterV2) Run(ctx context.Context) {
+func (c *CmdRouter) Run(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			slog.Error("panic", "err", r)
@@ -66,7 +75,7 @@ func (c *CmdRouterV2) Run(ctx context.Context) {
 	}
 }
 
-func (c CmdRouterV2) getOption() int {
+func (c CmdRouter) getOption() int {
 	c.showMenu()
 
 	var option int
@@ -83,7 +92,7 @@ func (c CmdRouterV2) getOption() int {
 	return option
 }
 
-func (c *CmdRouterV2) showMenu() {
+func (c *CmdRouter) showMenu() {
 	headers := []string{"#", c.name}
 	rows := make([][]any, 0, len(c.handlers))
 
