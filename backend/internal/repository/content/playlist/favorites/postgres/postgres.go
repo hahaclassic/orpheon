@@ -57,6 +57,10 @@ func (r *PlaylistFavoriteRepository) GetUserFavorites(ctx context.Context, userI
 		result = append(result, &meta)
 	}
 
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate rows: %w", err)
+	}
+
 	return result, nil
 }
 
@@ -73,13 +77,21 @@ func (r *PlaylistFavoriteRepository) DeleteFromUserFavorites(ctx context.Context
 	return nil
 }
 
-func (r *PlaylistFavoriteRepository) GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID) ([]uuid.UUID, error) {
-	const query = `
-		SELECT user_id
-		FROM favorite_playlists
-		WHERE playlist_id = $1
-	`
-
+func (r *PlaylistFavoriteRepository) GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID, withOwner bool) ([]uuid.UUID, error) {
+	var query string
+	if withOwner {
+		query = `
+			SELECT user_id
+			FROM favorite_playlists
+			WHERE playlist_id = $1
+	    `
+	} else {
+		query = `
+			SELECT user_id
+			FROM favorite_playlists
+			WHERE playlist_id = $1 AND user_id != (select owner_id from playlists where id = $1)
+		`
+	}
 	rows, err := r.pool.Query(ctx, query, playlistID)
 	if err != nil {
 		return nil, fmt.Errorf("get users with favorite: %w", err)
@@ -98,16 +110,27 @@ func (r *PlaylistFavoriteRepository) GetUsersWithFavoritePlaylist(ctx context.Co
 	return users, nil
 }
 
-func (r *PlaylistFavoriteRepository) DeleteFromAllFavorites(ctx context.Context, playlistID uuid.UUID) error {
-	const query = `
-		DELETE FROM favorite_playlists
-		WHERE playlist_id = $1
-	`
+func (r *PlaylistFavoriteRepository) DeleteFromAllFavorites(ctx context.Context, playlistID uuid.UUID, withOwner bool) error {
+	var (
+		query string
+		err   error
+	)
+	if withOwner {
+		query = `
+			DELETE FROM favorite_playlists
+			WHERE playlist_id = $1
+	    `
+	} else {
+		query = `
+			DELETE FROM favorite_playlists
+			WHERE playlist_id = $1 AND user_id != (select owner_id from playlists where id = $1) 
+		`
+	}
 
-	_, err := r.pool.Exec(ctx, query, playlistID)
-	if err != nil {
+	if _, err = r.pool.Exec(ctx, query, playlistID); err != nil {
 		return fmt.Errorf("delete from all favorites: %w", err)
 	}
+
 	return nil
 }
 

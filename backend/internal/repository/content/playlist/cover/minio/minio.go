@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/minio/minio-go/v7"
 )
 
@@ -51,6 +52,15 @@ func (r *PlaylistCoverRepository) SaveCover(ctx context.Context, cover *entity.C
 
 func (r *PlaylistCoverRepository) GetCover(ctx context.Context, objectID uuid.UUID) (*entity.Cover, error) {
 	objectName := fmt.Sprintf("playlist_covers/%s", objectID)
+
+	// Check if object exists first
+	_, err := r.minio.StatObject(ctx, r.bucketName, objectName, minio.StatObjectOptions{})
+	if err != nil {
+		if minio.ToErrorResponse(err).Code == "NoSuchKey" {
+			return nil, fmt.Errorf("%w: %v", commonerr.ErrNotFound, err)
+		}
+		return nil, fmt.Errorf("failed to check cover existence in MinIO: %w", err)
+	}
 
 	object, err := r.minio.GetObject(ctx, r.bucketName, objectName, minio.GetObjectOptions{})
 	if err != nil {

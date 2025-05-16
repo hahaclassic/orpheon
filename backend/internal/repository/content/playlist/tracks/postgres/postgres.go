@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -69,7 +70,7 @@ func (r *PlaylistTracksRepository) DeleteAllTracksFromPlaylist(ctx context.Conte
 		return fmt.Errorf("delete all tracks from playlist: %w", err)
 	}
 	if ct.RowsAffected() == 0 {
-		return fmt.Errorf("no tracks found in playlist %s", playlistID)
+		return fmt.Errorf("%w: no tracks found in playlist %s", commonerr.ErrNotFound, playlistID)
 	}
 
 	return nil
@@ -116,19 +117,7 @@ func (r *PlaylistTracksRepository) GetAllPlaylistTracks(ctx context.Context, pla
 
 func (r *PlaylistTracksRepository) ChangeTrackPosition(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
 	const query = `
-		WITH current_pos AS (
-			SELECT position 
-			FROM playlist_tracks 
-			WHERE playlist_id = $1 AND track_id = $2
-		)
-		UPDATE playlist_tracks
-		SET position = CASE
-			WHEN playlist_id = $1 AND track_id = $2 THEN $3
-			WHEN playlist_id = $1 AND position >= $3 AND position < (SELECT position FROM current_pos) THEN position + 1
-			WHEN playlist_id = $1 AND position <= $3 AND position > (SELECT position FROM current_pos) THEN position - 1
-			ELSE position
-		END
-		WHERE playlist_id = $1
+		SELECT change_track_position($1, $2, $3);
 	`
 
 	_, err := r.pool.Exec(ctx, query, playlistTrack.PlaylistID, playlistTrack.TrackID, playlistTrack.Position)
