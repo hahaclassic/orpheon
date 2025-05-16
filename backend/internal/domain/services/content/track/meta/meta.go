@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
@@ -23,11 +24,12 @@ type TrackMetaRepository interface {
 }
 
 type TrackMetaService struct {
-	repo TrackMetaRepository
+	repo           TrackMetaRepository
+	segmentService track.TrackSegmentService
 }
 
-func NewTrackMetaService(repo TrackMetaRepository) *TrackMetaService {
-	return &TrackMetaService{repo: repo}
+func NewTrackMetaService(repo TrackMetaRepository, segmentService track.TrackSegmentService) *TrackMetaService {
+	return &TrackMetaService{repo: repo, segmentService: segmentService}
 }
 
 func (s *TrackMetaService) GetTrackMeta(ctx context.Context, trackID uuid.UUID) (_ *entity.TrackMeta, err error) {
@@ -56,6 +58,10 @@ func (s *TrackMetaService) CreateTrackMeta(ctx context.Context, claims *entity.C
 		return uuid.Nil, err
 	}
 
+	if err = s.segmentService.CreateSegments(ctx, track.ID, track.Duration); err != nil {
+		return uuid.Nil, err
+	}
+
 	return id, nil
 }
 
@@ -78,6 +84,10 @@ func (s *TrackMetaService) DeleteTrackMeta(ctx context.Context, claims *entity.C
 
 	if claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
+	}
+
+	if err = s.segmentService.DeleteSegments(ctx, trackID); err != nil {
+		return err
 	}
 
 	return s.repo.Delete(ctx, trackID)

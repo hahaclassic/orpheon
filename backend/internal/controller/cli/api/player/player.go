@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -42,6 +43,14 @@ func (c *PlayerController) Menu() []cmdrouter.OptionHandler {
 		{
 			Name: "Pause",
 			Run:  c.pause,
+		},
+		{
+			Name: "Seek Forward",
+			Run:  c.seekForward,
+		},
+		{
+			Name: "Seek Backward",
+			Run:  c.seekBackward,
 		},
 		{
 			Name: "Next",
@@ -155,6 +164,46 @@ func (c *PlayerController) next(ctx context.Context) error {
 
 func (c *PlayerController) previous(ctx context.Context) error {
 	c.player.Previous()
+	time.Sleep(5 * time.Millisecond)
+	return nil
+}
+
+func (c *PlayerController) seekForward(ctx context.Context) error {
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Print("Enter seconds to seek forward (default 10): ")
+	scanner.Scan()
+	input := scanner.Text()
+
+	seconds := 10 // default value
+	if input != "" {
+		var err error
+		seconds, err = strconv.Atoi(input)
+		if err != nil {
+			return fmt.Errorf("invalid input: %w", err)
+		}
+	}
+
+	c.player.SeekForward(seconds)
+	time.Sleep(5 * time.Millisecond)
+	return nil
+}
+
+func (c *PlayerController) seekBackward(ctx context.Context) error {
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Print("Enter seconds to seek backward (default 10): ")
+	scanner.Scan()
+	input := scanner.Text()
+
+	seconds := 10 // default value
+	if input != "" {
+		var err error
+		seconds, err = strconv.Atoi(input)
+		if err != nil {
+			return fmt.Errorf("invalid input: %w", err)
+		}
+	}
+
+	c.player.SeekBackward(seconds)
 	time.Sleep(5 * time.Millisecond)
 	return nil
 }

@@ -2,6 +2,7 @@ package output
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	tableoutput "github.com/hahaclassic/orpheon/backend/pkg/table"
@@ -154,4 +155,58 @@ func PrintUsers(users []*entity.UserInfo) {
 
 	tableoutput.PrintTable(table.StyleColoredDark,
 		[]string{"ID", "Name", "Registration Date", "Birth Date", "Access Level"}, tableData)
+}
+
+func PrintStatsGraph(segments []*entity.Segment) {
+	const (
+		graphWidth  = 60 // ширина графика в символах
+		graphHeight = 10 // высота графика в символах
+	)
+
+	// Находим максимальное количество прослушиваний для масштабирования
+	maxStreams := uint64(0)
+	for _, seg := range segments {
+		if seg.TotalStreams > maxStreams {
+			maxStreams = seg.TotalStreams
+		}
+	}
+
+	// Создаем матрицу для графика
+	graph := make([][]rune, graphHeight)
+	for i := range graph {
+		graph[i] = make([]rune, graphWidth)
+		for j := range graph[i] {
+			graph[i][j] = ' '
+		}
+	}
+
+	// Заполняем график
+	segmentWidth := graphWidth / len(segments)
+	for i, seg := range segments {
+		height := int(float64(seg.TotalStreams) / float64(maxStreams) * float64(graphHeight))
+		if height > 0 {
+			startX := i * segmentWidth
+			endX := (i + 1) * segmentWidth
+			endX = min(endX, graphWidth)
+
+			for x := startX; x < endX; x++ {
+				for y := 0; y < height; y++ {
+					graph[graphHeight-1-y][x] = '█'
+				}
+			}
+		}
+	}
+
+	// Выводим график
+	fmt.Println("\nStreams per segment:")
+	fmt.Println("┌" + strings.Repeat("─", graphWidth) + "┐")
+	for _, row := range graph {
+		fmt.Print("│")
+		for _, cell := range row {
+			fmt.Print(string(cell))
+		}
+		fmt.Println("│")
+	}
+	fmt.Println("└" + strings.Repeat("─", graphWidth) + "┘")
+	fmt.Printf("Max streams: %d\n", maxStreams)
 }

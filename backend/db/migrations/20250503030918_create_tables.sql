@@ -72,10 +72,10 @@ CREATE TABLE track_segments (
     PRIMARY KEY (track_id, index)
 );
 
-CREATE TABLE artist_albums (
-    artist_id UUID NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+CREATE TABLE album_genres (
     album_id UUID NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
-    PRIMARY KEY (artist_id, album_id)
+    genre_id UUID NOT NULL REFERENCES genres(id) ON DELETE CASCADE,
+    PRIMARY KEY (album_id, genre_id)
 );
 
 CREATE TABLE artist_tracks (
@@ -107,6 +107,7 @@ DROP TABLE IF EXISTS playlist_tracks;
 DROP TABLE IF EXISTS artist_tracks;
 DROP TABLE IF EXISTS artist_albums;
 DROP TABLE IF EXISTS track_segments;
+DROP TABLE IF EXISTS album_genres;
 DROP TABLE IF EXISTS playlists;
 DROP TABLE IF EXISTS tracks;
 DROP TABLE IF EXISTS albums;

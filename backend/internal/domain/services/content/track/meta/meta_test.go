@@ -62,7 +62,8 @@ func TestTrackMetaService_CreateTrackMeta(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := mocks.NewTrackMetaRepository(t)
-			service := meta.NewTrackMetaService(repo)
+			segmentService := mocks.NewTrackSegmentService(t)
+			service := meta.NewTrackMetaService(repo, segmentService)
 			if tt.mockSetup != nil {
 				tt.mockSetup(repo)
 			}
@@ -79,7 +80,8 @@ func TestTrackMetaService_CreateTrackMeta(t *testing.T) {
 
 func TestTrackMetaService_GetTrackMeta(t *testing.T) {
 	repo := mocks.NewTrackMetaRepository(t)
-	service := meta.NewTrackMetaService(repo)
+	segmentService := mocks.NewTrackSegmentService(t)
+	service := meta.NewTrackMetaService(repo, segmentService)
 
 	trackID := uuid.New()
 	expected := &entity.TrackMeta{ID: trackID, Name: "Test Track"}
@@ -128,7 +130,8 @@ func TestTrackMetaService_UpdateTrackMeta(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := mocks.NewTrackMetaRepository(t)
-			service := meta.NewTrackMetaService(repo)
+			segmentService := mocks.NewTrackSegmentService(t)
+			service := meta.NewTrackMetaService(repo, segmentService)
 			if tt.mockSetup != nil {
 				tt.mockSetup(repo)
 			}
@@ -180,7 +183,8 @@ func TestTrackMetaService_DeleteTrackMeta(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := mocks.NewTrackMetaRepository(t)
-			service := meta.NewTrackMetaService(repo)
+			segmentService := mocks.NewTrackSegmentService(t)
+			service := meta.NewTrackMetaService(repo, segmentService)
 			if tt.mockSetup != nil {
 				tt.mockSetup(repo)
 			}

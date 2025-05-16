@@ -78,6 +78,7 @@ func (c *PlaylistMetaController) createPlaylist(ctx context.Context) error {
 	if scanner.Text() == "y" {
 		isPrivate = true
 	}
+	fmt.Println(isPrivate)
 
 	playlist := &entity.PlaylistMeta{
 		Name:        name,

@@ -123,3 +123,18 @@ func (r *TrackMetaRepository) Delete(ctx context.Context, trackID uuid.UUID) err
 
 	return nil
 }
+
+func (r *TrackMetaRepository) IncrementTrackTotalStreams(ctx context.Context, trackID uuid.UUID) error {
+	query := `
+		UPDATE tracks
+		SET total_streams = total_streams + 1
+		WHERE id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, trackID)
+	if err != nil {
+		return fmt.Errorf("failed to increment track total streams: %w", err)
+	}
+
+	return nil
+}

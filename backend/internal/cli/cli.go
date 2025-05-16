@@ -42,6 +42,7 @@ import (
 	search_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/search"
 	audio_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/audio"
 	track_meta_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/meta"
+	tracksegment "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/segment"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/user"
 	"github.com/hahaclassic/orpheon/backend/internal/infrastructure/minio"
 	"github.com/hahaclassic/orpheon/backend/internal/infrastructure/postgres"
@@ -67,6 +68,7 @@ import (
 	search_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/search/postgres"
 	audio_minio "github.com/hahaclassic/orpheon/backend/internal/repository/content/track/audio/minio"
 	track_meta_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/track/meta/postgres"
+	segment_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/track/segment/postgres"
 	user_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/user/postgres"
 	tableoutput "github.com/hahaclassic/orpheon/backend/pkg/table"
 )
@@ -106,6 +108,7 @@ func Run(conf *config.Config) {
 	playlistRepo := playlist_meta_postgres.NewPlaylistMetaRepository(pgxpool)
 	playlistTrackRepo := playlist_tracks_postgres.NewPlaylistTracksRepository(pgxpool)
 	playlistFavoriteRepo := favorites_postgres.NewPlaylistFavoriteRepository(pgxpool)
+	segmentRepo := segment_postgres.NewTrackSegmentRepository(pgxpool)
 
 	albumCoverRepo, err := album_cover_minio.NewAlbumCoverRepository(ctx, minioClient, conf.MinIO.BucketAlbum)
 	if err != nil {
@@ -150,7 +153,8 @@ func Run(conf *config.Config) {
 	playlistPolicyService := policy.New(playlistAccessRepoWithCache)
 
 	// Initialize content services
-	trackService := track_meta_service.NewTrackMetaService(trackRepo)
+	segmentService := tracksegment.NewTrackSegmentService(segmentRepo)
+	trackService := track_meta_service.NewTrackMetaService(trackRepo, segmentService)
 	trackAudioService := audio_service.New(audioRepo, audioconverter.New())
 	artistMetaService := artist_meta_service.New(artistMetaRepo)
 	playlistMetaService := playlist_meta_service.NewPlaylistMetaService(playlistRepo, playlistPolicyService)
@@ -171,6 +175,7 @@ func Run(conf *config.Config) {
 	artistAssignService := assign.NewArtistAssignService(artistAssignRepo)
 	artistAvatarService := avatar.NewArtistCoverService(artistAvatarRepo)
 	searchService := search_service.NewSearchService(searchRepo)
+	//listeningStatService := processor.NewListeningStatService(trackRepo, segmentRepo)
 
 	authController := auth_cli_ctrl.NewAuthController(authService)
 	genreController := genre_cli_ctrl.NewGenreController(genreService)
@@ -189,6 +194,7 @@ func Run(conf *config.Config) {
 	playlistCoverController := playlist_cli_ctrl.NewPlaylistCoverController(playlistCoverService)
 	playlistTrackController := playlist_cli_ctrl.NewPlaylistTrackController(playlistTrackService)
 	playlistFavoriteController := playlist_cli_ctrl.NewPlaylistFavoriteController(playlistFavoriteService)
+	trackSegmentController := track_cli_ctrl.NewTrackSegmentController(segmentService)
 
 	player := player.NewPlayer(trackAudioService)
 	playerController := player_cli_ctrl.NewPlayerController(player, albumTrackService, playlistTrackService, trackService)
@@ -207,6 +213,7 @@ func Run(conf *config.Config) {
 
 	trackGroup.Group("Meta", trackMetaController.Menu()...)
 	trackGroup.Group("Audio", trackAudioController.Menu()...)
+	trackGroup.SetOptionHandlers(trackSegmentController.Menu()...)
 
 	albumGroup.Group("Meta", albumMetaController.Menu()...)
 	albumGroup.Group("Covers", albumCoverController.Menu()...)

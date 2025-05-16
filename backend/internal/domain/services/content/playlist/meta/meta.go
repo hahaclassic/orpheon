@@ -3,6 +3,7 @@ package meta
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
@@ -20,10 +21,6 @@ type PlaylistMetaRepository interface {
 	GetByUser(ctx context.Context, userID uuid.UUID) ([]*entity.PlaylistMeta, error)
 	Update(ctx context.Context, playlist *entity.PlaylistMeta) error
 	Delete(ctx context.Context, playlistID uuid.UUID) error
-}
-
-type PlaylistAccessRepository interface {
-	DeleteAccessMeta(ctx context.Context, playlistID uuid.UUID) error
 }
 
 type PlaylistMetaService struct {
@@ -52,6 +49,9 @@ func (p *PlaylistMetaService) CreateMeta(ctx context.Context, claims *entity.Cla
 		return err
 	}
 	playlist.OwnerID = claims.UserID
+
+	playlist.CreatedAt = time.Now()
+	playlist.UpdatedAt = playlist.CreatedAt
 
 	return p.repo.Create(ctx, playlist)
 }
@@ -99,6 +99,8 @@ func (p *PlaylistMetaService) UpdateMeta(ctx context.Context, claims *entity.Cla
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrUpdateMeta, err)
 	}()
+
+	playlist.UpdatedAt = time.Now()
 
 	if err = p.policy.UpdatePrivacy(ctx, claims, playlist.ID, playlist.IsPrivate); err != nil {
 		return err

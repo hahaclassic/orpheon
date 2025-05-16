@@ -19,12 +19,12 @@ type ListeningStatService struct {
 }
 
 type TrackStatRepository interface {
-	IncrementTrackStreamCount(ctx context.Context, trackID uuid.UUID, userID uuid.UUID) error
+	IncrementTrackTotalStreams(ctx context.Context, trackID uuid.UUID) error
 }
 
 type SegmentStatRepository interface {
-	GetTrackSegments(ctx context.Context, trackID uuid.UUID) ([]*entity.Segment, error)
-	IncrementSegmentStreamCount(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int) error
+	GetSegments(ctx context.Context, trackID uuid.UUID) ([]*entity.Segment, error)
+	IncrementTotalStreams(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int) error
 }
 
 func NewListeningStatService(trackRepo TrackStatRepository, segmentRepo SegmentStatRepository) *ListeningStatService {
@@ -38,19 +38,19 @@ func (s *ListeningStatService) UpdateStat(ctx context.Context, event *entity.Lis
 		}
 	}()
 
-	segments, err := s.segmentRepo.GetTrackSegments(ctx, event.TrackID)
+	segments, err := s.segmentRepo.GetSegments(ctx, event.TrackID)
 	if err != nil {
 		return err
 	}
 
 	affectedSegIdx, totalDuration := s.proccessListeningEvent(segments, event)
 
-	if err = s.segmentRepo.IncrementSegmentStreamCount(ctx, event.TrackID, affectedSegIdx); err != nil {
+	if err = s.segmentRepo.IncrementTotalStreams(ctx, event.TrackID, affectedSegIdx); err != nil {
 		return err
 	}
 
 	if totalDuration > MinSeconds {
-		if err = s.trackRepo.IncrementTrackStreamCount(ctx, event.TrackID, event.UserID); err != nil {
+		if err = s.trackRepo.IncrementTrackTotalStreams(ctx, event.TrackID); err != nil {
 			return err
 		}
 	}
@@ -70,7 +70,7 @@ func (ListeningStatService) proccessListeningEvent(segments []*entity.Segment, e
 
 		intersec := intersection(segments[segIdx].Range, lisRange)
 		if float64(intersec.Len()) >= float64(segments[segIdx].Range.Len())/2 {
-			segments[segIdx].StreamCount++
+			segments[segIdx].TotalStreams++
 			affectedSegIdx = append(affectedSegIdx, segIdx)
 		}
 	}
@@ -86,7 +86,7 @@ func (ListeningStatService) proccessListeningEvent(segments []*entity.Segment, e
 			if idx < 0 || idx >= len(segments) {
 				continue
 			}
-			segments[idx].StreamCount++
+			segments[idx].TotalStreams++
 			affectedSegIdx = append(affectedSegIdx, idx)
 		}
 	}

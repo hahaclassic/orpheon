@@ -7,8 +7,9 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 )
 
-type TracksegmentService interface {
+type TrackSegmentService interface {
 	GetSegments(ctx context.Context, trackID uuid.UUID) ([]*entity.Segment, error)
-	CreateSegments(ctx context.Context, tracksID uuid.UUID) error
-	DeleteSegments(ctx context.Context) error
+	CreateSegments(ctx context.Context, trackID uuid.UUID, trackDuration int) error
+	IncrementTotalStreams(ctx context.Context, trackID uuid.UUID, segmentsIdxs []int) error
+	DeleteSegments(ctx context.Context, trackID uuid.UUID) error
 }
