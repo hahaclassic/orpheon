@@ -37,7 +37,7 @@ func (a *AlbumService) CreateAlbum(ctx context.Context, claims *entity.Claims, a
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrCreateAlbum, err)
 	}()
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -70,7 +70,7 @@ func (a *AlbumService) UpdateAlbum(ctx context.Context, claims *entity.Claims, a
 		err = errwrap.WrapIfErr(usecase.ErrUpdateAlbum, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -82,7 +82,7 @@ func (a *AlbumService) DeleteAlbum(ctx context.Context, claims *entity.Claims, a
 		err = errwrap.WrapIfErr(usecase.ErrDeleteAlbum, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

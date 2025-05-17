@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/search"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
@@ -53,6 +54,12 @@ func (s *SearchService) SearchPlaylists(ctx context.Context, claims *entity.Clai
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrSearchPlaylists, err)
 	}()
+
+	if claims == nil {
+		claims = &entity.Claims{
+			UserID: uuid.Nil,
+		}
+	}
 
 	playlists, err := s.repo.SearchPlaylists(ctx, req)
 	if err != nil {

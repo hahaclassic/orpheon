@@ -37,7 +37,7 @@ func (s *GenreService) CreateGenre(ctx context.Context, claims *entity.Claims, g
 		err = errwrap.WrapIfErr(usecase.ErrCreateGenre, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -74,7 +74,7 @@ func (s *GenreService) UpdateGenre(ctx context.Context, claims *entity.Claims, g
 		err = errwrap.WrapIfErr(usecase.ErrUpdateGenre, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -90,7 +90,7 @@ func (s *GenreService) DeleteGenre(ctx context.Context, claims *entity.Claims, g
 		err = errwrap.WrapIfErr(usecase.ErrDeleteGenre, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

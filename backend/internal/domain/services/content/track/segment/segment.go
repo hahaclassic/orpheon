@@ -63,7 +63,7 @@ func (s *Service) CreateSegments(ctx context.Context, trackID uuid.UUID, trackDu
 	segmentDuration := trackDuration / defaultSegmentCount
 	segments := make([]*entity.Segment, 0, defaultSegmentCount)
 
-	for i := 0; i < defaultSegmentCount; i++ {
+	for i := range defaultSegmentCount {
 		start := i * segmentDuration
 		end := start + segmentDuration
 

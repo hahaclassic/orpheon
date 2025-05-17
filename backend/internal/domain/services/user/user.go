@@ -35,9 +35,7 @@ func New(repo UserRepository) *UserService {
 
 func (u *UserService) CreateUser(ctx context.Context, user *entity.UserInfo) (_ uuid.UUID, err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrCreateUser, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrCreateUser, err)
 	}()
 
 	id, err := uuid.NewRandom()
@@ -58,9 +56,7 @@ func (u *UserService) CreateUser(ctx context.Context, user *entity.UserInfo) (_ 
 
 func (u *UserService) GetUser(ctx context.Context, userID uuid.UUID) (_ *entity.UserInfo, err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrGetUser, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrGetUser, err)
 	}()
 
 	return u.repo.GetUser(ctx, userID)
@@ -68,12 +64,10 @@ func (u *UserService) GetUser(ctx context.Context, userID uuid.UUID) (_ *entity.
 
 func (u *UserService) UpdateUser(ctx context.Context, claims *entity.Claims, user *entity.UserInfo) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrUpdateUser, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrUpdateUser, err)
 	}()
 
-	if claims.UserID != user.ID {
+	if claims != nil && claims.UserID != user.ID {
 		return commonerr.ErrForbidden
 	}
 
@@ -82,12 +76,10 @@ func (u *UserService) UpdateUser(ctx context.Context, claims *entity.Claims, use
 
 func (u *UserService) DeleteUser(ctx context.Context, claims *entity.Claims, userID uuid.UUID) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrDeleteUser, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrDeleteUser, err)
 	}()
 
-	if claims.UserID != userID && claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.UserID != userID && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

@@ -34,7 +34,7 @@ func (a *ArtistAssignService) AssignArtistToTrack(ctx context.Context, claims *e
 		err = errwrap.WrapIfErr(usecase.ErrAssignArtistOnTrack, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -46,7 +46,7 @@ func (a *ArtistAssignService) AssignArtistToAlbum(ctx context.Context, claims *e
 		err = errwrap.WrapIfErr(usecase.ErrAssignArtistOnAlbum, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -84,7 +84,7 @@ func (a *ArtistAssignService) UnassignArtistFromTrack(ctx context.Context, claim
 		err = errwrap.WrapIfErr(usecase.ErrUnassignArtistFromTrack, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -96,7 +96,7 @@ func (a *ArtistAssignService) UnassignArtistFromAlbum(ctx context.Context, claim
 		err = errwrap.WrapIfErr(usecase.ErrUnassignArtistFromAlbum, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

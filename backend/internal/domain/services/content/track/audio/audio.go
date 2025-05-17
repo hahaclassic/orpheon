@@ -55,7 +55,7 @@ func (a *AudioFileService) UploadAudioFile(ctx context.Context, claims *entity.C
 	}()
 
 	switch {
-	case claims.AccessLvl != entity.Admin:
+	case claims != nil && claims.AccessLvl != entity.Admin:
 		return commonerr.ErrForbidden
 	case chunk.End <= chunk.Start || chunk.Start != 0 || chunk.End != int64(len(chunk.Data)):
 		return ErrInvalidChunkParams
@@ -74,7 +74,7 @@ func (a *AudioFileService) DeleteAudioFile(ctx context.Context, claims *entity.C
 		err = errwrap.WrapIfErr(usecase.ErrDeleteAudioFile, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

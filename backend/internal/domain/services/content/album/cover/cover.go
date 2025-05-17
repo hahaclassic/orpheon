@@ -39,7 +39,7 @@ func (c *AlbumCoverService) UploadCover(ctx context.Context, claims *entity.Clai
 		err = errwrap.WrapIfErr(usecase.ErrUploadCover, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -51,7 +51,7 @@ func (c *AlbumCoverService) DeleteCover(ctx context.Context, claims *entity.Clai
 		err = errwrap.WrapIfErr(usecase.ErrDeleteCover, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
+	if claims != nil && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
