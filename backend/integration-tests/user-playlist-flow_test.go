@@ -114,29 +114,30 @@ func TestUserPlaylistFlow(t *testing.T) {
 	}
 	require.NoError(t, playlistMetaRepo.Create(ctx, playlist)) // 1. create playlist
 
+	// 1.1 check number of playlists
 	playlists, err := playlistMetaRepo.GetByUser(ctx, user.ID)
 	require.NoError(t, err)
 	assert.Len(t, playlists, 1, "Only one playlist should be in user's collection!")
-	assert.Equal(t, playlist.ID, playlists[0].ID, "IDs should be equal") // 1.1
+	assert.Equal(t, playlist.ID, playlists[0].ID, "IDs should be equal")
 
 	// 2. add track to playlist
-	require.NoError(t, playlistTrackRepo.AddTrackToPlaylist(ctx, &entity.PlaylistTrack{
+	playlistTrack := &entity.PlaylistTrack{
 		PlaylistID: playlist.ID,
 		TrackID:    track.ID,
-	}))
+	}
+	require.NoError(t, playlistTrackRepo.AddTrackToPlaylist(ctx, playlistTrack))
 
-	// 2.2
+	// 2.1 check number of tracks in playlist
 	tracks, err := playlistTrackRepo.GetAllPlaylistTracks(ctx, playlist.ID)
 	require.NoError(t, err)
+
 	assert.Len(t, tracks, 1, "Only one track should be in playlist!")
+	assert.Equal(t, track.ID, tracks[0].ID, "Track IDs should match")
 
 	// 3. delete track from playlist
-	require.NoError(t, playlistTrackRepo.DeleteTrackFromPlaylist(ctx, &entity.PlaylistTrack{
-		PlaylistID: playlist.ID,
-		TrackID:    track.ID,
-	}))
+	require.NoError(t, playlistTrackRepo.DeleteTrackFromPlaylist(ctx, playlistTrack))
 
-	// 3.1
+	// 3.1 check number of tracks in playlist
 	tracks, err = playlistTrackRepo.GetAllPlaylistTracks(ctx, playlist.ID)
 	require.NoError(t, err)
 	assert.Len(t, tracks, 0, "Playlist should be empty!")
@@ -144,7 +145,7 @@ func TestUserPlaylistFlow(t *testing.T) {
 	// 4 delete playlist
 	require.NoError(t, playlistMetaRepo.Delete(ctx, playlist.ID))
 
-	// 4.1
+	// 4.1 check number of playlists
 	playlists, err = playlistMetaRepo.GetByUser(ctx, user.ID)
 	require.NoError(t, err)
 	assert.Len(t, playlists, 0, "There should be 0 playlists left")

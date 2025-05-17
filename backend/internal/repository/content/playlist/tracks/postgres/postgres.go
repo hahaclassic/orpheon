@@ -48,12 +48,9 @@ func (r *PlaylistTracksRepository) AddTrackToPlaylist(ctx context.Context, playl
 func (r *PlaylistTracksRepository) DeleteTrackFromPlaylist(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
 	const query = `CALL delete_track_from_playlist($1, $2);`
 
-	ct, err := r.pool.Exec(ctx, query, playlistTrack.PlaylistID, playlistTrack.TrackID)
+	_, err := r.pool.Exec(ctx, query, playlistTrack.PlaylistID, playlistTrack.TrackID)
 	if err != nil {
 		return fmt.Errorf("delete track from playlist: %w", err)
-	}
-	if ct.RowsAffected() == 0 {
-		return fmt.Errorf("track %s not found in playlist %s", playlistTrack.TrackID, playlistTrack.PlaylistID)
 	}
 
 	return nil
