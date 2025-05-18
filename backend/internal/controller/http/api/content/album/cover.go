@@ -1,4 +1,4 @@
-package playlist_ctrl
+package album_ctrl
 
 import (
 	"bytes"
@@ -11,27 +11,25 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
 )
 
-type PlaylistCoverController struct {
-	service playlist.PlaylistCoverService
+type AlbumCoverController struct {
+	service album.AlbumCoverService
 }
 
-func NewPlaylistCoverController(service playlist.PlaylistCoverService) *PlaylistCoverController {
-	return &PlaylistCoverController{
-		service: service,
-	}
+func NewAlbumCoverController(service album.AlbumCoverService) *AlbumCoverController {
+	return &AlbumCoverController{service: service}
 }
 
-func (c *PlaylistCoverController) RegisterRoutes(router *gin.RouterGroup) {
-	// playlists := router.Group("/playlists")
+func (c *AlbumCoverController) RegisterRoutes(router *gin.RouterGroup) {
+	// albums := router.Group("/albums")
 	// {
 	// 	// Public routes
-	// 	playlists.GET("/:id/cover", c.GetCover)
+	// 	albums.GET("/:id/cover", c.GetCover)
 
 	// 	// Protected routes
-	// 	protected := playlists.Group("")
+	// 	protected := albums.Group("")
 	// 	protected.Use(middleware.Auth())
 	// 	{
 	// 		protected.POST("/:id/cover", c.UploadCover)
@@ -40,14 +38,14 @@ func (c *PlaylistCoverController) RegisterRoutes(router *gin.RouterGroup) {
 	// }
 }
 
-func (c *PlaylistCoverController) UploadCover(ctx *gin.Context) {
+func (c *AlbumCoverController) UploadCover(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	cover, err := c.parsePlaylistCover(ctx)
+	cover, err := c.parseAlbumCover(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -61,20 +59,14 @@ func (c *PlaylistCoverController) UploadCover(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Cover uploaded successfully"})
 }
 
-func (c *PlaylistCoverController) GetCover(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
-	if claims == nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
-
-	playlistID, err := uuid.Parse(ctx.Param("id"))
+func (c *AlbumCoverController) GetCover(ctx *gin.Context) {
+	albumID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid playlist ID"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid album ID"})
 		return
 	}
 
-	cover, err := c.service.GetCover(ctx.Request.Context(), claims, playlistID)
+	cover, err := c.service.GetCover(ctx.Request.Context(), albumID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -87,30 +79,30 @@ func (c *PlaylistCoverController) GetCover(ctx *gin.Context) {
 	ctx.Data(http.StatusOK, "image/jpeg", cover.Data)
 }
 
-func (c *PlaylistCoverController) DeleteCover(ctx *gin.Context) {
+func (c *AlbumCoverController) DeleteCover(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	playlistID, err := uuid.Parse(ctx.Param("id"))
+	albumID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid playlist ID"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid album ID"})
 		return
 	}
 
-	if err := c.service.DeleteCover(ctx.Request.Context(), claims, playlistID); err != nil {
+	if err := c.service.DeleteCover(ctx.Request.Context(), claims, albumID); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Cover deleted successfully"})
 }
 
-func (PlaylistCoverController) parsePlaylistCover(ctx *gin.Context) (*entity.Cover, error) {
-	playlistID, err := uuid.Parse(ctx.Param("id"))
+func (AlbumCoverController) parseAlbumCover(ctx *gin.Context) (*entity.Cover, error) {
+	albumID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		return nil, errors.New("invalid playlist ID")
+		return nil, errors.New("invalid album ID")
 	}
 
 	file, err := ctx.FormFile("cover")
@@ -138,7 +130,7 @@ func (PlaylistCoverController) parsePlaylistCover(ctx *gin.Context) (*entity.Cov
 	}
 
 	return &entity.Cover{
-		ObjectID: playlistID,
+		ObjectID: albumID,
 		Data:     buf.Bytes(),
 	}, nil
 }

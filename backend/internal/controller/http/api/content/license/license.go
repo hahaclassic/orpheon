@@ -1,4 +1,4 @@
-package license
+package license_ctrl
 
 import (
 	"errors"
@@ -17,7 +17,7 @@ type LicenseController struct {
 	authMiddleware gin.HandlerFunc
 }
 
-func New(licenseService license.LicenseService, authMiddleware gin.HandlerFunc) *LicenseController {
+func NewLicenseController(licenseService license.LicenseService, authMiddleware gin.HandlerFunc) *LicenseController {
 	return &LicenseController{
 		licenseService: licenseService,
 		authMiddleware: authMiddleware,

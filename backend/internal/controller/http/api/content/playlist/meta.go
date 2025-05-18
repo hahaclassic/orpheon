@@ -1,32 +1,31 @@
-package playlist
+package playlist_ctrl
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/hahaclassic/orpheon/backend/internal/controller/http/dto"
+	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 )
 
-type PlaylistController struct {
-	playlistService playlist.PlaylistService
+type PlaylistMetaController struct {
+	playlistService playlist.PlaylistMetaService
+	deleter         playlist.PlaylistDeletionService
+	privacyService  playlist.PlaylistPrivacyChanger
 }
 
-func New(playlistService playlist.PlaylistService) *PlaylistController {
-	return &PlaylistController{
+func NewPlaylistMetaController(playlistService playlist.PlaylistMetaService,
+	deleter playlist.PlaylistDeletionService,
+	privacyService playlist.PlaylistPrivacyChanger) *PlaylistMetaController {
+	return &PlaylistMetaController{
 		playlistService: playlistService,
-	}
-}
-
-func (c *PlaylistController) RegisterRoutes(router *gin.Engine) {
-	playlists := router.Group("/api/v1/playlists")
-	{
-		playlists.GET("/:id", c.GetPlaylist)
-		playlists.POST("", c.CreatePlaylist)
-		playlists.PUT("/:id", c.UpdatePlaylist)
-		playlists.DELETE("/:id", c.DeletePlaylist)
-		playlists.GET("/user/:userId", c.GetUserPlaylists)
+		deleter:         deleter,
+		privacyService:  privacyService,
 	}
 }
 
@@ -41,14 +40,20 @@ func (c *PlaylistController) RegisterRoutes(router *gin.Engine) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/playlists/{id} [get]
-func (c *PlaylistController) GetPlaylist(ctx *gin.Context) {
+func (c *PlaylistMetaController) GetPlaylist(ctx *gin.Context) {
+	claims := utils.GetClaims(ctx)
+	if claims == nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid playlist ID"})
 		return
 	}
 
-	playlist, err := c.playlistService.GetPlaylist(ctx.Request.Context(), id)
+	playlist, err := c.playlistService.GetMeta(ctx.Request.Context(), claims, id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Playlist not found"})
 		return
@@ -69,20 +74,26 @@ func (c *PlaylistController) GetPlaylist(ctx *gin.Context) {
 // @Failure 403 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/playlists [post]
-func (c *PlaylistController) CreatePlaylist(ctx *gin.Context) {
-	var playlist entity.Playlist
+func (c *PlaylistMetaController) CreatePlaylist(ctx *gin.Context) {
+	claims := utils.GetClaims(ctx)
+	if claims == nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var playlist entity.PlaylistMeta
 	if err := ctx.ShouldBindJSON(&playlist); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	createdPlaylist, err := c.playlistService.CreatePlaylist(ctx.Request.Context(), &playlist)
+	err := c.playlistService.CreateMeta(ctx.Request.Context(), claims, &playlist)
 	if err != nil {
 		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to create playlist"})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, createdPlaylist)
+	ctx.JSON(http.StatusCreated, gin.H{"message": "Playlist created successfully"})
 }
 
 // UpdatePlaylist godoc
@@ -99,27 +110,33 @@ func (c *PlaylistController) CreatePlaylist(ctx *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/playlists/{id} [put]
-func (c *PlaylistController) UpdatePlaylist(ctx *gin.Context) {
+func (c *PlaylistMetaController) UpdatePlaylist(ctx *gin.Context) {
+	claims := utils.GetClaims(ctx)
+	if claims == nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid playlist ID"})
 		return
 	}
 
-	var playlist entity.Playlist
+	var playlist entity.PlaylistMeta
 	if err := ctx.ShouldBindJSON(&playlist); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	playlist.ID = id
-	updatedPlaylist, err := c.playlistService.UpdatePlaylist(ctx.Request.Context(), &playlist)
+	err = c.playlistService.UpdateMeta(ctx.Request.Context(), claims, &playlist)
 	if err != nil {
 		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to update playlist"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, updatedPlaylist)
+	ctx.JSON(http.StatusOK, gin.H{"message": "Playlist updated successfully"})
 }
 
 // DeletePlaylist godoc
@@ -134,14 +151,20 @@ func (c *PlaylistController) UpdatePlaylist(ctx *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/playlists/{id} [delete]
-func (c *PlaylistController) DeletePlaylist(ctx *gin.Context) {
+func (c *PlaylistMetaController) DeletePlaylist(ctx *gin.Context) {
+	claims := utils.GetClaims(ctx)
+	if claims == nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid playlist ID"})
 		return
 	}
 
-	err = c.playlistService.DeletePlaylist(ctx.Request.Context(), id)
+	err = c.deleter.DeletePlaylist(ctx.Request.Context(), claims, id)
 	if err != nil {
 		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to delete playlist"})
 		return
@@ -160,18 +183,56 @@ func (c *PlaylistController) DeletePlaylist(ctx *gin.Context) {
 // @Failure 400 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/playlists/user/{userId} [get]
-func (c *PlaylistController) GetUserPlaylists(ctx *gin.Context) {
+func (c *PlaylistMetaController) GetUserPlaylists(ctx *gin.Context) {
+	claims := utils.GetClaims(ctx)
+	if claims == nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	userID, err := uuid.Parse(ctx.Param("userId"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
 
-	playlists, err := c.playlistService.GetUserPlaylists(ctx.Request.Context(), userID)
+	playlists, err := c.playlistService.GetUserAllPlaylistsMeta(ctx.Request.Context(), claims, userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user playlists"})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, playlists)
+}
+
+func (c *PlaylistMetaController) UpdatePlaylistPrivacy(ctx *gin.Context) {
+	claims := utils.GetClaims(ctx)
+	if claims == nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	id, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid playlist ID"})
+		return
+	}
+
+	var privacy dto.PlaylistPrivacy
+	if err := ctx.ShouldBindJSON(&privacy); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	err = c.privacyService.ChangePrivacy(ctx.Request.Context(), claims, id, privacy.IsPrivate)
+	if err != nil {
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to update playlist privacy"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update playlist privacy"})
+		}
+		return
+	}
+
+	ctx.Status(http.StatusOK)
 }

@@ -1,4 +1,4 @@
-package track
+package track_ctrl
 
 import (
 	"net/http"
@@ -10,30 +10,13 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
 )
 
-type TrackController struct {
-	trackService   track.TrackMetaService
-	authMiddleware gin.HandlerFunc
+type TrackMetaController struct {
+	trackService track.TrackMetaService
 }
 
-func New(trackService track.TrackMetaService, authMiddleware gin.HandlerFunc) *TrackController {
-	return &TrackController{
-		trackService:   trackService,
-		authMiddleware: authMiddleware,
-	}
-}
-
-func (c *TrackController) RegisterRoutes(router *gin.RouterGroup) {
-	tracks := router.Group("/tracks")
-	{
-		tracks.GET("/:id", c.GetTrack)
-
-		protected := tracks.Group("")
-		protected.Use(c.authMiddleware)
-		{
-			protected.POST("", c.CreateTrack)
-			protected.PUT("/:id", c.UpdateTrack)
-			protected.DELETE("/:id", c.DeleteTrack)
-		}
+func NewTrackMetaController(trackService track.TrackMetaService) *TrackMetaController {
+	return &TrackMetaController{
+		trackService: trackService,
 	}
 }
 
@@ -48,7 +31,7 @@ func (c *TrackController) RegisterRoutes(router *gin.RouterGroup) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/tracks/{id} [get]
-func (c *TrackController) GetTrack(ctx *gin.Context) {
+func (c *TrackMetaController) GetTrack(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid track ID"})
@@ -76,7 +59,7 @@ func (c *TrackController) GetTrack(ctx *gin.Context) {
 // @Failure 403 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/tracks [post]
-func (c *TrackController) CreateTrack(ctx *gin.Context) {
+func (c *TrackMetaController) CreateTrack(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -112,7 +95,7 @@ func (c *TrackController) CreateTrack(ctx *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/tracks/{id} [put]
-func (c *TrackController) UpdateTrack(ctx *gin.Context) {
+func (c *TrackMetaController) UpdateTrack(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -153,7 +136,7 @@ func (c *TrackController) UpdateTrack(ctx *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/tracks/{id} [delete]
-func (c *TrackController) DeleteTrack(ctx *gin.Context) {
+func (c *TrackMetaController) DeleteTrack(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})

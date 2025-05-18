@@ -1,4 +1,4 @@
-package album
+package album_ctrl
 
 import (
 	"errors"
@@ -13,29 +13,12 @@ import (
 )
 
 type AlbumController struct {
-	albumService   album.AlbumService
-	authMiddleware gin.HandlerFunc
+	albumService album.AlbumService
 }
 
-func New(albumService album.AlbumService, authMiddleware gin.HandlerFunc) *AlbumController {
+func NewAlbumMetaController(albumService album.AlbumService) *AlbumController {
 	return &AlbumController{
-		albumService:   albumService,
-		authMiddleware: authMiddleware,
-	}
-}
-
-func (c *AlbumController) RegisterRoutes(router *gin.RouterGroup) {
-	albums := router.Group("/albums")
-	{
-		albums.GET("/:id", c.GetAlbum)
-
-		protected := albums.Group("")
-		protected.Use(c.authMiddleware)
-		{
-			protected.POST("", c.CreateAlbum)
-			protected.PUT("/:id", c.UpdateAlbum)
-			protected.DELETE("/:id", c.DeleteAlbum)
-		}
+		albumService: albumService,
 	}
 }
 

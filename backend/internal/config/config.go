@@ -68,6 +68,15 @@ type LocalAccessMetaConfig struct {
 	Size int `env:"LOCAL_CACHE_SIZE"`
 }
 
+type CookieConfig struct {
+	Domain     string        `env:"COOKIE_DOMAIN"`
+	Path       string        `env:"COOKIE_PATH"`
+	Secure     bool          `env:"COOKIE_SECURE"`
+	HttpOnly   bool          `env:"COOKIE_HTTP_ONLY"`
+	RefreshTTL time.Duration `env:"COOKIE_REFRESH_TTL"`
+	AccessTTL  time.Duration `env:"COOKIE_ACCESS_TTL"`
+}
+
 type Config struct {
 	HTTP                 HTTPConfig
 	Postgres             PostgresConfig
@@ -78,6 +87,7 @@ type Config struct {
 	RefreshToken         RefreshTokenConfig
 	RedisAccessMetaCache RedisAccessMetaConfig
 	LocalAccessMetaCache LocalAccessMetaConfig
+	Cookie               CookieConfig
 }
 
 var (
@@ -95,26 +105,3 @@ func MustLoad() *Config {
 	})
 	return cfg
 }
-
-// type Config struct {
-// 	Postgres    postgres.PostgresConfig
-// 	MinIO       minio.MinioConfig
-// 	Redis       redis.RedisConfig
-// 	AccessCache AccessCacheConfig
-// 	Refresh     refresh_redis.TTLConfig
-// }
-
-// type AccessCacheConfig struct {
-// 	TTL     access_cache_redis.TTLConfig
-// 	LRUSize int
-// }
-
-// func MustLoad() *Config {
-// 	config := &Config{}
-// 	err := cleanenv.ReadConfig(configPath, config)
-// 	if err != nil {
-// 		log.Fatalf("Error while loading config: %s", err)
-// 	}
-
-// 	return config
-// }

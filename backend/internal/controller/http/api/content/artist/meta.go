@@ -1,4 +1,4 @@
-package artist
+package artist_ctrl
 
 import (
 	"errors"
@@ -12,31 +12,13 @@ import (
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 )
 
-type ArtistController struct {
-	artistService  artist.ArtistMetaService
-	authMiddleware gin.HandlerFunc
+type ArtistMetaController struct {
+	artistService artist.ArtistMetaService
 }
 
-func New(artistService artist.ArtistMetaService, authMiddleware gin.HandlerFunc) *ArtistController {
-	return &ArtistController{
-		artistService:  artistService,
-		authMiddleware: authMiddleware,
-	}
-}
-
-func (c *ArtistController) RegisterRoutes(router *gin.RouterGroup) {
-	artists := router.Group("/artists")
-	{
-		artists.GET("/:id", c.GetArtist)
-		artists.GET("", c.GetAllArtists)
-
-		protected := artists.Group("")
-		protected.Use(c.authMiddleware)
-		{
-			protected.POST("", c.CreateArtist)
-			protected.PUT("/:id", c.UpdateArtist)
-			protected.DELETE("/:id", c.DeleteArtist)
-		}
+func NewArtistMetaController(artistService artist.ArtistMetaService) *ArtistMetaController {
+	return &ArtistMetaController{
+		artistService: artistService,
 	}
 }
 
@@ -51,7 +33,7 @@ func (c *ArtistController) RegisterRoutes(router *gin.RouterGroup) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/artists/{id} [get]
-func (c *ArtistController) GetArtist(ctx *gin.Context) {
+func (c *ArtistMetaController) GetArtist(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid artist ID"})
@@ -67,7 +49,7 @@ func (c *ArtistController) GetArtist(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, artist)
 }
 
-func (c *ArtistController) GetAllArtists(ctx *gin.Context) {
+func (c *ArtistMetaController) GetAllArtists(ctx *gin.Context) {
 	artists, err := c.artistService.GetAllArtistMeta(ctx.Request.Context())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get all artists"})
@@ -89,7 +71,7 @@ func (c *ArtistController) GetAllArtists(ctx *gin.Context) {
 // @Failure 403 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/artists [post]
-func (c *ArtistController) CreateArtist(ctx *gin.Context) {
+func (c *ArtistMetaController) CreateArtist(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -129,7 +111,7 @@ func (c *ArtistController) CreateArtist(ctx *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/artists/{id} [put]
-func (c *ArtistController) UpdateArtist(ctx *gin.Context) {
+func (c *ArtistMetaController) UpdateArtist(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -174,7 +156,7 @@ func (c *ArtistController) UpdateArtist(ctx *gin.Context) {
 // @Failure 404 {object} gin.H
 // @Failure 500 {object} gin.H
 // @Router /api/v1/artists/{id} [delete]
-func (c *ArtistController) DeleteArtist(ctx *gin.Context) {
+func (c *ArtistMetaController) DeleteArtist(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})

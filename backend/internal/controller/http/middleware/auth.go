@@ -2,28 +2,23 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	jwttokens "github.com/hahaclassic/orpheon/backend/internal/adapters/tokens/jwt"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/auth"
 )
 
-func AuthMiddleware(authService auth.AuthService) gin.HandlerFunc {
+func AuthMiddlewareRequired(authService auth.AuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		slog.Info("Middleware triggered")
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+
+		token, err := c.Cookie("access_token")
+		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
 			return
 		}
-
-		fmt.Println("Authorization header:", authHeader)
-
-		token := strings.TrimPrefix(authHeader, "Bearer ")
 
 		claims, err := authService.GetClaims(c, token)
 		if err != nil {
@@ -37,7 +32,24 @@ func AuthMiddleware(authService auth.AuthService) gin.HandlerFunc {
 			return
 		}
 
-		fmt.Println("Claims:", claims)
+		c.Set("claims", claims)
+		c.Next()
+	}
+}
+
+func AuthMiddlewareOptional(authService auth.AuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		slog.Info("Middleware triggered")
+
+		token, err := c.Cookie("access_token")
+		if err != nil {
+			c.Next()
+		}
+
+		claims, err := authService.GetClaims(c, token)
+		if err != nil {
+			c.Next()
+		}
 
 		c.Set("claims", claims)
 		c.Next()

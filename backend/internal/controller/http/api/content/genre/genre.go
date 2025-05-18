@@ -1,4 +1,4 @@
-package genre
+package genre_ctrl
 
 import (
 	"errors"
@@ -17,7 +17,7 @@ type GenreController struct {
 	authMiddleware gin.HandlerFunc
 }
 
-func New(genreService genre.GenreService, authMiddleware gin.HandlerFunc) *GenreController {
+func NewGenreController(genreService genre.GenreService, authMiddleware gin.HandlerFunc) *GenreController {
 	return &GenreController{
 		genreService:   genreService,
 		authMiddleware: authMiddleware,
