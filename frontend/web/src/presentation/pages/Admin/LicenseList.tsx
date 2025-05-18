@@ -20,15 +20,12 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { api } from '../../../core/infrastructure/services/api';
-import axios from 'axios';
+import { apiService } from '../../../presentation/services/api';
 
 interface License {
-  ID: string;
-  Title: string;
-  Description: string;
-  CreatedAt?: string;
-  UpdatedAt?: string;
+  id: string;
+  title: string;
+  description: string;
 }
 
 const LicenseList = () => {
@@ -42,17 +39,16 @@ const LicenseList = () => {
   const fetchLicenses = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/licenses');
-      console.log('Received licenses data:', response.data);
-      // Убедимся, что данные являются массивом
-      const licensesData = Array.isArray(response.data) ? response.data : [];
+      const response = await apiService.get('/licenses');
+      console.log('Received licenses data:', response);
+      const licensesData = Array.isArray(response) ? response : [];
       console.log('Processed licenses data:', licensesData);
       setLicenses(licensesData);
       setError(null);
     } catch (err) {
       setError('Ошибка при загрузке лицензий');
       console.error('Error fetching licenses:', err);
-      setLicenses([]); // Устанавливаем пустой массив в случае ошибки
+      setLicenses([]);
     } finally {
       setLoading(false);
     }
@@ -65,7 +61,7 @@ const LicenseList = () => {
   const handleOpen = (license?: License) => {
     if (license) {
       setEditingLicense(license);
-      setFormData({ title: license.Title, description: license.Description });
+      setFormData({ title: license.title, description: license.description });
     } else {
       setEditingLicense(null);
       setFormData({ title: '', description: '' });
@@ -93,24 +89,16 @@ const LicenseList = () => {
       };
 
       console.log('Sending data:', trimmedData);
-      console.log('Auth token:', localStorage.getItem('access_token'));
 
       if (editingLicense) {
-        const response = await api.put(`/licenses/${editingLicense.ID}`, trimmedData);
-        console.log('Update response:', response);
+        await apiService.put(`/licenses/${editingLicense.id}`, trimmedData);
       } else {
-        const response = await api.post('/licenses/', trimmedData);
-        console.log('Create response:', response);
+        await apiService.post('/licenses/', trimmedData);
       }
       handleClose();
       fetchLicenses();
     } catch (err) {
-      console.error('Full error object:', err);
-      if (axios.isAxiosError(err)) {
-        console.error('Response data:', err.response?.data);
-        console.error('Response status:', err.response?.status);
-        console.error('Response headers:', err.response?.headers);
-      }
+      console.error('Error saving license:', err);
       setError('Ошибка при сохранении лицензии');
     }
   };
@@ -118,7 +106,7 @@ const LicenseList = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Вы уверены, что хотите удалить эту лицензию?')) {
       try {
-        await api.delete(`/licenses/${id}`);
+        await apiService.delete(`/licenses/${id}`);
         fetchLicenses();
       } catch (err) {
         setError('Ошибка при удалении лицензии');
@@ -168,24 +156,21 @@ const LicenseList = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  licenses.map((license) => {
-                    console.log('Rendering license:', license);
-                    return (
-                      <TableRow key={license.ID}>
-                        <TableCell>{license.ID}</TableCell>
-                        <TableCell>{license.Title}</TableCell>
-                        <TableCell>{license.Description}</TableCell>
-                        <TableCell align="right">
-                          <IconButton onClick={() => handleOpen(license)} color="primary">
-                            <EditIcon />
-                          </IconButton>
-                          <IconButton onClick={() => handleDelete(license.ID)} color="error">
-                            <DeleteIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
+                  licenses.map((license) => (
+                    <TableRow key={license.id}>
+                      <TableCell>{license.id}</TableCell>
+                      <TableCell>{license.title}</TableCell>
+                      <TableCell>{license.description}</TableCell>
+                      <TableCell align="right">
+                        <IconButton onClick={() => handleOpen(license)} color="primary">
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton onClick={() => handleDelete(license.id)} color="error">
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>

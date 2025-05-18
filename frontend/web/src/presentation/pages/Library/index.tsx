@@ -1,23 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, CardMedia, Tabs, Tab, styled } from '@mui/material';
-import { useApi } from '../../hooks/useApi';
-import { apiService } from '../../../core/infrastructure/services/api';
-import LoadingSpinner from '../../components/LoadingSpinner';
-import ErrorBoundary from '../../components/ErrorBoundary';
-import type { Playlist, Track } from '../../../core/infrastructure/services/api';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  CardMedia,
+  Tabs,
+  Tab,
+  Grid,
+  CircularProgress,
+  Alert,
+} from '@mui/material';
+import { apiService } from '../../../presentation/services/api';
 
-const LibraryContainer = styled(Box)({
-  padding: '24px',
-});
-
-const StyledCard = styled(Card)({
-  backgroundColor: 'background.paper',
-  transition: 'transform 0.2s ease-in-out',
-  '&:hover': {
-    transform: 'scale(1.02)',
-    cursor: 'pointer',
-  },
-});
+interface Track {
+  ID: string;
+  Title: string;
+  ArtistName: string;
+  AlbumName: string;
+  CoverImage: string;
+  Duration: number;
+}
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -25,135 +29,133 @@ interface TabPanelProps {
   value: number;
 }
 
-const TabPanel = (props: TabPanelProps) => {
+function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
 
   return (
     <div
       role="tabpanel"
       hidden={value !== index}
-      id={`library-tabpanel-${index}`}
-      aria-labelledby={`library-tab-${index}`}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
-};
+}
 
 const Library = () => {
-  const [activeTab, setActiveTab] = useState(0);
+  const [value, setValue] = useState(0);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const {
-    data: playlists,
-    loading: playlistsLoading,
-    error: playlistsError,
-    execute: fetchPlaylists,
-  } = useApi<Playlist[]>();
-
-  const {
-    data: likedTracks,
-    loading: tracksLoading,
-    error: tracksError,
-    execute: fetchLikedTracks,
-  } = useApi<Track[]>();
-
-  useEffect(() => {
-    fetchPlaylists(apiService.getPlaylists());
-    fetchLikedTracks(apiService.getLikedTracks());
-  }, [fetchPlaylists, fetchLikedTracks]);
-
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
+  const fetchTracks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiService.get('/tracks');
+      const tracksData = Array.isArray(response) ? response : [];
+      setTracks(tracksData);
+    } catch (err) {
+      console.error("Error fetching tracks:", err);
+      setError("Ошибка при загрузке треков. Пожалуйста, попробуйте позже.");
+      setTracks([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (playlistsLoading || tracksLoading) {
-    return <LoadingSpinner />;
-  }
+  useEffect(() => {
+    fetchTracks();
+  }, []);
 
-  if (playlistsError || tracksError) {
-    return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography color="error">
-          {playlistsError?.message || tracksError?.message || 'Failed to load content'}
-        </Typography>
-      </Box>
-    );
-  }
+  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+    setValue(newValue);
+  };
+
+  const handleTrackClick = (trackId: string) => {
+    navigate(`/track/${trackId}`);
+  };
 
   return (
-    <ErrorBoundary>
-      <LibraryContainer>
-        <Typography variant="h4" sx={{ mb: 3 }}>
-          Your Library
-        </Typography>
+    <Box sx={{ width: '100%', p: 4 }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={value} onChange={handleChange} aria-label="library tabs">
+          <Tab label="Треки" />
+          <Tab label="Альбомы" />
+          <Tab label="Артисты" />
+        </Tabs>
+      </Box>
 
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={activeTab} onChange={handleTabChange}>
-            <Tab label="Playlists" />
-            <Tab label="Liked Songs" />
-          </Tabs>
-        </Box>
+      {error && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-        <TabPanel value={activeTab} index={0}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-            {playlists?.map((playlist) => (
-              <Box key={playlist.id}>
-                <StyledCard>
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={playlist.coverUrl}
-                    alt={playlist.title}
-                  />
-                  <CardContent>
-                    <Typography variant="h6" noWrap>
-                      {playlist.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                      {playlist.description}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {playlist.tracks.length} tracks
-                    </Typography>
-                  </CardContent>
-                </StyledCard>
-              </Box>
-            ))}
+      <TabPanel value={value} index={0}>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
           </Box>
-        </TabPanel>
-
-        <TabPanel value={activeTab} index={1}>
-          <Box sx={{ display: 'grid', gap: 2 }}>
-            {likedTracks?.map((track) => (
-              <Box key={track.id}>
-                <StyledCard>
-                  <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
+        ) : (
+          <Grid container spacing={3}>
+            {tracks.length === 0 ? (
+              <Grid item xs={12}>
+                <Typography variant="h6" textAlign="center" color="text.secondary">
+                  Нет доступных треков
+                </Typography>
+              </Grid>
+            ) : (
+              tracks.map((track) => (
+                <Grid item xs={12} sm={6} md={4} key={track.ID}>
+                  <Card
+                    sx={{
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        transform: 'scale(1.02)',
+                        transition: 'transform 0.2s ease-in-out',
+                      },
+                    }}
+                    onClick={() => handleTrackClick(track.ID)}
+                  >
                     <CardMedia
                       component="img"
-                      sx={{ width: 60, height: 60, borderRadius: 1 }}
-                      image={track.coverUrl}
-                      alt={track.title}
+                      height="200"
+                      image={track.CoverImage || '/default-cover.jpg'}
+                      alt={track.Title}
                     />
-                    <Box sx={{ ml: 2 }}>
-                      <Typography variant="subtitle1">{track.title}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {track.artist}
+                    <CardContent>
+                      <Typography gutterBottom variant="h6" component="div" noWrap>
+                        {track.Title}
                       </Typography>
-                      {track.album && (
-                        <Typography variant="body2" color="text.secondary">
-                          {track.album}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Box>
-                </StyledCard>
-              </Box>
-            ))}
-          </Box>
-        </TabPanel>
-      </LibraryContainer>
-    </ErrorBoundary>
+                      <Typography variant="body2" color="text.secondary" noWrap>
+                        {track.ArtistName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" noWrap>
+                        {track.AlbumName}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))
+            )}
+          </Grid>
+        )}
+      </TabPanel>
+      <TabPanel value={value} index={1}>
+        <Typography>Альбомы (в разработке)</Typography>
+      </TabPanel>
+      <TabPanel value={value} index={2}>
+        <Typography>Артисты (в разработке)</Typography>
+      </TabPanel>
+    </Box>
   );
 };
 

@@ -1,123 +1,150 @@
-import { useState } from 'react';
+import { useState, useEffect } from "react";
 import {
   Box,
+  Container,
+  Typography,
   TextField,
   InputAdornment,
-  Typography,
+  Grid,
   Card,
   CardContent,
   CardMedia,
-  styled,
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import { useApi } from '../../hooks/useApi';
-import { apiService } from '../../../core/infrastructure/services/api';
-import LoadingSpinner from '../../components/LoadingSpinner';
-import ErrorBoundary from '../../components/ErrorBoundary';
-import type { Track } from '../../../core/infrastructure/services/api';
+  Button,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import SearchIcon from "@mui/icons-material/Search";
+import { apiService } from "../../../presentation/services/api";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import ErrorBoundary from "../../components/ErrorBoundary";
 
-const SearchContainer = styled(Box)({
-  padding: '24px',
-});
-
-const SearchInput = styled(TextField)({
-  width: '100%',
-  marginBottom: '32px',
-  '& .MuiOutlinedInput-root': {
-    borderRadius: '8px',
-  },
-});
-
-const StyledCard = styled(Card)({
-  backgroundColor: 'background.paper',
-  transition: 'transform 0.2s ease-in-out',
-  '&:hover': {
-    transform: 'scale(1.02)',
-    cursor: 'pointer',
-  },
-});
+interface Track {
+  ID: string;
+  Title: string;
+  ArtistName: string;
+  AlbumName: string;
+  CoverImage: string;
+  Duration: number;
+}
 
 const Search = () => {
-  const [query, setQuery] = useState('');
-  const {
-    data: searchResults,
-    loading,
-    error,
-    execute: search,
-  } = useApi<Track[]>();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Track[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const handleSearch = (value: string) => {
-    setQuery(value);
-    if (value.trim()) {
-      search(apiService.searchTracks(value));
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiService.get(`/search?query=${encodeURIComponent(searchQuery)}`);
+      const results = Array.isArray(response) ? response : [];
+      setSearchResults(results);
+    } catch (err) {
+      console.error("Error fetching search results:", err);
+      setError("Ошибка при поиске. Пожалуйста, попробуйте позже.");
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleTrackClick = (trackId: string) => {
+    navigate(`/track/${trackId}`);
+  };
+
   return (
-    <ErrorBoundary>
-      <SearchContainer>
-        <SearchInput
-          placeholder="Search for songs, artists, or albums"
-          value={query}
-          onChange={(e) => handleSearch(e.target.value)}
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box component="form" onSubmit={handleSearch} sx={{ mb: 4 }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Поиск треков..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
                 <SearchIcon />
               </InputAdornment>
             ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <Button type="submit" variant="contained" color="primary">
+                  Поиск
+                </Button>
+              </InputAdornment>
+            ),
           }}
         />
+      </Box>
 
-        {loading && <LoadingSpinner />}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-        {error && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography color="error">
-              {error.message || 'Failed to load search results'}
-            </Typography>
-          </Box>
-        )}
-
-        {searchResults && searchResults.length > 0 && (
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-            {searchResults.map((track) => (
-              <Box key={track.id}>
-                <StyledCard>
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Grid container spacing={3}>
+          {searchResults.length === 0 ? (
+            <Grid item xs={12}>
+              <Typography variant="h6" textAlign="center" color="text.secondary">
+                {searchQuery ? "Ничего не найдено" : "Введите запрос для поиска"}
+              </Typography>
+            </Grid>
+          ) : (
+            searchResults.map((track) => (
+              <Grid item xs={12} sm={6} md={4} key={track.ID}>
+                <Card
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    cursor: "pointer",
+                    "&:hover": {
+                      transform: "scale(1.02)",
+                      transition: "transform 0.2s ease-in-out",
+                    },
+                  }}
+                  onClick={() => handleTrackClick(track.ID)}
+                >
                   <CardMedia
                     component="img"
                     height="200"
-                    image={track.coverUrl}
-                    alt={track.title}
+                    image={track.CoverImage || "/default-cover.jpg"}
+                    alt={track.Title}
                   />
                   <CardContent>
-                    <Typography variant="h6" noWrap>
-                      {track.title}
+                    <Typography gutterBottom variant="h6" component="div" noWrap>
+                      {track.Title}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" noWrap>
-                      {track.artist}
+                      {track.ArtistName}
                     </Typography>
-                    {track.album && (
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {track.album}
-                      </Typography>
-                    )}
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                      {track.AlbumName}
+                    </Typography>
                   </CardContent>
-                </StyledCard>
-              </Box>
-            ))}
-          </Box>
-        )}
-
-        {searchResults && searchResults.length === 0 && query && (
-          <Box sx={{ p: 3, textAlign: 'center' }}>
-            <Typography color="text.secondary">
-              No results found for "{query}"
-            </Typography>
-          </Box>
-        )}
-      </SearchContainer>
-    </ErrorBoundary>
+                </Card>
+              </Grid>
+            ))
+          )}
+        </Grid>
+      )}
+    </Container>
   );
 };
 

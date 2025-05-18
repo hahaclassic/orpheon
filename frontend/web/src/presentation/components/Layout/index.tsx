@@ -22,7 +22,8 @@ const ContentArea = styled(Box)({
   flex: 1,
   overflowY: 'auto',
   padding: '24px',
-  // marginLeft: '240px', // Удалено!
+  width: '100%',
+  maxWidth: '100%',
 });
 
 const Layout = () => {

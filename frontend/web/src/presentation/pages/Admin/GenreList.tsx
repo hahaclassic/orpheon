@@ -20,11 +20,11 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { api } from '../../../core/infrastructure/services/api';
+import { api } from '../../../presentation/services/api';
 
 interface Genre {
-  ID: string;
-  Title: string;
+  id: string;
+  title: string;
 }
 
 const GenreList = () => {
@@ -38,15 +38,16 @@ const GenreList = () => {
   const fetchGenres = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/genres');
-      // Убедимся, что данные являются массивом
-      const genresData = Array.isArray(response.data) ? response.data : [];
+      const response = await api.getGenres();
+      console.log('Received genres data:', response);
+      const genresData = Array.isArray(response) ? response : [];
+      console.log('Processed genres data:', genresData);
       setGenres(genresData);
       setError(null);
     } catch (err) {
       setError('Ошибка при загрузке жанров');
       console.error('Error fetching genres:', err);
-      setGenres([]); // Устанавливаем пустой массив в случае ошибки
+      setGenres([]);
     } finally {
       setLoading(false);
     }
@@ -59,7 +60,7 @@ const GenreList = () => {
   const handleOpen = (genre?: Genre) => {
     if (genre) {
       setEditingGenre(genre);
-      setFormData({ title: genre.Title });
+      setFormData({ title: genre.title });
     } else {
       setEditingGenre(null);
       setFormData({ title: '' });
@@ -82,26 +83,28 @@ const GenreList = () => {
     e.preventDefault();
     try {
       const trimmedData = {
-        Title: formData.title.trim(),
+        title: formData.title.trim(),
       };
 
+      console.log('Sending data:', trimmedData);
+
       if (editingGenre) {
-        await api.put(`/genres/${editingGenre.ID}`, trimmedData);
+        await api.updateGenre(editingGenre.id, trimmedData);
       } else {
-        await api.post('/genres', trimmedData);
+        await api.createGenre(trimmedData);
       }
       handleClose();
       fetchGenres();
     } catch (err) {
-      setError('Ошибка при сохранении жанра');
       console.error('Error saving genre:', err);
+      setError('Ошибка при сохранении жанра');
     }
   };
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Вы уверены, что хотите удалить этот жанр?')) {
       try {
-        await api.delete(`/genres/${id}`);
+        await api.deleteGenre(id);
         fetchGenres();
       } catch (err) {
         setError('Ошибка при удалении жанра');
@@ -113,7 +116,7 @@ const GenreList = () => {
   return (
     <Box sx={{ p: 4, maxWidth: 1200, mx: 'auto' }}>
       <Paper sx={{ p: 4 }} elevation={3}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h5" fontWeight={700}>
             Управление жанрами
           </Typography>
@@ -137,6 +140,7 @@ const GenreList = () => {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell>ID</TableCell>
                   <TableCell>Название</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
@@ -144,19 +148,20 @@ const GenreList = () => {
               <TableBody>
                 {genres.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} align="center">
+                    <TableCell colSpan={3} align="center">
                       Нет доступных жанров
                     </TableCell>
                   </TableRow>
                 ) : (
                   genres.map((genre) => (
-                    <TableRow key={genre.ID}>
-                      <TableCell>{genre.Title}</TableCell>
+                    <TableRow key={genre.id}>
+                      <TableCell>{genre.id}</TableCell>
+                      <TableCell>{genre.title}</TableCell>
                       <TableCell align="right">
                         <IconButton onClick={() => handleOpen(genre)} color="primary">
                           <EditIcon />
                         </IconButton>
-                        <IconButton onClick={() => handleDelete(genre.ID)} color="error">
+                        <IconButton onClick={() => handleDelete(genre.id)} color="error">
                           <DeleteIcon />
                         </IconButton>
                       </TableCell>

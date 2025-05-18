@@ -2,7 +2,6 @@ import { Box, List, ListItem, ListItemIcon, ListItemText, styled, Divider, IconB
 import { Home, LibraryMusic, Search, Logout, Person, AdminPanelSettings } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { isAdmin } from '../../../utils/jwt';
 
 const SidebarContainer = styled(Box)({
   width: 240,
@@ -61,7 +60,9 @@ const ProfileSection = styled(Box)({
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuthContext();
+  const { logout, isAdmin } = useAuthContext();
+
+  console.log('Sidebar isAdmin value:', isAdmin); // Debug log
 
   const handleLogout = async () => {
     try {
@@ -71,9 +72,6 @@ const Sidebar = () => {
       console.error('Logout failed:', error);
     }
   };
-
-  const token = localStorage.getItem('access_token');
-  const admin = isAdmin(token);
 
   return (
     <SidebarContainer>
@@ -107,6 +105,7 @@ const Sidebar = () => {
         </svg>
         <span>Orpheon</span>
       </Logo>
+
       <List>
         {navigationItems.map((item) => (
           <StyledListItem
@@ -121,7 +120,7 @@ const Sidebar = () => {
             <ListItemText primary={item.text} />
           </StyledListItem>
         ))}
-        {admin && (
+        {isAdmin && (
           <StyledListItem
             onClick={() => navigate('/admin')}
             sx={{

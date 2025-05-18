@@ -20,13 +20,13 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { api } from '../../../core/infrastructure/services/api';
+import { api } from '../../../presentation/services/api';
 
 interface Artist {
-  ID: string;
-  Name: string;
-  Description: string;
-  Country: string;
+  id: string;
+  name: string;
+  description: string;
+  country: string;
 }
 
 const ArtistList = () => {
@@ -44,8 +44,10 @@ const ArtistList = () => {
   const fetchArtists = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/artists');
-      const artistsData = Array.isArray(response.data) ? response.data : [];
+      const response = await api.getArtists();
+      console.log('Raw API response:', response);
+      const artistsData = Array.isArray(response) ? response : [];
+      console.log('Processed artists data:', artistsData);
       setArtists(artistsData);
       setError(null);
     } catch (err) {
@@ -65,9 +67,9 @@ const ArtistList = () => {
     if (artist) {
       setEditingArtist(artist);
       setFormData({
-        name: artist.Name,
-        description: artist.Description,
-        country: artist.Country,
+        name: artist.name,
+        description: artist.description,
+        country: artist.country,
       });
     } else {
       setEditingArtist(null);
@@ -99,15 +101,15 @@ const ArtistList = () => {
     e.preventDefault();
     try {
       const trimmedData = {
-        Name: formData.name.trim(),
-        Description: formData.description.trim(),
-        Country: formData.country.trim(),
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        country: formData.country.trim(),
       };
 
       if (editingArtist) {
-        await api.put(`/artists/${editingArtist.ID}`, trimmedData);
+        await api.updateArtist(editingArtist.id, trimmedData);
       } else {
-        await api.post('/artists', trimmedData);
+        await api.createArtist(trimmedData);
       }
       handleClose();
       fetchArtists();
@@ -120,7 +122,7 @@ const ArtistList = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Вы уверены, что хотите удалить этого артиста?')) {
       try {
-        await api.delete(`/artists/${id}`);
+        await api.deleteArtist(id);
         fetchArtists();
       } catch (err) {
         setError('Ошибка при удалении артиста');
@@ -156,6 +158,7 @@ const ArtistList = () => {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell>ID</TableCell>
                   <TableCell>Имя</TableCell>
                   <TableCell>Страна</TableCell>
                   <TableCell>Описание</TableCell>
@@ -165,21 +168,22 @@ const ArtistList = () => {
               <TableBody>
                 {artists.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={5} align="center">
                       Нет доступных артистов
                     </TableCell>
                   </TableRow>
                 ) : (
                   artists.map((artist) => (
-                    <TableRow key={artist.ID}>
-                      <TableCell>{artist.Name}</TableCell>
-                      <TableCell>{artist.Country}</TableCell>
-                      <TableCell>{artist.Description}</TableCell>
+                    <TableRow key={artist.id}>
+                      <TableCell>{artist.id}</TableCell>
+                      <TableCell>{artist.name}</TableCell>
+                      <TableCell>{artist.country}</TableCell>
+                      <TableCell>{artist.description}</TableCell>
                       <TableCell align="right">
                         <IconButton onClick={() => handleOpen(artist)} color="primary">
                           <EditIcon />
                         </IconButton>
-                        <IconButton onClick={() => handleDelete(artist.ID)} color="error">
+                        <IconButton onClick={() => handleDelete(artist.id)} color="error">
                           <DeleteIcon />
                         </IconButton>
                       </TableCell>
@@ -199,34 +203,30 @@ const ArtistList = () => {
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <TextField
-              autoFocus
-              margin="dense"
+              name="name"
               label="Имя"
-              fullWidth
               value={formData.name}
               onChange={handleChange}
-              name="name"
+              fullWidth
+              margin="normal"
               required
-              sx={{ mb: 2 }}
             />
             <TextField
-              margin="dense"
+              name="country"
               label="Страна"
-              fullWidth
               value={formData.country}
               onChange={handleChange}
-              name="country"
+              fullWidth
+              margin="normal"
               required
-              sx={{ mb: 2 }}
             />
             <TextField
-              margin="dense"
+              name="description"
               label="Описание"
-              fullWidth
               value={formData.description}
               onChange={handleChange}
-              name="description"
-              required
+              fullWidth
+              margin="normal"
               multiline
               rows={4}
             />

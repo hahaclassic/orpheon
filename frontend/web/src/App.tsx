@@ -11,6 +11,10 @@ import Search from './presentation/pages/Search';
 import Login from './presentation/pages/Login';
 import Register from './presentation/pages/Register';
 import Profile from './presentation/pages/Profile';
+import PlaylistPage from './presentation/pages/Playlist';
+import ArtistPage from './presentation/pages/Artist';
+import AlbumPage from './presentation/pages/Album';
+import TrackPage from './presentation/pages/Track';
 import { AdminPanel } from './presentation/pages/Admin/AdminPanel';
 import GenreList from './presentation/pages/Admin/GenreList';
 import LicenseList from './presentation/pages/Admin/LicenseList';
@@ -38,6 +42,10 @@ const App = () => {
                     <Route path="/library" element={<Library />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/playlists/:id" element={<PlaylistPage />} />
+                    <Route path="/artists/:id" element={<ArtistPage />} />
+                    <Route path="/albums/:id" element={<AlbumPage />} />
+                    <Route path="/tracks/:id" element={<TrackPage />} />
                     <Route path="/admin" element={<AdminRoute><Outlet /></AdminRoute>}>
                       <Route index element={<AdminPanel />} />
                       <Route path="genres" element={<GenreList />} />

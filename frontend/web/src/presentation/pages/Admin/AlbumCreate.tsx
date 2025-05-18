@@ -27,7 +27,7 @@ import {
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import axios from 'axios';
+import { apiService } from '../../../presentation/services/api';
 
 interface Artist {
   id: number;
@@ -77,20 +77,20 @@ const AlbumCreate = () => {
   const fetchData = async () => {
     try {
       const [albumsRes, artistsRes, genresRes, licensesRes] = await Promise.all([
-        axios.get('/api/v1/albums'),
-        axios.get('/api/v1/artists'),
-        axios.get('/api/v1/genres'),
-        axios.get('/api/v1/licenses'),
+        apiService.get('/albums'),
+        apiService.get('/artists'),
+        apiService.get('/genres'),
+        apiService.get('/licenses'),
       ]);
       
       // Ensure albums is an array
-      const albumsData = Array.isArray(albumsRes.data) ? albumsRes.data : [];
+      const albumsData = Array.isArray(albumsRes) ? albumsRes : [];
       setAlbums(albumsData);
       
       // Ensure other data is also arrays
-      setArtists(Array.isArray(artistsRes.data) ? artistsRes.data : []);
-      setGenres(Array.isArray(genresRes.data) ? genresRes.data : []);
-      setLicenses(Array.isArray(licensesRes.data) ? licensesRes.data : []);
+      setArtists(Array.isArray(artistsRes) ? artistsRes : []);
+      setGenres(Array.isArray(genresRes) ? genresRes : []);
+      setLicenses(Array.isArray(licensesRes) ? licensesRes : []);
     } catch (err) {
       setError('Ошибка при загрузке данных');
       console.error('Error fetching data:', err);
@@ -190,9 +190,9 @@ const AlbumCreate = () => {
       }
 
       if (editingAlbum) {
-        await axios.put(`/api/v1/albums/${editingAlbum.id}`, formDataToSend);
+        await apiService.put(`/albums/${editingAlbum.id}`, formDataToSend);
       } else {
-        await axios.post('/api/v1/albums', formDataToSend);
+        await apiService.post('/albums', formDataToSend);
       }
       handleClose();
       fetchData();
@@ -205,7 +205,7 @@ const AlbumCreate = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('Вы уверены, что хотите удалить этот альбом?')) {
       try {
-        await axios.delete(`/api/v1/albums/${id}`);
+        await apiService.delete(`/albums/${id}`);
         fetchData();
       } catch (err) {
         setError('Ошибка при удалении альбома');

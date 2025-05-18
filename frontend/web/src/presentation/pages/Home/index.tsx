@@ -1,118 +1,203 @@
-import { Box, Typography, Card, CardContent, CardMedia, styled } from '@mui/material';
-import { useEffect } from 'react';
-import { useApi } from '../../hooks/useApi';
-import { apiService } from '../../../core/infrastructure/services/api';
-import LoadingSpinner from '../../components/LoadingSpinner';
-import ErrorBoundary from '../../components/ErrorBoundary';
-import type { Playlist, Track } from '../../../core/infrastructure/services/api';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Container,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  CardMedia,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
+import { apiService } from "../../../presentation/services/api";
 
-const Section = styled(Box)({
-  marginBottom: '40px',
-});
+interface Track {
+  ID: string;
+  Title: string;
+  ArtistName: string;
+  AlbumName: string;
+  CoverImage: string;
+  Duration: number;
+}
 
-const StyledCard = styled(Card)({
-  backgroundColor: 'background.paper',
-  transition: 'transform 0.2s ease-in-out',
-  '&:hover': {
-    transform: 'scale(1.02)',
-    cursor: 'pointer',
-  },
-});
+interface Album {
+  ID: string;
+  Title: string;
+  ArtistName: string;
+  CoverImage: string;
+  ReleaseDate: string;
+}
 
 const Home = () => {
-  const {
-    data: featuredPlaylists,
-    loading: playlistsLoading,
-    error: playlistsError,
-    execute: fetchPlaylists,
-  } = useApi<Playlist[]>();
+  const [recentTracks, setRecentTracks] = useState<Track[]>([]);
+  const [popularAlbums, setPopularAlbums] = useState<Album[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const {
-    data: recentlyPlayed,
-    loading: tracksLoading,
-    error: tracksError,
-    execute: fetchRecentTracks,
-  } = useApi<Track[]>();
+  const fetchRecentTracks = async () => {
+    try {
+      const response = await apiService.get('/tracks/recent');
+      const tracksData = Array.isArray(response) ? response : [];
+      setRecentTracks(tracksData);
+    } catch (err) {
+      console.error("Error fetching recent tracks:", err);
+      setError("Ошибка при загрузке последних треков");
+    }
+  };
+
+  const fetchPopularAlbums = async () => {
+    try {
+      const response = await apiService.get('/albums/popular');
+      const albumsData = Array.isArray(response) ? response : [];
+      setPopularAlbums(albumsData);
+    } catch (err) {
+      console.error("Error fetching popular albums:", err);
+      setError("Ошибка при загрузке популярных альбомов");
+    }
+  };
 
   useEffect(() => {
-    fetchPlaylists(apiService.getPlaylists());
-    fetchRecentTracks(apiService.getTracks());
-  }, [fetchPlaylists, fetchRecentTracks]);
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        await Promise.all([fetchRecentTracks(), fetchPopularAlbums()]);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Ошибка при загрузке данных");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (playlistsLoading || tracksLoading) {
-    return <LoadingSpinner />;
-  }
+    fetchData();
+  }, []);
 
-  if (playlistsError || tracksError) {
-    return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography color="error">
-          {playlistsError?.message || tracksError?.message || 'Failed to load content'}
-        </Typography>
-      </Box>
-    );
-  }
+  const handleTrackClick = (trackId: string) => {
+    navigate(`/track/${trackId}`);
+  };
+
+  const handleAlbumClick = (albumId: string) => {
+    navigate(`/album/${albumId}`);
+  };
 
   return (
-    <ErrorBoundary>
-      <Box>
-        <Section>
-          <Typography variant="h4" sx={{ mb: 3 }}>
-            Good Evening
-          </Typography>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 3 }}>
-            {featuredPlaylists?.map((playlist) => (
-              <Box key={playlist.id}>
-                <StyledCard>
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={playlist.coverUrl}
-                    alt={playlist.title}
-                  />
-                  <CardContent>
-                    <Typography variant="h6" noWrap>
-                      {playlist.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                      {playlist.description}
-                    </Typography>
-                  </CardContent>
-                </StyledCard>
-              </Box>
-            ))}
-          </Box>
-        </Section>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-        <Section>
-          <Typography variant="h5" sx={{ mb: 3 }}>
-            Recently Played
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Последние треки
           </Typography>
-          <Box sx={{ display: 'grid', gap: 2 }}>
-            {recentlyPlayed?.map((track) => (
-              <Box key={track.id}>
-                <StyledCard>
-                  <Box sx={{ display: 'flex', alignItems: 'center', p: 2 }}>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {recentTracks.length === 0 ? (
+              <Grid item xs={12}>
+                <Typography variant="h6" textAlign="center" color="text.secondary">
+                  Нет доступных треков
+                </Typography>
+              </Grid>
+            ) : (
+              recentTracks.map((track) => (
+                <Grid item xs={12} sm={6} md={4} key={track.ID}>
+                  <Card
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      cursor: "pointer",
+                      "&:hover": {
+                        transform: "scale(1.02)",
+                        transition: "transform 0.2s ease-in-out",
+                      },
+                    }}
+                    onClick={() => handleTrackClick(track.ID)}
+                  >
                     <CardMedia
                       component="img"
-                      sx={{ width: 60, height: 60, borderRadius: 1 }}
-                      image={track.coverUrl}
-                      alt={track.title}
+                      height="200"
+                      image={track.CoverImage || "/default-cover.jpg"}
+                      alt={track.Title}
                     />
-                    <Box sx={{ ml: 2 }}>
-                      <Typography variant="subtitle1">{track.title}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {track.artist}
+                    <CardContent>
+                      <Typography gutterBottom variant="h6" component="div" noWrap>
+                        {track.Title}
                       </Typography>
-                    </Box>
-                  </Box>
-                </StyledCard>
-              </Box>
-            ))}
-          </Box>
-        </Section>
-      </Box>
-    </ErrorBoundary>
+                      <Typography variant="body2" color="text.secondary" noWrap>
+                        {track.ArtistName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" noWrap>
+                        {track.AlbumName}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))
+            )}
+          </Grid>
+
+          <Typography variant="h4" component="h1" gutterBottom>
+            Популярные альбомы
+          </Typography>
+          <Grid container spacing={3}>
+            {popularAlbums.length === 0 ? (
+              <Grid item xs={12}>
+                <Typography variant="h6" textAlign="center" color="text.secondary">
+                  Нет доступных альбомов
+                </Typography>
+              </Grid>
+            ) : (
+              popularAlbums.map((album) => (
+                <Grid item xs={12} sm={6} md={4} key={album.ID}>
+                  <Card
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      cursor: "pointer",
+                      "&:hover": {
+                        transform: "scale(1.02)",
+                        transition: "transform 0.2s ease-in-out",
+                      },
+                    }}
+                    onClick={() => handleAlbumClick(album.ID)}
+                  >
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image={album.CoverImage || "/default-cover.jpg"}
+                      alt={album.Title}
+                    />
+                    <CardContent>
+                      <Typography gutterBottom variant="h6" component="div" noWrap>
+                        {album.Title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" noWrap>
+                        {album.ArtistName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {new Date(album.ReleaseDate).toLocaleDateString()}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))
+            )}
+          </Grid>
+        </>
+      )}
+    </Container>
   );
 };
 

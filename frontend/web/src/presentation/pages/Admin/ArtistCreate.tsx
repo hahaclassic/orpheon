@@ -20,7 +20,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import axios from 'axios';
+import { apiService } from '../../../presentation/services/api';
 
 interface Artist {
   id: number;
@@ -42,8 +42,8 @@ const ArtistCreate = () => {
 
   const fetchArtists = async () => {
     try {
-      const response = await axios.get('/api/v1/artists');
-      const artistsData = Array.isArray(response.data) ? response.data : [];
+      const response = await apiService.get('/artists');
+      const artistsData = Array.isArray(response) ? response : [];
       setArtists(artistsData);
     } catch (err) {
       setError('Ошибка при загрузке артистов');
@@ -90,9 +90,9 @@ const ArtistCreate = () => {
     e.preventDefault();
     try {
       if (editingArtist) {
-        await axios.put(`/api/v1/artists/${editingArtist.id}`, formData);
+        await apiService.put(`/artists/${editingArtist.id}`, formData);
       } else {
-        await axios.post('/api/v1/artists', formData);
+        await apiService.post('/artists', formData);
       }
       handleClose();
       fetchArtists();
@@ -105,7 +105,7 @@ const ArtistCreate = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm('Вы уверены, что хотите удалить этого артиста?')) {
       try {
-        await axios.delete(`/api/v1/artists/${id}`);
+        await apiService.delete(`/artists/${id}`);
         fetchArtists();
       } catch (err) {
         setError('Ошибка при удалении артиста');

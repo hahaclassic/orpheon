@@ -3,6 +3,15 @@ import { useAuth } from '../hooks/useAuth';
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  isLoading: boolean;
+  user: {
+    id: string;
+    name: string;
+    registration_date: string;
+    birth_date: string;
+    access_lvl: number;
+  } | null;
   login: (login: string, password: string) => Promise<void>;
   register: (login: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
