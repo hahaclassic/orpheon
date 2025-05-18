@@ -16,8 +16,14 @@ import {
   Container,
   Tabs,
   Tab,
+  IconButton,
+  Divider,
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
+import EditIcon from '@mui/icons-material/Edit';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
+import PersonIcon from '@mui/icons-material/Person';
 import axios from 'axios';
 
 interface UserProfile {
@@ -36,7 +42,7 @@ interface Playlist {
   coverImage?: string;
 }
 
-const Profile = () => {
+const Me = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -130,26 +136,25 @@ const Profile = () => {
   };
 
   const renderPlaylistGrid = (playlists: Playlist[], loading: boolean) => (
-    <Grid container spacing={2} sx={{ width: '100%', m: 0, px: 2 }}>
+    <Grid container spacing={3} sx={{ width: '100%', m: 0 }}>
       {loading ? (
         <Typography color="text.secondary" sx={{ ml: 2 }}>Загрузка...</Typography>
       ) : playlists?.length === 0 ? (
         <Typography color="text.secondary" sx={{ ml: 2 }}>Нет плейлистов</Typography>
       ) : (
         (playlists || []).map((playlist) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={playlist.id} sx={{ width: '100%' }}>
+          <Grid item xs={12} sm={6} md={4} lg={3} key={playlist.id}>
             <Paper 
               sx={{ 
                 p: 2,
-                width: '100%',
-                boxSizing: 'border-box',
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out',
                 '&:hover': {
-                  transform: 'scale(1.02)',
-                  transition: 'transform 0.2s ease-in-out',
+                  transform: 'translateY(-4px)',
+                  boxShadow: 4,
                 },
               }}
               onClick={() => handlePlaylistClick(playlist.id)}
@@ -160,8 +165,9 @@ const Profile = () => {
                   aspectRatio: '1',
                   mb: 2,
                   bgcolor: 'primary.dark',
-                  borderRadius: 1,
+                  borderRadius: 2,
                   overflow: 'hidden',
+                  position: 'relative',
                 }}
               >
                 {playlist.coverImage ? (
@@ -180,17 +186,34 @@ const Profile = () => {
                     sx={{
                       width: '100%',
                       height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       bgcolor: 'primary.main',
                     }}
-                  />
+                  >
+                    <PlaylistPlayIcon sx={{ fontSize: 48, color: 'white' }} />
+                  </Box>
+                )}
+                {!playlist.isPublic && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      bgcolor: 'rgba(0, 0, 0, 0.6)',
+                      borderRadius: 1,
+                      px: 1,
+                      py: 0.5,
+                    }}
+                  >
+                    <Typography variant="caption" color="white">
+                      Приватный
+                    </Typography>
+                  </Box>
                 )}
               </Box>
               <Typography variant="h6" noWrap>{playlist.name}</Typography>
-              {!playlist.isPublic && (
-                <Typography variant="caption" color="text.secondary">
-                  Приватный
-                </Typography>
-              )}
             </Paper>
           </Grid>
         ))
@@ -210,42 +233,51 @@ const Profile = () => {
       <Box
         sx={{
           bgcolor: 'primary.dark',
-          py: 4,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          zIndex: 10,
-          width: '100%',
+          py: 6,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(45deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 100%)',
+            zIndex: 1,
+          },
         }}
       >
-        <Container maxWidth="xl">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <Avatar
               sx={{
-                width: 120,
-                height: 120,
-                fontSize: 48,
+                width: 150,
+                height: 150,
+                fontSize: 64,
                 border: '4px solid',
-                borderColor: 'primary.main',
+                borderColor: 'white',
                 bgcolor: 'primary.main',
+                boxShadow: 4,
               }}
               src={profile?.avatar}
             >
               {profile?.username?.[0]}
             </Avatar>
-            <Box>
-              <Typography variant="h4" fontWeight={700} gutterBottom>
+            <Box sx={{ color: 'white' }}>
+              <Typography variant="h3" fontWeight={700} gutterBottom>
                 {profileLoading ? 'Загрузка...' : profile?.name || profile?.username || '—'}
               </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
+              <Typography variant="h6" sx={{ opacity: 0.9 }}>
                 {profileLoading ? '' : profile?.email || ''}
               </Typography>
               {profile?.birthDate && (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body1" sx={{ opacity: 0.8, mt: 1 }}>
                   Дата рождения: {new Date(profile.birthDate).toLocaleDateString()}
                 </Typography>
               )}
               {profile?.createdAt && (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body1" sx={{ opacity: 0.8 }}>
                   Дата регистрации: {new Date(profile.createdAt).toLocaleDateString()}
                 </Typography>
               )}
@@ -260,11 +292,31 @@ const Profile = () => {
           <Tabs 
             value={activeTab} 
             onChange={(_, newValue) => setActiveTab(newValue)}
-            sx={{ minHeight: 64 }}
+            sx={{ 
+              minHeight: 72,
+              '& .MuiTab-root': {
+                minHeight: 72,
+                fontSize: '1rem',
+                textTransform: 'none',
+                fontWeight: 500,
+              },
+            }}
           >
-            <Tab label="Основная информация" />
-            <Tab label="Мои плейлисты" />
-            <Tab label="Избранное" />
+            <Tab 
+              icon={<PersonIcon />} 
+              iconPosition="start" 
+              label="Основная информация" 
+            />
+            <Tab 
+              icon={<PlaylistPlayIcon />} 
+              iconPosition="start" 
+              label="Мои плейлисты" 
+            />
+            <Tab 
+              icon={<FavoriteIcon />} 
+              iconPosition="start" 
+              label="Избранное" 
+            />
           </Tabs>
         </Container>
       </Box>
@@ -274,15 +326,62 @@ const Profile = () => {
         <Container maxWidth="xl">
           {activeTab === 0 && (
             <Box>
-              <Typography variant="h5" gutterBottom>Основная информация</Typography>
-              <Button
-                variant="outlined"
-                startIcon={<LockIcon />}
-                onClick={() => setPasswordDialogOpen(true)}
-                sx={{ mt: 2 }}
-              >
-                Изменить пароль
-              </Button>
+              <Paper sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                  <Typography variant="h5">Основная информация</Typography>
+                  <IconButton color="primary">
+                    <EditIcon />
+                  </IconButton>
+                </Box>
+                <Divider sx={{ mb: 3 }} />
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      Имя пользователя
+                    </Typography>
+                    <Typography variant="body1">
+                      {profile?.username || '—'}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      Email
+                    </Typography>
+                    <Typography variant="body1">
+                      {profile?.email || '—'}
+                    </Typography>
+                  </Grid>
+                  {profile?.birthDate && (
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Дата рождения
+                      </Typography>
+                      <Typography variant="body1">
+                        {new Date(profile.birthDate).toLocaleDateString()}
+                      </Typography>
+                    </Grid>
+                  )}
+                  {profile?.createdAt && (
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Дата регистрации
+                      </Typography>
+                      <Typography variant="body1">
+                        {new Date(profile.createdAt).toLocaleDateString()}
+                      </Typography>
+                    </Grid>
+                  )}
+                </Grid>
+                <Box sx={{ mt: 4 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<LockIcon />}
+                    onClick={() => setPasswordDialogOpen(true)}
+                  >
+                    Изменить пароль
+                  </Button>
+                </Box>
+              </Paper>
             </Box>
           )}
 
@@ -303,7 +402,12 @@ const Profile = () => {
       </Box>
 
       {/* Password Change Dialog */}
-      <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)}>
+      <Dialog 
+        open={passwordDialogOpen} 
+        onClose={() => setPasswordDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Изменение пароля</DialogTitle>
         <form onSubmit={handlePasswordSubmit}>
           <DialogContent>
@@ -343,7 +447,7 @@ const Profile = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setPasswordDialogOpen(false)}>Отмена</Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" variant="contained" disabled={loading}>
               {loading ? 'Сохранение...' : 'Сохранить'}
             </Button>
           </DialogActions>
@@ -353,4 +457,4 @@ const Profile = () => {
   );
 };
 
-export default Profile; 
+export default Me; 

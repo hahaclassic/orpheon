@@ -21,9 +21,9 @@ const MainContent = styled(Box)({
 const ContentArea = styled(Box)({
   flex: 1,
   overflowY: 'auto',
-  padding: '24px',
-  width: '100%',
-  maxWidth: '100%',
+  padding: '16px',
+  display: 'flex',
+  flexDirection: 'column',
 });
 
 const Layout = () => {
