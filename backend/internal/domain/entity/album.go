@@ -7,9 +7,9 @@ import (
 )
 
 type AlbumMeta struct {
-	ID          uuid.UUID
+	ID          uuid.UUID `json:"id"`
 	Title       string
 	Label       string
-	LicenseID   uuid.UUID
-	ReleaseDate time.Time
+	LicenseID   uuid.UUID `json:"license_id"`
+	ReleaseDate time.Time `json:"release_date"`
 }
