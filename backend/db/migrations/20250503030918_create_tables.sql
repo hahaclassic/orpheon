@@ -29,12 +29,12 @@ CREATE TABLE artists (
     id UUID PRIMARY KEY,
     name TEXT NOT NULL UNIQUE CHECK (length(name) > 2), -- Название артиста должно быть хотя бы 3 символа
     description TEXT,
-    country TEXT CHECK (length(country) > 2) -- Код страны (например, "US", "RU")
+    country TEXT CHECK (length(country) > 2) -- Название страны (например, "US", "RU")
 );
 
 CREATE TABLE albums (
     id UUID PRIMARY KEY,
-    title TEXT NOT NULL UNIQUE CHECK (length(title) > 1),
+    title TEXT NOT NULL UNIQUE CHECK (length(title) > 0),
     label TEXT,
     license_id UUID REFERENCES licenses(id) ON DELETE SET NULL, -- Если лицензия удалена, оставляем NULL
     release_date DATE NOT NULL CHECK (release_date <= NOW()) -- Альбом не может выйти в будущем
@@ -42,15 +42,15 @@ CREATE TABLE albums (
 
 CREATE TABLE tracks (
     id UUID PRIMARY KEY,
-    genre_id UUID REFERENCES genres(id) ON DELETE CASCADE, -- !!! TODO: надо добавить NOT NULL
+    genre_id UUID NOT NULL REFERENCES genres(id) ON DELETE CASCADE,
     duration INT NOT NULL CHECK (duration > 0), -- Длительность трека должна быть положительной
     name TEXT NOT NULL CHECK (length(name) > 1),
     explicit BOOLEAN NOT NULL DEFAULT FALSE, -- Явное указание значения по умолчанию
     license_id UUID REFERENCES licenses(id) ON DELETE SET NULL, -- Лицензия может быть удалена
     total_streams INT NOT NULL CHECK (total_streams >= 0),
     album_id UUID REFERENCES albums(id) ON DELETE CASCADE,
-    track_number INT NOT NULL CHECK (track_number >=0) -- позиция в альбоме
-    -- !!! TODO: (name, album_id) - UNIQUE
+    track_number INT NOT NULL CHECK (track_number >=1), -- позиция в альбоме
+    UNIQUE (name, album_id) -- уникальность имени трека в альбоме
 );
 
 CREATE TABLE playlists (
