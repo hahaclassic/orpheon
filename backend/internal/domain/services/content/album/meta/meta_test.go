@@ -26,14 +26,14 @@ func TestCreateAlbum(t *testing.T) {
 		repo := mocks.NewAlbumRepository(t)
 		repo.On("CreateAlbum", ctx, mock.AnythingOfType("*entity.AlbumMeta")).Return(nil)
 		svc := meta.New(repo)
-		err := svc.CreateAlbum(ctx, adminClaims, album)
+		_, err := svc.CreateAlbum(ctx, adminClaims, album)
 		assert.NoError(t, err)
 	})
 
 	t.Run("forbidden", func(t *testing.T) {
 		repo := mocks.NewAlbumRepository(t)
 		svc := meta.New(repo)
-		err := svc.CreateAlbum(ctx, userClaims, album)
+		_, err := svc.CreateAlbum(ctx, userClaims, album)
 		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 
@@ -41,7 +41,7 @@ func TestCreateAlbum(t *testing.T) {
 		repo := mocks.NewAlbumRepository(t)
 		repo.On("CreateAlbum", ctx, mock.AnythingOfType("*entity.AlbumMeta")).Return(errors.New("db error"))
 		svc := meta.New(repo)
-		err := svc.CreateAlbum(ctx, adminClaims, album)
+		_, err := svc.CreateAlbum(ctx, adminClaims, album)
 		assert.ErrorIs(t, err, usecase.ErrCreateAlbum)
 	})
 }
