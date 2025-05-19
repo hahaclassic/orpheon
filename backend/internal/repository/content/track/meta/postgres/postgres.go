@@ -76,7 +76,7 @@ func (r *TrackMetaRepository) GetTrackArtists(ctx context.Context, trackID uuid.
 func (r *TrackMetaRepository) Create(ctx context.Context, track *entity.TrackMeta) error {
 	query := `
 		WITH max_track_number AS (
-			SELECT COALESCE(MAX(track_number), -1) + 1 as next_number
+			SELECT COALESCE(MAX(track_number), 0) + 1 as next_number
 			FROM tracks
 			WHERE album_id = $7
 		)

@@ -22,7 +22,7 @@ func NewPlaylistTracksRepository(pool *pgxpool.Pool) *PlaylistTracksRepository {
 func (r *PlaylistTracksRepository) AddTrackToPlaylist(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
 	const query = `
 		WITH max_position AS (
-			SELECT COALESCE(MAX(position), -1) + 1 as next_position
+			SELECT COALESCE(MAX(position), 0) + 1 as next_position
 			FROM playlist_tracks
 			WHERE playlist_id = $1
 		)
