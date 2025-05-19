@@ -19,7 +19,7 @@ func NewAlbumTrackRepository(pool *pgxpool.Pool) *AlbumTrackRepository {
 func (r *AlbumTrackRepository) GetAllTracks(ctx context.Context, albumID uuid.UUID) ([]*entity.TrackMeta, error) {
 	query := `
 		SELECT t.id, t.name, t.duration, t.explicit, t.license_id, t.album_id,
-			   t.track_number, t.total_streams
+			   t.track_number, t.total_streams, t.genre_id
 		FROM tracks t WHERE t.album_id = $1
 	`
 	rows, err := r.pool.Query(ctx, query, albumID)
@@ -31,7 +31,9 @@ func (r *AlbumTrackRepository) GetAllTracks(ctx context.Context, albumID uuid.UU
 	tracks := make([]*entity.TrackMeta, 0)
 	for rows.Next() {
 		var track entity.TrackMeta
-		if err := rows.Scan(&track.ID, &track.Name, &track.Duration, &track.Explicit, &track.LicenseID, &track.AlbumID, &track.TrackNumber, &track.TotalStreams); err != nil {
+		if err := rows.Scan(&track.ID, &track.Name, &track.Duration,
+			&track.Explicit, &track.LicenseID, &track.AlbumID,
+			&track.TrackNumber, &track.TotalStreams, &track.GenreID); err != nil {
 			return nil, err
 		}
 		tracks = append(tracks, &track)

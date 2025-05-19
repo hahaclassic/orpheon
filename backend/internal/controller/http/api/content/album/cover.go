@@ -22,22 +22,6 @@ func NewAlbumCoverController(service album.AlbumCoverService) *AlbumCoverControl
 	return &AlbumCoverController{service: service}
 }
 
-func (c *AlbumCoverController) RegisterRoutes(router *gin.RouterGroup) {
-	// albums := router.Group("/albums")
-	// {
-	// 	// Public routes
-	// 	albums.GET("/:id/cover", c.GetCover)
-
-	// 	// Protected routes
-	// 	protected := albums.Group("")
-	// 	protected.Use(middleware.Auth())
-	// 	{
-	// 		protected.POST("/:id/cover", c.UploadCover)
-	// 		protected.DELETE("/:id/cover", c.DeleteCover)
-	// 	}
-	// }
-}
-
 func (c *AlbumCoverController) UploadCover(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/hahaclassic/orpheon/backend/internal/controller/http/dto"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
@@ -72,13 +73,13 @@ func (c *TrackMetaController) CreateTrack(ctx *gin.Context) {
 		return
 	}
 
-	createdTrack, err := c.trackService.CreateTrackMeta(ctx.Request.Context(), claims, &track)
+	id, err := c.trackService.CreateTrackMeta(ctx.Request.Context(), claims, &track)
 	if err != nil {
 		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to create track"})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, createdTrack)
+	ctx.JSON(http.StatusCreated, dto.ID{ID: id})
 }
 
 // UpdateTrack godoc

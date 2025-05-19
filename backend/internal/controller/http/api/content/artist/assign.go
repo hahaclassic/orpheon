@@ -32,7 +32,7 @@ func (c *ArtistAssignController) AssignArtistToTrack(ctx *gin.Context) {
 		return
 	}
 
-	trackID, err := uuid.Parse(ctx.Param("trackID"))
+	trackID, err := uuid.Parse(ctx.Param("track_id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid track ID"})
 		return
@@ -64,7 +64,7 @@ func (c *ArtistAssignController) AssignArtistToAlbum(ctx *gin.Context) {
 		return
 	}
 
-	albumID, err := uuid.Parse(ctx.Param("albumID"))
+	albumID, err := uuid.Parse(ctx.Param("album_id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid album ID"})
 		return
@@ -115,6 +115,38 @@ func (c *ArtistAssignController) GetTracksByArtist(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, tracks)
 }
 
+// func (c *ArtistAssignController) GetArtistsByAlbum(ctx *gin.Context) {
+// 	albumID, err := uuid.Parse(ctx.Param("id"))
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid album ID"})
+// 		return
+// 	}
+
+// 	artists, err := c.artistService.GetArtistByAlbum(ctx, albumID)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	ctx.JSON(http.StatusOK, artists)
+// }
+
+// func (c *ArtistAssignController) GetArtistsByTrack(ctx *gin.Context) {
+// 	trackID, err := uuid.Parse(ctx.Param("id"))
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid track ID"})
+// 		return
+// 	}
+
+// 	artists, err := c.artistService.GetArtistByTrack(ctx, trackID)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	ctx.JSON(http.StatusOK, artists)
+// }
+
 func (c *ArtistAssignController) UnassignArtistFromTrack(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
@@ -128,7 +160,7 @@ func (c *ArtistAssignController) UnassignArtistFromTrack(ctx *gin.Context) {
 		return
 	}
 
-	trackID, err := uuid.Parse(ctx.Param("trackID"))
+	trackID, err := uuid.Parse(ctx.Param("track_id"))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -160,7 +192,7 @@ func (c *ArtistAssignController) UnassignArtistFromAlbum(ctx *gin.Context) {
 		return
 	}
 
-	albumID, err := uuid.Parse(ctx.Param("albumID"))
+	albumID, err := uuid.Parse(ctx.Param("album_id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid album ID"})
 		return

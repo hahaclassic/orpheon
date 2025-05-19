@@ -173,16 +173,22 @@ func (c *PlaylistMetaController) DeletePlaylist(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-// GetUserPlaylists godoc
-// @Summary Get user's playlists
-// @Description Get all playlists created by a specific user
-// @Tags playlists
-// @Produce json
-// @Param userId path string true "User ID"
-// @Success 200 {array} entity.Playlist
-// @Failure 400 {object} gin.H
-// @Failure 500 {object} gin.H
-// @Router /api/v1/playlists/user/{userId} [get]
+func (c *PlaylistMetaController) GetMyPlaylists(ctx *gin.Context) {
+	claims := utils.GetClaims(ctx)
+	if claims == nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	playlists, err := c.playlistService.GetUserAllPlaylistsMeta(ctx.Request.Context(), claims, claims.UserID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user playlists"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, playlists)
+}
+
 func (c *PlaylistMetaController) GetUserPlaylists(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
@@ -190,7 +196,7 @@ func (c *PlaylistMetaController) GetUserPlaylists(ctx *gin.Context) {
 		return
 	}
 
-	userID, err := uuid.Parse(ctx.Param("userId"))
+	userID, err := uuid.Parse(ctx.Param("user_id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return

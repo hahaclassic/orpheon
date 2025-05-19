@@ -26,6 +26,7 @@ func NewArtistRouter(
 func (r *ArtistRouter) RegisterRoutes(router *gin.RouterGroup) {
 	artistGroup := router.Group("/artists")
 
+	artistGroup.GET("", r.artistMetaController.GetAllArtists)
 	artistGroup.GET("/:id", r.artistMetaController.GetArtist)
 	artistGroup.GET("/:id/albums", r.artistAssignController.GetAlbumsByArtist)
 	artistGroup.GET("/:id/tracks", r.artistAssignController.GetTracksByArtist)
@@ -36,6 +37,11 @@ func (r *ArtistRouter) RegisterRoutes(router *gin.RouterGroup) {
 		artistProtected.POST("", r.artistMetaController.CreateArtist)
 		artistProtected.PUT("/:id", r.artistMetaController.UpdateArtist)
 		artistProtected.DELETE("/:id", r.artistMetaController.DeleteArtist)
+
+		artistProtected.POST("/:id/tracks/:track_id", r.artistAssignController.AssignArtistToTrack)
+		artistProtected.DELETE("/:id/tracks/:track_id", r.artistAssignController.UnassignArtistFromTrack)
+		artistProtected.POST("/:id/albums/:album_id", r.artistAssignController.AssignArtistToAlbum)
+		artistProtected.DELETE("/:id/albums/:album_id", r.artistAssignController.UnassignArtistFromAlbum)
 	}
 
 	avatarGroup := artistGroup.Group("/:id/avatar")

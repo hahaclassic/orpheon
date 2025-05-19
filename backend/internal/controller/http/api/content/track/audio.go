@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -66,7 +67,7 @@ func (c *TrackAudioController) parseRangeHeader(ctx *gin.Context) (int64, int64,
 	// Parse Range header (format: "bytes=start-end")
 	rangeStr := strings.TrimPrefix(rangeHeader, "bytes=")
 	parts := strings.Split(rangeStr, "-")
-	if len(parts) != 2 {
+	if len(parts) < 1 || len(parts) > 2 {
 		return 0, 0, errors.New("Invalid range format")
 	}
 
@@ -75,9 +76,14 @@ func (c *TrackAudioController) parseRangeHeader(ctx *gin.Context) (int64, int64,
 		return 0, 0, errors.New("Invalid start range")
 	}
 
-	end, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return 0, 0, errors.New("Invalid end range")
+	end := int64(0)
+	if len(parts) == 2 && parts[1] != "" {
+		end, err = strconv.ParseInt(parts[1], 10, 64)
+		if err != nil {
+			return 0, 0, errors.New("Invalid end range")
+		}
+	} else {
+		end = math.MaxInt64
 	}
 
 	return start, end, nil

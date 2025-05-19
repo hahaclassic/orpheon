@@ -125,20 +125,20 @@ func (ac AuthController) packTokens(c *gin.Context, tokens *entity.AuthTokens) {
 	c.SetCookie(
 		refreshCookieName,
 		tokens.Refresh,
-		int(ac.cookieConfig.RefreshTTL.Seconds()), // 7 days in seconds
-		ac.cookieConfig.Path,                      // path
-		ac.cookieConfig.Domain,                    // domain ("" = current)
-		ac.cookieConfig.Secure,                    // secure (set to false if testing locally w/o HTTPS)
-		true,                                      // httpOnly
+		int(ac.cookieConfig.RefreshTTL.Seconds()),
+		ac.cookieConfig.Path,   // path
+		ac.cookieConfig.Domain, // domain ("" = current)
+		ac.cookieConfig.Secure, // secure (set to false if testing locally w/o HTTPS)
+		true,                   // httpOnly
 	)
 
 	c.SetCookie(
 		accessCookieName,
 		tokens.Access,
-		int(ac.cookieConfig.AccessTTL.Seconds()), // 1 hour in seconds
-		ac.cookieConfig.Path,                     // path
-		ac.cookieConfig.Domain,                   // domain ("" = current)
-		ac.cookieConfig.Secure,                   // secure (set to false if testing locally w/o HTTPS)
-		ac.cookieConfig.HttpOnly,                 // httpOnly
+		int(ac.cookieConfig.AccessTTL.Seconds()),
+		ac.cookieConfig.Path,     // path
+		ac.cookieConfig.Domain,   // domain ("" = current)
+		ac.cookieConfig.Secure,   // secure (set to false if testing locally w/o HTTPS)
+		ac.cookieConfig.HttpOnly, // httpOnly
 	)
 }

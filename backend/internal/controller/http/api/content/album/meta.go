@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/hahaclassic/orpheon/backend/internal/controller/http/dto"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
@@ -13,10 +14,10 @@ import (
 )
 
 type AlbumController struct {
-	albumService album.AlbumService
+	albumService album.AlbumMetaService
 }
 
-func NewAlbumMetaController(albumService album.AlbumService) *AlbumController {
+func NewAlbumMetaController(albumService album.AlbumMetaService) *AlbumController {
 	return &AlbumController{
 		albumService: albumService,
 	}
@@ -43,6 +44,32 @@ func (c *AlbumController) GetAlbum(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, album)
 }
 
+func (c *AlbumController) GetAllAlbums(ctx *gin.Context) {
+	albums, err := c.albumService.GetAllAlbums(ctx.Request.Context())
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get all albums"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, albums)
+}
+
+// func (c *AlbumController) GetAlbumByArtist(ctx *gin.Context) {
+// 	artistID, err := uuid.Parse(ctx.Param("artist_id"))
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid artist ID"})
+// 		return
+// 	}
+
+// 	albums, err := c.albumService.GetAlbumByArtist(ctx.Request.Context(), artistID)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get album by artist"})
+// 		return
+// 	}
+
+// 	ctx.JSON(http.StatusOK, albums)
+// }
+
 func (c *AlbumController) CreateAlbum(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
 	if claims == nil {
@@ -52,21 +79,21 @@ func (c *AlbumController) CreateAlbum(ctx *gin.Context) {
 
 	var album entity.AlbumMeta
 	if err := ctx.ShouldBindJSON(&album); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := c.albumService.CreateAlbum(ctx.Request.Context(), claims, &album); err != nil {
+	id, err := c.albumService.CreateAlbum(ctx.Request.Context(), claims, &album)
+	if err != nil {
 		if errors.Is(err, commonerr.ErrForbidden) {
 			ctx.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
-			return
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create album"})
 		}
-
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create album"})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, album.ID)
+	ctx.JSON(http.StatusCreated, dto.ID{ID: id})
 }
 
 func (c *AlbumController) UpdateAlbum(ctx *gin.Context) {

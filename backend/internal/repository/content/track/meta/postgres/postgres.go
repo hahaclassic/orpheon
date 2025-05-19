@@ -46,6 +46,33 @@ func (r *TrackMetaRepository) GetByID(ctx context.Context, trackID uuid.UUID) (*
 	return &track, nil
 }
 
+func (r *TrackMetaRepository) GetTrackArtists(ctx context.Context, trackID uuid.UUID) ([]*entity.ArtistMeta, error) {
+	query := `
+		SELECT a.id, a.name, a.description, a.country
+		FROM artists
+		JOIN artist_tracks ON artists.id = artist_tracks.artist_id
+		WHERE artist_tracks.track_id = $1
+	`
+
+	rows, err := r.pool.Query(ctx, query, trackID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get track artists: %w", err)
+	}
+	defer rows.Close()
+
+	artists := make([]*entity.ArtistMeta, 0)
+	for rows.Next() {
+		var artist entity.ArtistMeta
+		err := rows.Scan(&artist.ID, &artist.Name, &artist.Description, &artist.Country)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan artist: %w", err)
+		}
+		artists = append(artists, &artist)
+	}
+
+	return artists, nil
+}
+
 func (r *TrackMetaRepository) Create(ctx context.Context, track *entity.TrackMeta) error {
 	query := `
 		WITH max_track_number AS (

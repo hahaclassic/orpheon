@@ -19,7 +19,7 @@ func NewAlbumTrackController(albumTrackService album.AlbumTrackService) *AlbumTr
 }
 
 func (c *AlbumTrackController) GetAlbumTracks(ctx *gin.Context) {
-	albumID, err := uuid.Parse(ctx.Param("albumID"))
+	albumID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid album ID"})
 		return

@@ -57,6 +57,31 @@ func (r *artistMetaRepository) GetAll(ctx context.Context) ([]*entity.ArtistMeta
 	return artists, nil
 }
 
+func (r *artistMetaRepository) GetByAlbum(ctx context.Context, albumID uuid.UUID) ([]*entity.ArtistMeta, error) {
+	query := `SELECT a.id, a.name, a.description, a.country FROM artists a JOIN album_artist aa ON a.id = aa.artist_id WHERE aa.album_id = $1`
+
+	rows, err := r.db.Query(ctx, query, albumID)
+	if err != nil {
+		return nil, err
+	}
+
+	artists := make([]*entity.ArtistMeta, 0)
+	for rows.Next() {
+		var artist entity.ArtistMeta
+		err := rows.Scan(&artist.ID, &artist.Name, &artist.Description, &artist.Country)
+		if err != nil {
+			return nil, err
+		}
+		artists = append(artists, &artist)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return artists, nil
+}
+
 func (r *artistMetaRepository) Create(ctx context.Context, artist *entity.ArtistMeta) error {
 	query := `INSERT INTO artists (id, name, description, country) VALUES ($1, $2, $3, $4)`
 

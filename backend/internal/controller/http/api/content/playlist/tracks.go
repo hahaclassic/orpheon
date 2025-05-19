@@ -57,7 +57,7 @@ func (c *PlaylistTrackController) AddTrackToPlaylist(ctx *gin.Context) {
 	}
 
 	var request struct {
-		TrackID string `json:"trackId" binding:"required"`
+		TrackID string `json:"track_id" binding:"required"`
 	}
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

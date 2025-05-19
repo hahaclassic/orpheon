@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrInvalidChunkParams = errors.New("invalid chunk parameters")
+	ErrInvalidTrackID     = errors.New("invalid track id")
 )
 
 type AudioFileRepository interface {
@@ -59,6 +60,8 @@ func (a *AudioFileService) UploadAudioFile(ctx context.Context, claims *entity.C
 		return commonerr.ErrForbidden
 	case chunk.End <= chunk.Start || chunk.Start != 0 || chunk.End != int64(len(chunk.Data)):
 		return ErrInvalidChunkParams
+	case chunk.TrackID == uuid.Nil:
+		return ErrInvalidTrackID
 	}
 
 	converted, err := a.converter.ChangeBitrate(ctx, chunk)

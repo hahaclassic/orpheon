@@ -32,7 +32,8 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/assign"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/avatar"
 	artist_meta_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/meta"
-	genre_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre"
+	genre_assign "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre/assign"
+	genre_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre/meta"
 	license_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/license"
 	playlist_cover_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/cover"
 	playlist_deletion_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/deleter"
@@ -57,7 +58,8 @@ import (
 	assign_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/artist/assign/postgres"
 	avatar_minio "github.com/hahaclassic/orpheon/backend/internal/repository/content/artist/avatar/minio"
 	artist_meta_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/artist/meta/postgres"
-	genre_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/genre/postgres"
+	genre_assign_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/genre/assign/postgres"
+	genre_meta_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/genre/meta/postgres"
 	license_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/license/postgres"
 	access_cache_local "github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/access-cache/local"
 	access_cache_redis "github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/access-cache/redis"
@@ -102,7 +104,8 @@ func Run(conf *config.Config) {
 	albumTrackRepo := album_tracks_postgres.NewAlbumTrackRepository(pgxpool)
 	artistMetaRepo := artist_meta_postgres.NewArtistMetaRepository(pgxpool)
 	artistAssignRepo := assign_postgres.NewArtistAssignRepository(pgxpool)
-	genreRepo := genre_postgres.NewGenreRepository(pgxpool)
+	genreRepo := genre_meta_postgres.NewGenreRepository(pgxpool)
+	genreAssignRepo := genre_assign_postgres.NewGenreAssignRepository(pgxpool)
 	licenseRepo := license_postgres.NewLicenseRepository(pgxpool)
 	searchRepo := search_postgres.NewSearchRepository(pgxpool)
 	playlistRepo := playlist_meta_postgres.NewPlaylistMetaRepository(pgxpool)
@@ -173,6 +176,7 @@ func Run(conf *config.Config) {
 		playlistAccessRepo,
 	)
 	genreService := genre_service.NewGenreService(genreRepo)
+	genreAssignService := genre_assign.NewGenreAssignService(genreAssignRepo)
 	licenseService := license_service.NewLicenseService(licenseRepo)
 	albumMetaService := album_meta_service.New(albumMetaRepo)
 	albumCoverService := album_cover_service.New(albumCoverRepo)
@@ -187,6 +191,7 @@ func Run(conf *config.Config) {
 
 	authController := auth_ctrl.NewAuthController(authService, &conf.Cookie)
 	genreController := genre_ctrl.NewGenreController(genreService, authMiddlewareRequired)
+	genreAssignController := genre_ctrl.NewGenreAssignController(genreAssignService)
 	licenseController := license_ctrl.NewLicenseController(licenseService, authMiddlewareRequired)
 	artistMetaController := artist_ctrl.NewArtistMetaController(artistMetaService)
 	artistAvatarController := artist_ctrl.NewArtistAvatarController(artistAvatarService)
@@ -209,7 +214,7 @@ func Run(conf *config.Config) {
 
 	albumRouter := album_ctrl.NewAlbumRouter(
 		albumMetaController, albumCoverController,
-		albumTrackController, authMiddlewareRequired)
+		albumTrackController, genreAssignController, authMiddlewareRequired)
 
 	artistRouter := artist_ctrl.NewArtistRouter(
 		artistMetaController, artistAvatarController,
@@ -220,7 +225,7 @@ func Run(conf *config.Config) {
 		playlistFavoriteController, playlistCoverController, authMiddlewareRequired)
 
 	trackRouter := track_ctrl.NewTrackRouter(trackMetaController,
-		trackSegmentController, trackAudioController, authMiddlewareRequired)
+		trackSegmentController, trackAudioController, artistAssignController, authMiddlewareRequired)
 
 	meRouter := me_ctrl.NewMeRouter(playlistMetaController, userController,
 		playlistFavoriteController, authMiddlewareRequired)

@@ -21,6 +21,7 @@ type TrackMetaRepository interface {
 	Create(ctx context.Context, track *entity.TrackMeta) error
 	Update(ctx context.Context, track *entity.TrackMeta) error
 	Delete(ctx context.Context, trackID uuid.UUID) error
+	GetTrackArtists(ctx context.Context, trackID uuid.UUID) ([]*entity.ArtistMeta, error)
 }
 
 type TrackMetaService struct {
@@ -37,10 +38,20 @@ func (s *TrackMetaService) GetTrackMeta(ctx context.Context, trackID uuid.UUID) 
 		err = errwrap.WrapIfErr(usecase.ErrGetTrackMeta, err)
 	}()
 
-	return s.repo.GetByID(ctx, trackID)
+	track, err := s.repo.GetByID(ctx, trackID)
+	if err != nil {
+		return nil, err
+	}
+
+	track.Artists, err = s.repo.GetTrackArtists(ctx, trackID)
+	if err != nil {
+		return nil, err
+	}
+
+	return track, nil
 }
 
-func (s *TrackMetaService) CreateTrackMeta(ctx context.Context, claims *entity.Claims, track *entity.TrackMeta) (id uuid.UUID, err error) {
+func (s *TrackMetaService) CreateTrackMeta(ctx context.Context, claims *entity.Claims, track *entity.TrackMeta) (_ uuid.UUID, err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrCreateTrackMeta, err)
 	}()
@@ -62,7 +73,7 @@ func (s *TrackMetaService) CreateTrackMeta(ctx context.Context, claims *entity.C
 		return uuid.Nil, err
 	}
 
-	return id, nil
+	return track.ID, nil
 }
 
 func (s *TrackMetaService) UpdateTrackMeta(ctx context.Context, claims *entity.Claims, track *entity.TrackMeta) (err error) {

@@ -4,5 +4,5 @@ import "github.com/google/uuid"
 
 type Genre struct {
 	ID    uuid.UUID `json:"id"`
-	Title string
+	Title string    `json:"title"`
 }

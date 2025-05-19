@@ -16,11 +16,11 @@ import (
 )
 
 type AlbumMainController struct {
-	albumMetaService  usecase.AlbumService
+	albumMetaService  usecase.AlbumMetaService
 	albumCoverService usecase.AlbumCoverService
 }
 
-func NewAlbumMainController(albumMetaService usecase.AlbumService, albumCoverService usecase.AlbumCoverService) *AlbumMainController {
+func NewAlbumMainController(albumMetaService usecase.AlbumMetaService, albumCoverService usecase.AlbumCoverService) *AlbumMainController {
 	return &AlbumMainController{
 		albumMetaService:  albumMetaService,
 		albumCoverService: albumCoverService,
@@ -86,12 +86,12 @@ func (c *AlbumMainController) createAlbum(ctx context.Context) error {
 		ReleaseDate: releaseDate,
 	}
 
-	err = c.albumMetaService.CreateAlbum(ctx, session.Claims(), album)
+	id, err := c.albumMetaService.CreateAlbum(ctx, session.Claims(), album)
 	if err != nil {
 		return fmt.Errorf("failed to create album: %w", err)
 	}
 
-	fmt.Println("Album created successfully")
+	fmt.Printf("Album created successfully with ID: %s\n", id)
 	return nil
 }
 

@@ -2,24 +2,28 @@ package track_ctrl
 
 import (
 	"github.com/gin-gonic/gin"
+	artist_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/artist"
 )
 
 type TrackRouter struct {
-	trackMetaController *TrackMetaController
-	segmentService      *TrackSegmentController
-	audioService        *TrackAudioController
-	authMiddleware      gin.HandlerFunc
+	trackMetaController    *TrackMetaController
+	segmentService         *TrackSegmentController
+	audioService           *TrackAudioController
+	artistAssignController *artist_ctrl.ArtistAssignController
+	authMiddleware         gin.HandlerFunc
 }
 
 func NewTrackRouter(trackMetaController *TrackMetaController,
 	segmentService *TrackSegmentController,
 	audioService *TrackAudioController,
+	artistAssignController *artist_ctrl.ArtistAssignController,
 	authMiddleware gin.HandlerFunc) *TrackRouter {
 	return &TrackRouter{
-		trackMetaController: trackMetaController,
-		segmentService:      segmentService,
-		audioService:        audioService,
-		authMiddleware:      authMiddleware,
+		trackMetaController:    trackMetaController,
+		segmentService:         segmentService,
+		audioService:           audioService,
+		artistAssignController: artistAssignController,
+		authMiddleware:         authMiddleware,
 	}
 }
 
