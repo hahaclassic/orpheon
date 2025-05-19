@@ -178,6 +178,65 @@ func (_c *TrackMetaRepository_GetByID_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
+// GetTrackArtists provides a mock function with given fields: ctx, trackID
+func (_m *TrackMetaRepository) GetTrackArtists(ctx context.Context, trackID uuid.UUID) ([]*entity.ArtistMeta, error) {
+	ret := _m.Called(ctx, trackID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTrackArtists")
+	}
+
+	var r0 []*entity.ArtistMeta
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.ArtistMeta, error)); ok {
+		return rf(ctx, trackID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.ArtistMeta); ok {
+		r0 = rf(ctx, trackID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.ArtistMeta)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, trackID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TrackMetaRepository_GetTrackArtists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTrackArtists'
+type TrackMetaRepository_GetTrackArtists_Call struct {
+	*mock.Call
+}
+
+// GetTrackArtists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - trackID uuid.UUID
+func (_e *TrackMetaRepository_Expecter) GetTrackArtists(ctx interface{}, trackID interface{}) *TrackMetaRepository_GetTrackArtists_Call {
+	return &TrackMetaRepository_GetTrackArtists_Call{Call: _e.mock.On("GetTrackArtists", ctx, trackID)}
+}
+
+func (_c *TrackMetaRepository_GetTrackArtists_Call) Run(run func(ctx context.Context, trackID uuid.UUID)) *TrackMetaRepository_GetTrackArtists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *TrackMetaRepository_GetTrackArtists_Call) Return(_a0 []*entity.ArtistMeta, _a1 error) *TrackMetaRepository_GetTrackArtists_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TrackMetaRepository_GetTrackArtists_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.ArtistMeta, error)) *TrackMetaRepository_GetTrackArtists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function with given fields: ctx, track
 func (_m *TrackMetaRepository) Update(ctx context.Context, track *entity.TrackMeta) error {
 	ret := _m.Called(ctx, track)

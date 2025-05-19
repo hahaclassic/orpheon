@@ -178,6 +178,124 @@ func (_c *AlbumRepository_GetAlbum_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
+// GetAlbumArtists provides a mock function with given fields: ctx, albumID
+func (_m *AlbumRepository) GetAlbumArtists(ctx context.Context, albumID uuid.UUID) ([]*entity.ArtistMeta, error) {
+	ret := _m.Called(ctx, albumID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAlbumArtists")
+	}
+
+	var r0 []*entity.ArtistMeta
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.ArtistMeta, error)); ok {
+		return rf(ctx, albumID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.ArtistMeta); ok {
+		r0 = rf(ctx, albumID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.ArtistMeta)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, albumID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AlbumRepository_GetAlbumArtists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAlbumArtists'
+type AlbumRepository_GetAlbumArtists_Call struct {
+	*mock.Call
+}
+
+// GetAlbumArtists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - albumID uuid.UUID
+func (_e *AlbumRepository_Expecter) GetAlbumArtists(ctx interface{}, albumID interface{}) *AlbumRepository_GetAlbumArtists_Call {
+	return &AlbumRepository_GetAlbumArtists_Call{Call: _e.mock.On("GetAlbumArtists", ctx, albumID)}
+}
+
+func (_c *AlbumRepository_GetAlbumArtists_Call) Run(run func(ctx context.Context, albumID uuid.UUID)) *AlbumRepository_GetAlbumArtists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *AlbumRepository_GetAlbumArtists_Call) Return(_a0 []*entity.ArtistMeta, _a1 error) *AlbumRepository_GetAlbumArtists_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AlbumRepository_GetAlbumArtists_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.ArtistMeta, error)) *AlbumRepository_GetAlbumArtists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAlbumGenres provides a mock function with given fields: ctx, albumID
+func (_m *AlbumRepository) GetAlbumGenres(ctx context.Context, albumID uuid.UUID) ([]*entity.Genre, error) {
+	ret := _m.Called(ctx, albumID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAlbumGenres")
+	}
+
+	var r0 []*entity.Genre
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.Genre, error)); ok {
+		return rf(ctx, albumID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.Genre); ok {
+		r0 = rf(ctx, albumID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.Genre)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, albumID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AlbumRepository_GetAlbumGenres_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAlbumGenres'
+type AlbumRepository_GetAlbumGenres_Call struct {
+	*mock.Call
+}
+
+// GetAlbumGenres is a helper method to define mock.On call
+//   - ctx context.Context
+//   - albumID uuid.UUID
+func (_e *AlbumRepository_Expecter) GetAlbumGenres(ctx interface{}, albumID interface{}) *AlbumRepository_GetAlbumGenres_Call {
+	return &AlbumRepository_GetAlbumGenres_Call{Call: _e.mock.On("GetAlbumGenres", ctx, albumID)}
+}
+
+func (_c *AlbumRepository_GetAlbumGenres_Call) Run(run func(ctx context.Context, albumID uuid.UUID)) *AlbumRepository_GetAlbumGenres_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *AlbumRepository_GetAlbumGenres_Call) Return(_a0 []*entity.Genre, _a1 error) *AlbumRepository_GetAlbumGenres_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AlbumRepository_GetAlbumGenres_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.Genre, error)) *AlbumRepository_GetAlbumGenres_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllAlbums provides a mock function with given fields: ctx
 func (_m *AlbumRepository) GetAllAlbums(ctx context.Context) ([]*entity.AlbumMeta, error) {
 	ret := _m.Called(ctx)

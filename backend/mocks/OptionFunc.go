@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	access_meta "github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/access-meta/with-cache"
+	deleter "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/deleter"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,7 +21,7 @@ func (_m *OptionFunc) EXPECT() *OptionFunc_Expecter {
 }
 
 // Execute provides a mock function with given fields: _a0
-func (_m *OptionFunc) Execute(_a0 *access_meta.PlaylistAccessRepoWithCache) {
+func (_m *OptionFunc) Execute(_a0 *deleter.PlaylistDeleter) {
 	_m.Called(_a0)
 }
 
@@ -31,14 +31,14 @@ type OptionFunc_Execute_Call struct {
 }
 
 // Execute is a helper method to define mock.On call
-//   - _a0 *access_meta.PlaylistAccessRepoWithCache
+//   - _a0 *deleter.PlaylistDeleter
 func (_e *OptionFunc_Expecter) Execute(_a0 interface{}) *OptionFunc_Execute_Call {
 	return &OptionFunc_Execute_Call{Call: _e.mock.On("Execute", _a0)}
 }
 
-func (_c *OptionFunc_Execute_Call) Run(run func(_a0 *access_meta.PlaylistAccessRepoWithCache)) *OptionFunc_Execute_Call {
+func (_c *OptionFunc_Execute_Call) Run(run func(_a0 *deleter.PlaylistDeleter)) *OptionFunc_Execute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*access_meta.PlaylistAccessRepoWithCache))
+		run(args[0].(*deleter.PlaylistDeleter))
 	})
 	return _c
 }
@@ -48,7 +48,7 @@ func (_c *OptionFunc_Execute_Call) Return() *OptionFunc_Execute_Call {
 	return _c
 }
 
-func (_c *OptionFunc_Execute_Call) RunAndReturn(run func(*access_meta.PlaylistAccessRepoWithCache)) *OptionFunc_Execute_Call {
+func (_c *OptionFunc_Execute_Call) RunAndReturn(run func(*deleter.PlaylistDeleter)) *OptionFunc_Execute_Call {
 	_c.Run(run)
 	return _c
 }
