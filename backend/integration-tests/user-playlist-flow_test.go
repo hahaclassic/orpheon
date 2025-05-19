@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	album_meta_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/album/meta/postgres"
-	genre_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/genre/postgres"
+	genre_meta_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/genre/meta/postgres"
 	license_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/license/postgres"
 	playlist_meta_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/meta/postgres"
 	playlist_tracks_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/tracks/postgres"
@@ -48,7 +48,7 @@ func TestUserPlaylistFlow(t *testing.T) {
 		}
 	}()
 
-	genreRepo := genre_postgres.NewGenreRepository(pgxPool)
+	genreRepo := genre_meta_postgres.NewGenreRepository(pgxPool)
 	licenseRepo := license_postgres.NewLicenseRepository(pgxPool)
 	albumRepo := album_meta_postgres.NewAlbumRepository(pgxPool)
 	trackRepo := track_meta_postgres.NewTrackMetaRepository(pgxPool)
