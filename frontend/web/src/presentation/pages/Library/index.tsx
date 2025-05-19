@@ -54,8 +54,8 @@ const Library = () => {
         apiService.get('/me/favorites'),
       ]);
       const [myPlaylistsWithCovers, favoritePlaylistsWithCovers] = await Promise.all([
-        fetchPlaylistCovers(myPlaylistsData),
-        fetchPlaylistCovers(favoritePlaylistsData),
+        fetchPlaylistCovers(myPlaylistsData ?? []),
+        fetchPlaylistCovers(favoritePlaylistsData ?? []),
       ]);
       setMyPlaylists(myPlaylistsWithCovers);
       setFavoritePlaylists(favoritePlaylistsWithCovers);
