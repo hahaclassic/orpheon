@@ -355,6 +355,7 @@ const AlbumList = () => {
       // 3. Создаем и загружаем треки
       for (const track of formData.tracks) {
         // Создаем трек только если у него нет id (новый трек)
+        var trackID = track.id;
         if (!track.id) {
           const trackData = {
             name: track.name,
@@ -367,28 +368,27 @@ const AlbumList = () => {
           };
 
           const trackResponse = await apiService.post('/tracks', trackData);
-          const trackId = trackResponse.id;
+          trackID = trackResponse.id;
+        }
 
-          // Загружаем аудиофайл, если он есть
-          if (track.audioFile) {
-            const formDataAudio = new FormData();
-            formDataAudio.append('audio', track.audioFile, track.audioFile.name);
-            console.log('Uploading audio:', {
-              fileName: track.audioFile.name,
-              fileType: track.audioFile.type,
-              fileSize: track.audioFile.size,
-              trackId,
+        if (track.audioFile) {
+          const formDataAudio = new FormData();
+          formDataAudio.append('audio', track.audioFile, track.audioFile.name);
+          console.log('Uploading audio:', {
+            fileName: track.audioFile.name,
+            fileType: track.audioFile.type,
+            fileSize: track.audioFile.size,
+            trackID: trackID,
+          });
+          try {
+            await apiService.post(`/tracks/${trackID}/audio`, formDataAudio, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
             });
-            try {
-              await apiService.post(`/tracks/${trackId}/audio`, formDataAudio, {
-                headers: {
-                  'Content-Type': 'multipart/form-data',
-                },
-              });
-            } catch (err) {
-              console.error('Error uploading audio:', err);
-              throw err;
-            }
+          } catch (err) {
+            console.error('Error uploading audio:', err);
+            throw err;
           }
         }
       }

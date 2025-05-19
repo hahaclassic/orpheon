@@ -19,6 +19,7 @@ import { ArrowBack, PlayArrow, Pause } from '@mui/icons-material';
 import { albumService } from '../../core/infrastructure/services/albumService';
 import type { Album, Artist, Genre } from '../../core/infrastructure/services/albumService';
 import { apiService } from '../services/api';
+import { usePlayerContext } from '../contexts/PlayerContext';
 
 interface Track {
   id: string;
@@ -35,8 +36,7 @@ const AlbumPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const [currentTrack, setCurrentTrack] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const { currentTrack, isPlaying, setTrack, togglePlay } = usePlayerContext();
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -92,11 +92,13 @@ const AlbumPage = () => {
   };
 
   const handleTrackClick = (trackId: string) => {
-    if (currentTrack === trackId) {
-      setIsPlaying(!isPlaying);
-    } else {
-      setCurrentTrack(trackId);
-      setIsPlaying(true);
+    const track = tracks.find(t => t.id === trackId);
+    if (track) {
+      if (currentTrack?.id === trackId) {
+        togglePlay();
+      } else {
+        setTrack(track, tracks);
+      }
     }
   };
 
@@ -270,11 +272,11 @@ const AlbumPage = () => {
                       className="play-icon"
                       sx={{
                         position: 'absolute',
-                        opacity: 0,
+                        opacity: currentTrack?.id === track.id ? 1 : 0,
                         transition: 'opacity 0.2s',
                       }}
                     >
-                      {currentTrack === track.id && isPlaying ? <Pause /> : <PlayArrow />}
+                      {currentTrack?.id === track.id && isPlaying ? <Pause /> : <PlayArrow />}
                     </IconButton>
                   </Box>
                   <ListItemText

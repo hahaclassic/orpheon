@@ -13,14 +13,11 @@ import type { SyntheticEvent } from 'react';
 
 const PlayerBar = () => {
   const {
-    currentTrack,
-    isPlaying,
+    state: { currentTrack, isPlaying, volume, progress },
     togglePlay,
     playNext,
     playPrevious,
-    volume,
     setVolume,
-    progress,
     setProgress,
   } = usePlayerContext();
 
@@ -66,17 +63,9 @@ const PlayerBar = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [togglePlay]);
 
-  if (!currentTrack) {
-    return null;
-  }
-
   return (
     <Box
       sx={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
         height: { xs: '120px', sm: '100px', md: '90px' },
         backgroundColor: 'background.paper',
         borderTop: '1px solid rgba(255, 255, 255, 0.1)',
@@ -84,7 +73,8 @@ const PlayerBar = () => {
         display: 'flex',
         alignItems: 'center',
         gap: 2,
-        zIndex: 'appBar',
+        width: '100%',
+        minWidth: 0,
       }}
     >
       <Box
@@ -95,20 +85,24 @@ const PlayerBar = () => {
           flexDirection: { xs: 'column', sm: 'row' },
           alignItems: { xs: 'flex-start', sm: 'center' },
           gap: { xs: 1, sm: 2 },
+          maxWidth: { sm: '30%', md: '25%' },
         }}
       >
-        <Box
-          component="img"
-          src={currentTrack.coverImage}
-          alt={currentTrack.title}
-          sx={{
-            width: { xs: 40, sm: 56 },
-            height: { xs: 40, sm: 56 },
-            borderRadius: 1,
-            objectFit: 'cover',
-          }}
-        />
-        <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        {currentTrack?.coverUrl && (
+          <Box
+            component="img"
+            src={currentTrack.coverUrl}
+            alt={currentTrack.name}
+            sx={{
+              width: { xs: 40, sm: 56 },
+              height: { xs: 40, sm: 56 },
+              borderRadius: 1,
+              objectFit: 'cover',
+              flexShrink: 0,
+            }}
+          />
+        )}
+        <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', flex: 1 }}>
           <Typography
             variant="subtitle1"
             sx={{
@@ -118,7 +112,7 @@ const PlayerBar = () => {
               textOverflow: 'ellipsis',
             }}
           >
-            {currentTrack.title}
+            {currentTrack?.name || 'Нет трека'}
           </Typography>
           <Typography
             variant="body2"
@@ -130,7 +124,7 @@ const PlayerBar = () => {
               textOverflow: 'ellipsis',
             }}
           >
-            {currentTrack.artist}
+            {currentTrack?.track_number || ''}
           </Typography>
         </Box>
       </Box>
@@ -144,24 +138,26 @@ const PlayerBar = () => {
           justifyContent: 'center',
           order: { xs: 3, sm: 'unset' },
           width: { xs: '100%', sm: 'auto' },
+          minWidth: 0,
         }}
       >
-        <IconButton onClick={playPrevious} size="small">
+        <IconButton onClick={playPrevious} size="small" disabled={!currentTrack}>
           <SkipPrevious />
         </IconButton>
-        <IconButton onClick={togglePlay} size="large">
+        <IconButton onClick={togglePlay} size="large" disabled={!currentTrack}>
           {isPlaying ? <Pause /> : <PlayArrow />}
         </IconButton>
-        <IconButton onClick={playNext} size="small">
+        <IconButton onClick={playNext} size="small" disabled={!currentTrack}>
           <SkipNext />
         </IconButton>
-        <Box sx={{ width: '100%', maxWidth: 400, mx: 2 }}>
+        <Box sx={{ width: '100%', maxWidth: 400, mx: 2, minWidth: 0 }}>
           <Slider
             value={progress}
             onChange={handleProgressChange}
             onChangeCommitted={handleProgressChangeCommitted}
             onMouseDown={() => setIsDragging(true)}
             aria-label="track progress"
+            disabled={!currentTrack}
             sx={{
               color: 'primary.main',
               height: 4,
@@ -199,12 +195,14 @@ const PlayerBar = () => {
           justifyContent: 'flex-end',
           order: { xs: 2, sm: 'unset' },
           width: { xs: '100%', sm: 'auto' },
+          minWidth: 0,
+          maxWidth: { sm: '30%', md: '25%' },
         }}
       >
         <IconButton onClick={toggleMute} size="small">
           {volume === 0 ? <VolumeOff /> : <VolumeUp />}
         </IconButton>
-        <Box sx={{ width: 100, display: { xs: 'none', sm: 'block' } }}>
+        <Box sx={{ width: 100, display: { xs: 'none', sm: 'block' }, minWidth: 0 }}>
           <Slider
             value={volume}
             onChange={handleVolumeChange}

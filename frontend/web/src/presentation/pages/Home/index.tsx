@@ -124,7 +124,7 @@ const Home = () => {
               </Grid>
             ) : (
               albums.map((album) => (
-                <Grid item xs={12} sm={6} md={4} key={album.id}>
+                <Grid item xs={12} sm={6} md={3} key={album.id}>
                   <Card
                     sx={{
                       height: "100%",
@@ -140,7 +140,7 @@ const Home = () => {
                     <CardMedia
                       component="img"
                       sx={{
-                        height: 300,
+                        height: 250,
                         width: '100%',
                         objectFit: 'cover',
                         aspectRatio: '1/1'

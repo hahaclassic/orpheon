@@ -1,41 +1,52 @@
 import { Box, styled } from '@mui/material';
-import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import PlayerBar from './PlayerBar';
+import { useState } from 'react';
 
 const LayoutContainer = styled(Box)({
   display: 'flex',
-  flexDirection: 'column',
   height: '100vh',
-  backgroundColor: 'background.default',
   overflow: 'hidden',
 });
 
-const MainContent = styled(Box)({
+const MainContent = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isSidebarCollapsed'
+})<{ isSidebarCollapsed: boolean }>(({ theme, isSidebarCollapsed }) => ({
   flex: 1,
   display: 'flex',
+  flexDirection: 'column',
   overflow: 'hidden',
-  position: 'relative',
-});
+  transition: theme.transitions.create('margin', {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
+}));
 
 const ContentArea = styled(Box)({
   flex: 1,
-  overflowY: 'auto',
-  padding: '16px',
+  overflow: 'auto',
+  padding: '24px',
+  backgroundColor: 'background.default',
   display: 'flex',
   flexDirection: 'column',
+  minHeight: 0,
 });
 
-const Layout = () => {
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
     <LayoutContainer>
-      <MainContent>
-        <Sidebar />
+      <Sidebar 
+        isCollapsed={isSidebarCollapsed} 
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+      />
+      <MainContent isSidebarCollapsed={isSidebarCollapsed}>
         <ContentArea>
-          <Outlet />
+          {children}
         </ContentArea>
+        <PlayerBar />
       </MainContent>
-      <PlayerBar />
     </LayoutContainer>
   );
 };

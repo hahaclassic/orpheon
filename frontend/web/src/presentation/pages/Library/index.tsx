@@ -6,140 +6,182 @@ import {
   Card,
   CardContent,
   CardMedia,
-  Tabs,
-  Tab,
   Grid,
   CircularProgress,
   Alert,
+  Button,
+  Container,
 } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import ImageIcon from '@mui/icons-material/Image';
 import { apiService } from '../../../presentation/services/api';
-
-interface Track {
-  ID: string;
-  Title: string;
-  ArtistName: string;
-  AlbumName: string;
-  CoverImage: string;
-  Duration: number;
-}
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+import { useApi } from '../../../presentation/hooks/useApi';
+import PlaylistDialog from '../../../presentation/components/PlaylistDialog';
+import type { Track, Playlist } from '../../../presentation/types';
 
 const Library = () => {
-  const [value, setValue] = useState(0);
-  const [tracks, setTracks] = useState<Track[]>([]);
+  const [myPlaylists, setMyPlaylists] = useState<Playlist[]>([]);
+  const [favoritePlaylists, setFavoritePlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const { createPlaylist } = useApi();
 
-  const fetchTracks = async () => {
+  const fetchPlaylistCovers = async (playlists: Playlist[]) => {
+    return Promise.all(
+      playlists.map(async (playlist) => {
+        try {
+          const coverResponse = await apiService.get(`/playlists/${playlist.id}/cover`, {
+            responseType: 'blob'
+          });
+          const coverUrl = URL.createObjectURL(coverResponse);
+          return { ...playlist, coverImage: coverUrl };
+        } catch (err) {
+          console.error(`Error fetching cover for playlist ${playlist.id}:`, err);
+          return { ...playlist, coverImage: '/default-playlist-cover.jpg' };
+        }
+      })
+    );
+  };
+
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiService.get('/tracks');
-      const tracksData = Array.isArray(response) ? response : [];
-      setTracks(tracksData);
+      const [myPlaylistsData, favoritePlaylistsData] = await Promise.all([
+        apiService.get('/me/playlists'),
+        apiService.get('/me/favorites'),
+      ]);
+      const [myPlaylistsWithCovers, favoritePlaylistsWithCovers] = await Promise.all([
+        fetchPlaylistCovers(myPlaylistsData),
+        fetchPlaylistCovers(favoritePlaylistsData),
+      ]);
+      setMyPlaylists(myPlaylistsWithCovers);
+      setFavoritePlaylists(favoritePlaylistsWithCovers);
     } catch (err) {
-      console.error("Error fetching tracks:", err);
-      setError("Ошибка при загрузке треков. Пожалуйста, попробуйте позже.");
-      setTracks([]);
+      console.error("Error fetching data:", err);
+      setError("Ошибка при загрузке данных. Пожалуйста, попробуйте позже.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTracks();
+    fetchData();
   }, []);
 
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
+  const handlePlaylistClick = (playlistId: number) => {
+    navigate(`/playlists/${playlistId}`);
   };
 
-  const handleTrackClick = (trackId: string) => {
-    navigate(`/track/${trackId}`);
+  const handleCreatePlaylist = async (name: string) => {
+    try {
+      await createPlaylist(name);
+      fetchData();
+    } catch (err) {
+      console.error("Error creating playlist:", err);
+      setError("Ошибка при создании плейлиста. Пожалуйста, попробуйте позже.");
+    }
   };
+
+  // Объединяем обычные и избранные плейлисты, помечая избранные
+  const allPlaylists = [
+    ...myPlaylists.map((p) => ({ ...p, isFavorite: false })),
+    ...favoritePlaylists.map((p) => ({ ...p, isFavorite: true })),
+  ];
+  // Убираем дубли по id (если плейлист есть и в моих, и в избранных)
+  const uniquePlaylists = allPlaylists.filter(
+    (playlist, idx, arr) => arr.findIndex((p) => p.id === playlist.id) === idx
+  );
 
   return (
-    <Box sx={{ width: '100%', p: 4 }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={value} onChange={handleChange} aria-label="library tabs">
-          <Tab label="Треки" />
-          <Tab label="Альбомы" />
-          <Tab label="Артисты" />
-        </Tabs>
-      </Box>
-
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       {error && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
+        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       )}
-
-      <TabPanel value={value} index={0}>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Мои плейлисты
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setCreateDialogOpen(true)}
+        >
+          Создать плейлист
+        </Button>
+      </Box>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
           <Grid container spacing={3}>
-            {tracks.length === 0 ? (
+            {uniquePlaylists.length === 0 ? (
               <Grid item xs={12}>
                 <Typography variant="h6" textAlign="center" color="text.secondary">
-                  Нет доступных треков
+                  У вас пока нет плейлистов
                 </Typography>
               </Grid>
             ) : (
-              tracks.map((track) => (
-                <Grid item xs={12} sm={6} md={4} key={track.ID}>
+              uniquePlaylists.map((playlist) => (
+                <Grid item xs={12} sm={6} md={3} key={playlist.id}>
                   <Card
                     sx={{
                       height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
                       cursor: 'pointer',
+                      border: playlist.isFavorite ? '2px solid #a78bfa' : undefined,
+                      boxShadow: playlist.isFavorite ? '0 0 0 2px #a78bfa' : undefined,
                       '&:hover': {
                         transform: 'scale(1.02)',
                         transition: 'transform 0.2s ease-in-out',
+                        boxShadow: playlist.isFavorite ? '0 0 0 4px #a78bfa' : undefined,
                       },
                     }}
-                    onClick={() => handleTrackClick(track.ID)}
+                    onClick={() => handlePlaylistClick(playlist.id)}
                   >
-                    <CardMedia
-                      component="img"
-                      height="200"
-                      image={track.CoverImage || '/default-cover.jpg'}
-                      alt={track.Title}
-                    />
+                    {playlist.coverImage ? (
+                      <CardMedia
+                        component="img"
+                        sx={{
+                          height: 250,
+                          width: '100%',
+                          objectFit: 'cover',
+                          aspectRatio: '1/1'
+                        }}
+                        image={playlist.coverImage}
+                        alt={playlist.name}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          height: 250,
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: 'primary.dark',
+                          borderRadius: 2,
+                        }}
+                      >
+                        <ImageIcon sx={{ fontSize: 64, color: 'primary.contrastText', opacity: 0.3 }} />
+                      </Box>
+                    )}
                     <CardContent>
                       <Typography gutterBottom variant="h6" component="div" noWrap>
-                        {track.Title}
+                        {playlist.name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {track.ArtistName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {track.AlbumName}
+                      {playlist.isFavorite && (
+                        <Typography variant="body2" color="#a78bfa">
+                          ★ Избранное
+                        </Typography>
+                      )}
+                      <Typography variant="body2" color="text.secondary">
+                        {playlist.trackCount} треков
                       </Typography>
                     </CardContent>
                   </Card>
@@ -147,15 +189,91 @@ const Library = () => {
               ))
             )}
           </Grid>
-        )}
-      </TabPanel>
-      <TabPanel value={value} index={1}>
-        <Typography>Альбомы (в разработке)</Typography>
-      </TabPanel>
-      <TabPanel value={value} index={2}>
-        <Typography>Артисты (в разработке)</Typography>
-      </TabPanel>
-    </Box>
+
+          {/* Блок избранных плейлистов */}
+          <Box sx={{ mt: 6 }}>
+            <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 3 }}>
+              Избранные плейлисты
+            </Typography>
+            <Grid container spacing={3}>
+              {favoritePlaylists.length === 0 ? (
+                <Grid item xs={12}>
+                  <Typography variant="h6" textAlign="center" color="text.secondary">
+                    У вас пока нет избранных плейлистов
+                  </Typography>
+                </Grid>
+              ) : (
+                favoritePlaylists.map((playlist) => (
+                  <Grid item xs={12} sm={6} md={3} key={playlist.id}>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        cursor: 'pointer',
+                        border: '2px solid #a78bfa',
+                        boxShadow: '0 0 0 2px #a78bfa',
+                        '&:hover': {
+                          transform: 'scale(1.02)',
+                          transition: 'transform 0.2s ease-in-out',
+                          boxShadow: '0 0 0 4px #a78bfa',
+                        },
+                      }}
+                      onClick={() => handlePlaylistClick(playlist.id)}
+                    >
+                      {playlist.coverImage ? (
+                        <CardMedia
+                          component="img"
+                          sx={{
+                            height: 250,
+                            width: '100%',
+                            objectFit: 'cover',
+                            aspectRatio: '1/1'
+                          }}
+                          image={playlist.coverImage}
+                          alt={playlist.name}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            height: 250,
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: 'primary.dark',
+                            borderRadius: 2,
+                          }}
+                        >
+                          <ImageIcon sx={{ fontSize: 64, color: 'primary.contrastText', opacity: 0.3 }} />
+                        </Box>
+                      )}
+                      <CardContent>
+                        <Typography gutterBottom variant="h6" component="div" noWrap>
+                          {playlist.name}
+                        </Typography>
+                        <Typography variant="body2" color="#a78bfa">
+                          ★ Избранное
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {playlist.trackCount} треков
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))
+              )}
+            </Grid>
+          </Box>
+        </>
+      )}
+      <PlaylistDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onSubmit={handleCreatePlaylist}
+        title="Создать новый плейлист"
+      />
+    </Container>
   );
 };
 

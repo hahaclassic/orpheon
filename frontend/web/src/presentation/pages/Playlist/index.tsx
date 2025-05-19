@@ -24,6 +24,13 @@ import {
   MenuItem,
   Switch,
   Divider,
+  Container,
+  Grid,
+  Card,
+  CardMedia,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -31,16 +38,19 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { ArrowBack, PlayArrow, Pause } from '@mui/icons-material';
 import axios from 'axios';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { usePlayerContext } from '../../contexts/PlayerContext';
+import { apiService } from '../../services/api';
+
+const API_URL = 'http://localhost:8080/api/v1';
 
 interface Track {
   id: string;
-  title: string;
-  artists: string[];
+  name: string;
   duration: number;
-  albumCover: string;
-  albumName: string;
+  track_number: number;
 }
 
 interface Playlist {
@@ -82,77 +92,65 @@ const PlaylistPage = () => {
   const [updatingFavorite, setUpdatingFavorite] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const { currentTrack, isPlaying, setTrack, togglePlay } = usePlayerContext();
 
   const isOwner = user && playlist && user.id === playlist.owner_id;
 
   useEffect(() => {
-    const fetchPlaylist = async () => {
-      if (!id) return;
+    const fetchPlaylistData = async () => {
+      if (!id) {
+        setError('Playlist ID is missing');
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
-        const response = await axios.get(`/playlists/${id}`, {
-          baseURL: 'http://localhost:8080/api/v1',
-          withCredentials: true,
-        });
-        setPlaylist(response.data);
-        setEditForm({
-          name: response.data.name,
-          description: response.data.description || '',
-        });
-
-        // Загружаем обложку
+        const data = await apiService.get(`/playlists/${id}`);
+        setPlaylist(data);
+        
+        // Get user information
         try {
-          const coverResponse = await axios.get(`/playlists/${id}/cover`, {
-            baseURL: 'http://localhost:8080/api/v1',
-            withCredentials: true,
-            responseType: 'blob',
-          });
-          
-          // Создаем URL для blob
-          const coverUrl = URL.createObjectURL(coverResponse.data);
-          setPlaylist(prev => prev ? {
-            ...prev,
-            coverImage: coverUrl
-          } : null);
+          const userData = await apiService.get(`/users/${data.owner_id}`);
+          setPlaylist(prev => prev ? { ...prev, owner_name: userData.name } : null);
         } catch (err) {
-          // Если обложка не найдена, оставляем coverImage как undefined
-          console.log('Обложка не найдена');
+          console.error('Error fetching user data:', err);
         }
-      } catch (err) {
-        setError('Не удалось загрузить плейлист');
+
+        // Get playlist cover
+        try {
+          const coverResponse = await apiService.get(`/playlists/${id}/cover`, {
+            responseType: 'blob'
+          });
+          const coverUrl = URL.createObjectURL(coverResponse);
+          setPlaylist(prev => prev ? { ...prev, coverImage: coverUrl } : null);
+        } catch (err) {
+          console.error('Error fetching playlist cover:', err);
+        }
+        
+        // Get playlist tracks
+        try {
+          setTracksLoading(true);
+          const tracksResponse = await apiService.get(`/playlists/${id}/tracks`);
+          setTracks(tracksResponse);
+        } catch (err) {
+          console.error('Error fetching playlist tracks:', err);
+          setTracks([]);
+        } finally {
+          setTracksLoading(false);
+        }
+
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching playlist data:', error);
+        setError('Failed to load playlist data');
+        setPlaylist(null);
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchTracks = async () => {
-      if (!id) return;
-
-      try {
-        setTracksLoading(true);
-        const response = await axios.get(`/playlists/${id}/tracks`, {
-          baseURL: 'http://localhost:8080/api/v1',
-          withCredentials: true,
-        });
-        setTracks(response.data || []);
-      } catch (err) {
-        setError('Не удалось загрузить треки');
-        setTracks([]);
-      } finally {
-        setTracksLoading(false);
-      }
-    };
-
-    fetchPlaylist();
-    fetchTracks();
-
-    // Очищаем URL при размонтировании компонента
-    return () => {
-      if (playlist?.coverImage?.startsWith('blob:')) {
-        URL.revokeObjectURL(playlist.coverImage);
-      }
-    };
+    fetchPlaylistData();
   }, [id]);
 
   const handlePrivacyChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -160,15 +158,13 @@ const PlaylistPage = () => {
 
     try {
       setUpdatingPrivacy(true);
-      await axios.patch(
-        `/playlists/${id}/privacy`,
-        { is_private: event.target.checked },
-        {
-          baseURL: 'http://localhost:8080/api/v1',
-          withCredentials: true,
-        }
-      );
+      await apiService({
+        method: 'patch',
+        url: `/playlists/${id}/privacy`,
+        data: { is_private: event.target.checked }
+      });
       setPlaylist(prev => prev ? { ...prev, is_private: event.target.checked } : null);
+      event.target.checked = !event.target.checked;
     } catch (err) {
       setError('Не удалось изменить настройки приватности');
     } finally {
@@ -181,15 +177,12 @@ const PlaylistPage = () => {
     if (!playlist) return;
 
     try {
-      const response = await axios.put(
-        `/playlists/${id}`,
-        editForm,
-        {
-          baseURL: 'http://localhost:8080/api/v1',
-          withCredentials: true,
-        }
-      );
-      setPlaylist(response.data);
+      const response = await apiService.put(`/playlists/${id}`, {
+        name: editForm.name,
+        description: editForm.description,
+        is_private: playlist.is_private
+      });
+      setPlaylist(response);
       setEditDialogOpen(false);
     } catch (err) {
       setError('Не удалось обновить информацию о плейлисте');
@@ -202,20 +195,14 @@ const PlaylistPage = () => {
     try {
       setUpdatingFavorite(true);
       if (playlist.isFavorite) {
-        await axios.delete(`/me/favorites/${id}`, {
-          baseURL: 'http://localhost:8080/api/v1',
-          withCredentials: true,
-        });
+        await apiService.delete(`/me/favorites/${id}`);
         setPlaylist(prev => prev ? {
           ...prev,
           isFavorite: false,
           rating: prev.rating - 1
         } : null);
       } else {
-        await axios.post(`/me/favorites/${id}`, {}, {
-          baseURL: 'http://localhost:8080/api/v1',
-          withCredentials: true,
-        });
+        await apiService.post(`/me/favorites/${id}`);
         setPlaylist(prev => prev ? {
           ...prev,
           isFavorite: true,
@@ -242,32 +229,18 @@ const PlaylistPage = () => {
       const formData = new FormData();
       formData.append('cover', file);
 
-      await axios.post(`/playlists/${id}/cover`, formData, {
-        baseURL: 'http://localhost:8080/api/v1',
-        withCredentials: true,
+      await apiService.post(`/playlists/${id}/cover`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      // Загружаем новую обложку
-      const coverResponse = await axios.get(`/playlists/${id}/cover`, {
-        baseURL: 'http://localhost:8080/api/v1',
-        withCredentials: true,
-        responseType: 'blob',
+      // Reload the cover
+      const coverResponse = await apiService.get(`/playlists/${id}/cover`, {
+        responseType: 'blob'
       });
-
-      // Освобождаем старый URL если он был
-      if (playlist?.coverImage?.startsWith('blob:')) {
-        URL.revokeObjectURL(playlist.coverImage);
-      }
-
-      // Создаем новый URL для blob
-      const coverUrl = URL.createObjectURL(coverResponse.data);
-      setPlaylist(prev => prev ? {
-        ...prev,
-        coverImage: coverUrl
-      } : null);
+      const coverUrl = URL.createObjectURL(coverResponse);
+      setPlaylist(prev => prev ? { ...prev, coverImage: coverUrl } : null);
     } catch (err) {
       setError('Не удалось загрузить обложку');
     } finally {
@@ -281,10 +254,7 @@ const PlaylistPage = () => {
 
     try {
       setUploadingCover(true);
-      await axios.delete(`/playlists/${id}/cover`, {
-        baseURL: 'http://localhost:8080/api/v1',
-        withCredentials: true,
-      });
+      await apiService.delete(`/playlists/${id}/cover`);
 
       // Освобождаем URL если он был
       if (playlist?.coverImage?.startsWith('blob:')) {
@@ -306,227 +276,205 @@ const PlaylistPage = () => {
   const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) => setMenuAnchor(e.currentTarget);
   const handleMenuClose = () => setMenuAnchor(null);
 
+  const handleTrackClick = (trackId: string) => {
+    const track = tracks.find(t => t.id === trackId);
+    if (track) {
+      if (currentTrack?.id === trackId) {
+        togglePlay();
+      } else {
+        setTrack(track, tracks);
+      }
+    }
+  };
+
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <CircularProgress />
-      </Box>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Typography>Loading...</Typography>
+      </Container>
     );
   }
 
   if (error || !playlist) {
     return (
-      <Box sx={{ p: 4 }}>
-        <Alert severity="error">{error || 'Плейлист не найден'}</Alert>
-      </Box>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+          <Typography color="error">{error || 'Playlist not found'}</Typography>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate(-1)}
+            variant="outlined"
+          >
+            Назад
+          </Button>
+        </Box>
+      </Container>
     );
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%' }}>
-      {/* Header Section */}
-      <Box
-        sx={{
-          bgcolor: 'primary.dark',
-          py: 6,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          zIndex: 10,
-          width: '100%',
-        }}
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Button
+        startIcon={<ArrowBack />}
+        onClick={() => navigate(-1)}
+        variant="outlined"
+        sx={{ mb: 3 }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, pl: { xs: 2, sm: 4, md: 6 } }}>
-          <Box
-            sx={{
-              width: 200,
-              height: 200,
-              bgcolor: 'primary.main',
-              borderRadius: 1,
-              overflow: 'hidden',
-              position: 'relative',
-              '&:hover .cover-actions': {
-                opacity: 1,
-              },
-            }}
-          >
-            {playlist.coverImage ? (
-              <Box
+        Назад
+      </Button>
+      
+      <Grid container spacing={4}>
+        {/* Playlist Header */}
+        <Grid item xs={12} md={4}>
+          <Card>
+            <Box sx={{ position: 'relative' }}>
+              <CardMedia
                 component="img"
-                src={playlist.coverImage}
+                image={playlist.coverImage || '/default-playlist.png'}
                 alt={playlist.name}
-                sx={{
+                sx={{ 
+                  aspectRatio: '1/1',
                   width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
+                  height: 'auto',
+                  objectFit: 'cover'
                 }}
               />
-            ) : (
-              <Box
-                sx={{
-                  width: '100%',
-                  height: '100%',
-                  bgcolor: 'primary.main',
-                }}
-              />
-            )}
-            {isOwner && (
-              <Box
-                className="cover-actions"
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  bgcolor: 'rgba(0, 0, 0, 0.5)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                  opacity: 0,
-                  transition: 'opacity 0.2s',
-                }}
-              >
-                <Tooltip title="Изменить обложку">
-                  <IconButton
-                    onClick={handleCoverClick}
-                    disabled={uploadingCover}
-                    sx={{ color: 'white' }}
-                  >
-                    <PhotoCameraIcon />
-                  </IconButton>
-                </Tooltip>
-                {playlist.coverImage && (
-                  <Tooltip title="Удалить обложку">
-                    <IconButton
-                      onClick={handleDeleteCover}
-                      disabled={uploadingCover}
-                      sx={{ color: 'white' }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </Box>
-            )}
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleCoverChange}
-              accept="image/*"
-              style={{ display: 'none' }}
-            />
-          </Box>
-          <Box sx={{ flex: 1 }}>
+              {isOwner && (
+                <IconButton
+                  sx={{
+                    position: 'absolute',
+                    bottom: 8,
+                    right: 8,
+                    bgcolor: 'rgba(0, 0, 0, 0.6)',
+                    '&:hover': {
+                      bgcolor: 'rgba(0, 0, 0, 0.8)',
+                    },
+                  }}
+                  onClick={handleCoverClick}
+                  disabled={uploadingCover}
+                >
+                  <PhotoCameraIcon sx={{ color: 'white' }} />
+                </IconButton>
+              )}
+            </Box>
+          </Card>
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            ref={fileInputRef}
+            onChange={handleCoverChange}
+          />
+        </Grid>
+        <Grid item xs={12} md={8}>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+              плейлист
+            </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-              <Typography variant="h4" fontWeight={700}>
+              <Typography variant="h3" component="h1">
                 {playlist.name}
               </Typography>
-              <IconButton
-                onClick={() => setEditDialogOpen(true)}
-                sx={{ color: 'text.secondary' }}
-              >
-                <EditIcon />
-              </IconButton>
-              <Tooltip title={playlist?.isFavorite ? "Удалить из избранного" : "Добавить в избранное"}>
-                <IconButton
-                  onClick={handleFavoriteClick}
-                  disabled={updatingFavorite}
-                  sx={{ color: playlist?.isFavorite ? 'background.default' : 'text.secondary' }}
-                >
-                  {playlist?.isFavorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+              {isOwner && (
+                <IconButton onClick={() => {
+                  setEditForm({
+                    name: playlist.name,
+                    description: playlist.description || ''
+                  });
+                  setEditDialogOpen(true);
+                }}>
+                  <EditIcon />
                 </IconButton>
-              </Tooltip>
-              <Typography variant="body2" color="text.secondary">
-                {playlist.rating}
+              )}
+            </Box>
+            
+            {/* Owner */}
+            <Box sx={{ mb: 2 }}>
+              <Typography
+                variant="h6"
+                component="a"
+                href={`/users/${playlist.owner_id}`}
+                sx={{ 
+                  display: 'inline-block',
+                  textDecoration: 'none', 
+                  color: 'inherit',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                  }
+                }}
+              >
+                {playlist.owner_name || 'Unknown user'}
               </Typography>
             </Box>
+
+            {/* Description */}
             {playlist.description && (
               <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
                 {playlist.description}
               </Typography>
             )}
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Создан: {new Date(playlist.createdAt).toLocaleDateString()}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Обновлен: {new Date(playlist.updatedAt).toLocaleDateString()}
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
 
-      {/* Tracks Section */}
-      <Box sx={{ flex: 1, bgcolor: 'background.default', px: { xs: 2, sm: 6, md: 10 }, py: 4 }}>
-        <Typography variant="h5" fontWeight={700} gutterBottom>
-          Треки {!tracksLoading && `(${tracks.length})`}
-        </Typography>
-        {tracksLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress />
+            {/* Privacy Switch for owner */}
+            {isOwner && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Typography>Приватный плейлист</Typography>
+                <Switch
+                  checked={playlist.is_private}
+                  onChange={handlePrivacyChange}
+                  disabled={updatingPrivacy}
+                />
+              </Box>
+            )}
           </Box>
-        ) : tracks.length === 0 ? (
-          <Typography color="text.secondary" sx={{ p: 4, textAlign: 'center' }}>
-            В плейлисте пока нет треков
-          </Typography>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell width={50}>#</TableCell>
-                  <TableCell>Название</TableCell>
-                  <TableCell>Альбом</TableCell>
-                  <TableCell width={100} align="right">Длительность</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tracks.map((track, index) => (
-                  <TableRow
-                    key={track.id}
-                    hover
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() => navigate(`/tracks/${track.id}`)}
+        </Grid>
+
+        {/* Tracks List */}
+        <Grid item xs={12}>
+          {tracksLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : tracks && tracks.length > 0 ? (
+            <List>
+              {tracks.map((track, index) => (
+                <Box key={track.id}>
+                  <ListItem
+                    button
+                    onClick={() => handleTrackClick(track.id)}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      },
+                    }}
                   >
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Box
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 1,
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <Box
-                            component="img"
-                            src={track.albumCover}
-                            alt={track.albumName}
-                            sx={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                            }}
-                          />
-                        </Box>
-                        <Box>
-                          <Typography variant="body1">{track.title}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {track.artists.join(', ')}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>{track.albumName}</TableCell>
-                    <TableCell align="right">{formatDuration(track.duration)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Box>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleTrackClick(track.id);
+                      }}
+                    >
+                      {currentTrack?.id === track.id && isPlaying ? <Pause /> : <PlayArrow />}
+                    </IconButton>
+                    <ListItemText
+                      primary={track.name}
+                      secondary={formatDuration(track.duration)}
+                    />
+                  </ListItem>
+                  {index < tracks.length - 1 && <Divider />}
+                </Box>
+              ))}
+            </List>
+          ) : (
+            <Typography color="text.secondary" sx={{ p: 3, textAlign: 'center' }}>
+              Нет треков в плейлисте
+            </Typography>
+          )}
+        </Grid>
+      </Grid>
 
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -555,7 +503,7 @@ const PlaylistPage = () => {
           </DialogActions>
         </form>
       </Dialog>
-    </Box>
+    </Container>
   );
 };
 

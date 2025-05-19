@@ -6,12 +6,11 @@ export interface User {
 }
 
 export interface Track {
-  id: number;
-  title: string;
-  artist: string;
-  coverImage?: string;
+  id: string;
+  name: string;
   duration: number;
-  url: string;
+  track_number: number;
+  coverUrl?: string;
 }
 
 export interface Playlist {

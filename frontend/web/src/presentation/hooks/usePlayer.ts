@@ -1,5 +1,6 @@
-import { useState, useCallback, useRef } from 'react';
-import type { Track } from '../../core/infrastructure/services/api';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import type { Track } from '../types';
+import { apiService } from '../services/api';
 
 interface PlayerState {
   currentTrack: Track | null;
@@ -7,6 +8,8 @@ interface PlayerState {
   volume: number;
   progress: number;
   duration: number;
+  playlist: Track[];
+  currentTrackIndex: number;
 }
 
 const initialState: PlayerState = {
@@ -15,68 +18,191 @@ const initialState: PlayerState = {
   volume: 50,
   progress: 0,
   duration: 0,
+  playlist: [],
+  currentTrackIndex: -1,
 };
 
 export const usePlayer = () => {
   const [state, setState] = useState<PlayerState>(initialState);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Инициализация аудио элемента
+  useEffect(() => {
+    audioRef.current = new Audio();
+    audioRef.current.preload = 'metadata';
+
+    const handleTimeUpdate = () => {
+      if (audioRef.current) {
+        setState(prev => ({
+          ...prev,
+          progress: audioRef.current?.currentTime || 0
+        }));
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (audioRef.current) {
+        setState(prev => ({
+          ...prev,
+          duration: audioRef.current?.duration || 0
+        }));
+      }
+    };
+
+    const handleEnded = () => {
+      if (state.currentTrackIndex < state.playlist.length - 1) {
+        playNext();
+      } else {
+        setState(prev => ({ ...prev, isPlaying: false, progress: 0 }));
+      }
+    };
+
+    const handleError = (e: Event) => {
+      console.error('Audio error:', e);
+      setState(prev => ({ ...prev, isPlaying: false }));
+    };
+
+    audioRef.current.addEventListener('timeupdate', handleTimeUpdate);
+    audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audioRef.current.addEventListener('ended', handleEnded);
+    audioRef.current.addEventListener('error', handleError);
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.removeEventListener('timeupdate', handleTimeUpdate);
+        audioRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audioRef.current.removeEventListener('ended', handleEnded);
+        audioRef.current.removeEventListener('error', handleError);
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+    };
+  }, []);
+
   const play = useCallback(() => {
     if (audioRef.current) {
-      audioRef.current.play();
-      setState((prev) => ({ ...prev, isPlaying: true }));
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setState(prev => ({ ...prev, isPlaying: true }));
+          })
+          .catch(error => {
+            console.error('Error playing audio:', error);
+            setState(prev => ({ ...prev, isPlaying: false }));
+          });
+      }
     }
   }, []);
 
   const pause = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
-      setState((prev) => ({ ...prev, isPlaying: false }));
+      setState(prev => ({ ...prev, isPlaying: false }));
     }
   }, []);
 
-  const setTrack = useCallback((track: Track) => {
+  const setTrack = useCallback((track: Track, playlist: Track[] = []) => {
     if (audioRef.current) {
-      audioRef.current.src = track.coverUrl; // Assuming coverUrl is the audio URL
-      audioRef.current.load();
-      setState((prev) => ({ ...prev, currentTrack: track, isPlaying: false }));
+      const trackIndex = playlist.findIndex(t => t.id === track.id);
+      const audioUrl = `http://localhost:8080/api/v1/tracks/${track.id}/audio`;
+      
+      console.log('Loading audio from:', audioUrl); // Для отладки
+      
+      // Сначала пауза текущего трека
+      audioRef.current.pause();
+      
+      // Устанавливаем новый источник
+      audioRef.current.src = audioUrl;
+      
+      // Добавляем заголовки для Range запроса
+      audioRef.current.preload = 'metadata';
+      
+      // Устанавливаем тип контента
+      audioRef.current.setAttribute('type', 'audio/mpeg');
+      
+      // Добавляем заголовки для Range запроса
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', audioUrl, true);
+      xhr.responseType = 'blob';
+      xhr.setRequestHeader('Range', 'bytes=0-');
+      
+      xhr.onload = function() {
+        if (xhr.status === 206) {
+          const blob = xhr.response;
+          const url = URL.createObjectURL(blob);
+          
+          // Создаем новый аудио элемент
+          const audio = new Audio();
+          audio.setAttribute('type', 'audio/mpeg');
+          audio.src = url;
+          audio.preload = 'metadata';
+          
+          // Добавляем обработчики событий
+          audio.addEventListener('loadedmetadata', () => {
+            console.log('Audio metadata loaded');
+            play();
+          });
+          
+          audio.addEventListener('error', (e) => {
+            console.error('Audio error:', e);
+          });
+          
+          // Заменяем старый аудио элемент на новый
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = audio;
+          }
+          
+          audio.load();
+        } else {
+          console.error('Failed to load audio:', xhr.status, xhr.statusText);
+        }
+      };
+      
+      xhr.onerror = function() {
+        console.error('Error loading audio:', xhr.statusText);
+      };
+      
+      xhr.send();
+      
+      setState(prev => ({
+        ...prev,
+        currentTrack: track,
+        isPlaying: false,
+        playlist: playlist,
+        currentTrackIndex: trackIndex,
+        progress: 0
+      }));
     }
-  }, []);
+  }, [play]);
+
+  const playNext = useCallback(() => {
+    if (state.currentTrackIndex < state.playlist.length - 1) {
+      const nextTrack = state.playlist[state.currentTrackIndex + 1];
+      setTrack(nextTrack, state.playlist);
+    }
+  }, [state.currentTrackIndex, state.playlist, setTrack]);
+
+  const playPrevious = useCallback(() => {
+    if (state.currentTrackIndex > 0) {
+      const prevTrack = state.playlist[state.currentTrackIndex - 1];
+      setTrack(prevTrack, state.playlist);
+    }
+  }, [state.currentTrackIndex, state.playlist, setTrack]);
 
   const setVolume = useCallback((volume: number) => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100;
-      setState((prev) => ({ ...prev, volume }));
+      setState(prev => ({ ...prev, volume }));
     }
   }, []);
 
   const setProgress = useCallback((progress: number) => {
     if (audioRef.current) {
       audioRef.current.currentTime = progress;
-      setState((prev) => ({ ...prev, progress }));
+      setState(prev => ({ ...prev, progress }));
     }
-  }, []);
-
-  const handleTimeUpdate = useCallback(() => {
-    if (audioRef.current) {
-      setState((prev) => ({
-        ...prev,
-        progress: audioRef.current?.currentTime || 0,
-      }));
-    }
-  }, []);
-
-  const handleLoadedMetadata = useCallback(() => {
-    if (audioRef.current) {
-      setState((prev) => ({
-        ...prev,
-        duration: audioRef.current?.duration || 0,
-      }));
-    }
-  }, []);
-
-  const handleEnded = useCallback(() => {
-    setState((prev) => ({ ...prev, isPlaying: false, progress: 0 }));
   }, []);
 
   return {
@@ -86,9 +212,8 @@ export const usePlayer = () => {
     setTrack,
     setVolume,
     setProgress,
-    handleTimeUpdate,
-    handleLoadedMetadata,
-    handleEnded,
+    playNext,
+    playPrevious,
     audioRef,
   };
 };
