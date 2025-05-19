@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre"
+	genre "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre/meta"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/genre"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
