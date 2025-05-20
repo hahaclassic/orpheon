@@ -8,16 +8,20 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/dto"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
 )
 
 type PlaylistTrackController struct {
 	tracksService playlist.PlaylistTrackService
+	aggregator    aggregator.ContentAggregator
 }
 
-func NewPlaylistTrackController(tracksService playlist.PlaylistTrackService) *PlaylistTrackController {
+func NewPlaylistTrackController(tracksService playlist.PlaylistTrackService,
+	aggregator aggregator.ContentAggregator) *PlaylistTrackController {
 	return &PlaylistTrackController{
 		tracksService: tracksService,
+		aggregator:    aggregator,
 	}
 }
 
@@ -40,7 +44,13 @@ func (c *PlaylistTrackController) GetPlaylistTracks(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, tracks)
+	aggregated, err := c.aggregator.GetTracks(ctx.Request.Context(), tracks...)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get playlist tracks"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated)
 }
 
 func (c *PlaylistTrackController) AddTrackToPlaylist(ctx *gin.Context) {
@@ -56,23 +66,15 @@ func (c *PlaylistTrackController) AddTrackToPlaylist(ctx *gin.Context) {
 		return
 	}
 
-	var request struct {
-		TrackID string `json:"track_id" binding:"required"`
-	}
+	var request dto.TrackAdditionRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	trackID, err := uuid.Parse(request.TrackID)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid track ID"})
-		return
-	}
-
 	err = c.tracksService.AddTrack(ctx.Request.Context(), claims, &entity.PlaylistTrack{
 		PlaylistID: playlistID,
-		TrackID:    trackID,
+		TrackID:    request.TrackID,
 	})
 	if err != nil {
 		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to add track to playlist"})
@@ -95,7 +97,7 @@ func (c *PlaylistTrackController) DeleteTrackFromPlaylist(ctx *gin.Context) {
 		return
 	}
 
-	trackID, err := uuid.Parse(ctx.Param("trackId"))
+	trackID, err := uuid.Parse(ctx.Param("track_id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid track ID"})
 		return

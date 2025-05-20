@@ -1,6 +1,7 @@
 package track_ctrl
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -8,16 +9,20 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/dto"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 )
 
 type TrackMetaController struct {
 	trackService track.TrackMetaService
+	aggregator   aggregator.ContentAggregator
 }
 
-func NewTrackMetaController(trackService track.TrackMetaService) *TrackMetaController {
+func NewTrackMetaController(trackService track.TrackMetaService, aggregator aggregator.ContentAggregator) *TrackMetaController {
 	return &TrackMetaController{
 		trackService: trackService,
+		aggregator:   aggregator,
 	}
 }
 
@@ -45,7 +50,13 @@ func (c *TrackMetaController) GetTrack(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, track)
+	aggregated, err := c.aggregator.GetTracks(ctx.Request.Context(), track)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated[0])
 }
 
 // CreateTrack godoc
@@ -75,7 +86,11 @@ func (c *TrackMetaController) CreateTrack(ctx *gin.Context) {
 
 	id, err := c.trackService.CreateTrackMeta(ctx.Request.Context(), claims, &track)
 	if err != nil {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to create track"})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create track"})
+		}
 		return
 	}
 
@@ -118,7 +133,11 @@ func (c *TrackMetaController) UpdateTrack(ctx *gin.Context) {
 	track.ID = id
 	err = c.trackService.UpdateTrackMeta(ctx.Request.Context(), claims, &track)
 	if err != nil {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to update track"})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update track"})
+		}
 		return
 	}
 
@@ -152,7 +171,11 @@ func (c *TrackMetaController) DeleteTrack(ctx *gin.Context) {
 
 	err = c.trackService.DeleteTrackMeta(ctx.Request.Context(), claims, id)
 	if err != nil {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to delete track"})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete track"})
+		}
 		return
 	}
 

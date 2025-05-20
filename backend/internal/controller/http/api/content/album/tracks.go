@@ -5,16 +5,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
 )
 
 type AlbumTrackController struct {
 	albumTrackService album.AlbumTrackService
+	aggregator        aggregator.ContentAggregator
 }
 
-func NewAlbumTrackController(albumTrackService album.AlbumTrackService) *AlbumTrackController {
+func NewAlbumTrackController(albumTrackService album.AlbumTrackService, aggregator aggregator.ContentAggregator) *AlbumTrackController {
 	return &AlbumTrackController{
 		albumTrackService: albumTrackService,
+		aggregator:        aggregator,
 	}
 }
 
@@ -30,5 +33,12 @@ func (c *AlbumTrackController) GetAlbumTracks(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, tracks)
+
+	aggregated, err := c.aggregator.GetTracks(ctx.Request.Context(), tracks...)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated)
 }

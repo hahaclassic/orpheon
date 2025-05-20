@@ -21,7 +21,6 @@ type TrackMetaRepository interface {
 	Create(ctx context.Context, track *entity.TrackMeta) error
 	Update(ctx context.Context, track *entity.TrackMeta) error
 	Delete(ctx context.Context, trackID uuid.UUID) error
-	GetTrackArtists(ctx context.Context, trackID uuid.UUID) ([]*entity.ArtistMeta, error)
 }
 
 type TrackMetaService struct {
@@ -39,11 +38,6 @@ func (s *TrackMetaService) GetTrackMeta(ctx context.Context, trackID uuid.UUID) 
 	}()
 
 	track, err := s.repo.GetByID(ctx, trackID)
-	if err != nil {
-		return nil, err
-	}
-
-	track.Artists, err = s.repo.GetTrackArtists(ctx, trackID)
 	if err != nil {
 		return nil, err
 	}

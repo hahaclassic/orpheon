@@ -108,65 +108,65 @@ func (r *ArtistAssignRepository) GetArtistTracks(ctx context.Context, artistID u
 	return tracks, nil
 }
 
-// func (r *ArtistAssignRepository) GetArtistByAlbum(ctx context.Context, albumID uuid.UUID) ([]*entity.ArtistMeta, error) {
-// 	query := `
-// 		SELECT a.id, a.name, a.description, a.country
-// 		FROM artists a
-// 		JOIN artist_albums aa ON a.id = aa.artist_id
-// 		WHERE aa.album_id = $1
-// 	`
-// 	rows, err := r.pool.Query(ctx, query, albumID)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("get artist by album: %w", err)
-// 	}
-// 	defer rows.Close()
+func (r *ArtistAssignRepository) GetArtistByAlbum(ctx context.Context, albumID uuid.UUID) ([]*entity.ArtistMeta, error) {
+	query := `
+		SELECT a.id, a.name, a.description, a.country
+		FROM artists a
+		JOIN artist_albums aa ON a.id = aa.artist_id
+		WHERE aa.album_id = $1
+	`
+	rows, err := r.pool.Query(ctx, query, albumID)
+	if err != nil {
+		return nil, fmt.Errorf("get artist by album: %w", err)
+	}
+	defer rows.Close()
 
-// 	var artists []*entity.ArtistMeta
-// 	for rows.Next() {
-// 		var artist entity.ArtistMeta
-// 		err := rows.Scan(&artist.ID, &artist.Name, &artist.Description, &artist.Country)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("get artist by album: %w", err)
-// 		}
-// 		artists = append(artists, &artist)
-// 	}
+	var artists []*entity.ArtistMeta
+	for rows.Next() {
+		var artist entity.ArtistMeta
+		err := rows.Scan(&artist.ID, &artist.Name, &artist.Description, &artist.Country)
+		if err != nil {
+			return nil, fmt.Errorf("get artist by album: %w", err)
+		}
+		artists = append(artists, &artist)
+	}
 
-// 	if err := rows.Err(); err != nil {
-// 		return nil, fmt.Errorf("get artist by album: %w", err)
-// 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("get artist by album: %w", err)
+	}
 
-// 	return artists, nil
-// }
+	return artists, nil
+}
 
-// func (r *ArtistAssignRepository) GetArtistByTrack(ctx context.Context, trackID uuid.UUID) ([]*entity.ArtistMeta, error) {
-// 	query := `
-// 		SELECT a.id, a.name, a.description, a.country
-// 		FROM artists a
-// 		JOIN artist_tracks at ON a.id = at.artist_id
-// 		WHERE at.track_id = $1
-// 	`
-// 	rows, err := r.pool.Query(ctx, query, trackID)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("get artist by track: %w", err)
-// 	}
-// 	defer rows.Close()
+func (r *ArtistAssignRepository) GetArtistByTrack(ctx context.Context, trackID uuid.UUID) ([]*entity.ArtistMeta, error) {
+	query := `
+		SELECT a.id, a.name, a.description, a.country
+		FROM artists a
+		JOIN artist_tracks at ON a.id = at.artist_id
+		WHERE at.track_id = $1
+	`
+	rows, err := r.pool.Query(ctx, query, trackID)
+	if err != nil {
+		return nil, fmt.Errorf("get artist by track: %w", err)
+	}
+	defer rows.Close()
 
-// 	var artists []*entity.ArtistMeta
-// 	for rows.Next() {
-// 		var artist entity.ArtistMeta
-// 		err := rows.Scan(&artist.ID, &artist.Name, &artist.Description, &artist.Country)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("get artist by track: %w", err)
-// 		}
-// 		artists = append(artists, &artist)
-// 	}
+	var artists []*entity.ArtistMeta
+	for rows.Next() {
+		var artist entity.ArtistMeta
+		err := rows.Scan(&artist.ID, &artist.Name, &artist.Description, &artist.Country)
+		if err != nil {
+			return nil, fmt.Errorf("get artist by track: %w", err)
+		}
+		artists = append(artists, &artist)
+	}
 
-// 	if err := rows.Err(); err != nil {
-// 		return nil, fmt.Errorf("get artist by track: %w", err)
-// 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("get artist by track: %w", err)
+	}
 
-// 	return artists, nil
-// }
+	return artists, nil
+}
 
 func (r *ArtistAssignRepository) UnassignArtistFromTrack(ctx context.Context, artistID uuid.UUID, trackID uuid.UUID) error {
 	query := `

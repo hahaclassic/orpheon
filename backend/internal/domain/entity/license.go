@@ -6,4 +6,5 @@ type License struct {
 	ID          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
+	LicenseURL  string    `json:"license_url"`
 }

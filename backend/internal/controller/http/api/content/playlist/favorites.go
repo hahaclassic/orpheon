@@ -11,11 +11,14 @@ import (
 
 type PlaylistFavoritesController struct {
 	favoritesService playlist.PlaylistFavoriteService
+	aggregator       playlist.PlaylistAggregator
 }
 
-func NewPlaylistFavoritesController(favoritesService playlist.PlaylistFavoriteService) *PlaylistFavoritesController {
+func NewPlaylistFavoritesController(favoritesService playlist.PlaylistFavoriteService,
+	aggregator playlist.PlaylistAggregator) *PlaylistFavoritesController {
 	return &PlaylistFavoritesController{
 		favoritesService: favoritesService,
+		aggregator:       aggregator,
 	}
 }
 
@@ -41,7 +44,13 @@ func (c *PlaylistFavoritesController) GetFavoritePlaylists(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, playlists)
+	aggregated, err := c.aggregator.GetPlaylists(ctx.Request.Context(), claims, playlists...)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get favorite playlists"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated)
 }
 
 func (c *PlaylistFavoritesController) AddToFavorites(ctx *gin.Context) {

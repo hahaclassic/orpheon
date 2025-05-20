@@ -23,9 +23,9 @@ import (
 	track_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/track"
 	me_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/me"
 	user_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/user"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/middleware"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/router"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/auth"
+	content_aggregator "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/aggregator"
 	album_cover_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/cover"
 	album_meta_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/meta"
 	album_tracks_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/tracks"
@@ -35,6 +35,7 @@ import (
 	genre_assign "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre/assign"
 	genre_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre/meta"
 	license_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/license"
+	playlist_aggregator "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/aggregator"
 	playlist_cover_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/cover"
 	playlist_deletion_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/deleter"
 	playlist_favorites_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/favorites"
@@ -186,30 +187,46 @@ func Run(conf *config.Config) {
 	searchService := search_service.NewSearchService(searchRepo)
 	//listeningStatService := processor.NewListeningStatService(trackRepo, segmentRepo)
 
-	authMiddlewareRequired := middleware.AuthMiddlewareRequired(authService)
-	authMiddlewareOptional := middleware.AuthMiddlewareOptional(authService)
+	contentAggregator := content_aggregator.NewContentAggregator(
+		trackService,
+		artistAssignService,
+		albumMetaService,
+		licenseService,
+		genreService,
+	)
+
+	playlistAggregator := playlist_aggregator.NewPlaylistAggregator(
+		playlistMetaService,
+		playlistFavoriteService,
+		playlistTrackService,
+		userService,
+	)
 
 	authController := auth_ctrl.NewAuthController(authService, &conf.Cookie)
+	authMiddlewareRequired := authController.AuthMiddlewareRequired()
+	authMiddlewareOptional := authController.AuthMiddlewareOptional()
+
 	genreController := genre_ctrl.NewGenreController(genreService, authMiddlewareRequired)
 	genreAssignController := genre_ctrl.NewGenreAssignController(genreAssignService)
 	licenseController := license_ctrl.NewLicenseController(licenseService, authMiddlewareRequired)
 	artistMetaController := artist_ctrl.NewArtistMetaController(artistMetaService)
 	artistAvatarController := artist_ctrl.NewArtistAvatarController(artistAvatarService)
-	artistAssignController := artist_ctrl.NewArtistAssignController(artistAssignService)
-	albumMetaController := album_ctrl.NewAlbumMetaController(albumMetaService)
-	albumTrackController := album_ctrl.NewAlbumTrackController(albumTrackService)
+	artistAssignController := artist_ctrl.NewArtistAssignController(artistAssignService, contentAggregator)
+	albumMetaController := album_ctrl.NewAlbumMetaController(albumMetaService, contentAggregator)
+	albumTrackController := album_ctrl.NewAlbumTrackController(albumTrackService, contentAggregator)
 	albumCoverController := album_ctrl.NewAlbumCoverController(albumCoverService)
-	trackMetaController := track_ctrl.NewTrackMetaController(trackService)
+	trackMetaController := track_ctrl.NewTrackMetaController(trackService, contentAggregator)
 	trackAudioController := track_ctrl.NewTrackAudioController(trackAudioService)
-	searchController := search_ctrl.NewSearchController(searchService, authMiddlewareOptional)
+	searchController := search_ctrl.NewSearchController(searchService, contentAggregator, playlistAggregator, authMiddlewareOptional)
 	userController := user_ctrl.NewUserController(userService)
 	playlistMetaController := playlist_ctrl.NewPlaylistMetaController(playlistMetaService,
 		playlistDeletionService,
 		playlistPrivacyService,
+		playlistAggregator,
 	)
 	playlistCoverController := playlist_ctrl.NewPlaylistCoverController(playlistCoverService)
-	playlistTrackController := playlist_ctrl.NewPlaylistTrackController(playlistTrackService)
-	playlistFavoriteController := playlist_ctrl.NewPlaylistFavoritesController(playlistFavoriteService)
+	playlistTrackController := playlist_ctrl.NewPlaylistTrackController(playlistTrackService, contentAggregator)
+	playlistFavoriteController := playlist_ctrl.NewPlaylistFavoritesController(playlistFavoriteService, playlistAggregator)
 	trackSegmentController := track_ctrl.NewTrackSegmentController(segmentService)
 
 	albumRouter := album_ctrl.NewAlbumRouter(

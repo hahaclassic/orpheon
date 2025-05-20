@@ -87,7 +87,7 @@ func (c *ArtistMetaController) CreateArtist(ctx *gin.Context) {
 	err := c.artistService.CreateArtistMeta(ctx.Request.Context(), claims, &artist)
 	if err != nil {
 		if errors.Is(err, commonerr.ErrForbidden) {
-			ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to create artist"})
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 		} else {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create artist"})
 		}
@@ -134,7 +134,7 @@ func (c *ArtistMetaController) UpdateArtist(ctx *gin.Context) {
 	err = c.artistService.UpdateArtistMeta(ctx.Request.Context(), claims, &artist)
 	if err != nil {
 		if errors.Is(err, commonerr.ErrForbidden) {
-			ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to update artist"})
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 		} else {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update artist"})
 		}
@@ -172,7 +172,7 @@ func (c *ArtistMetaController) DeleteArtist(ctx *gin.Context) {
 	err = c.artistService.DeleteArtistMeta(ctx.Request.Context(), claims, id)
 	if err != nil {
 		if errors.Is(err, commonerr.ErrForbidden) {
-			ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to delete artist"})
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 		} else {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete artist"})
 		}

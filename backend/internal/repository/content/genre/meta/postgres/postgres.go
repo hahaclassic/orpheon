@@ -72,3 +72,31 @@ func (r *GenreRepository) Delete(ctx context.Context, genreID uuid.UUID) error {
 	_, err := r.pool.Exec(ctx, query, genreID)
 	return err
 }
+
+func (r *GenreRepository) GetByAlbum(ctx context.Context, albumID uuid.UUID) ([]*entity.Genre, error) {
+	query := `SELECT g.id, g.title FROM genres g
+	JOIN album_genres ag ON g.id = ag.genre_id
+	WHERE ag.album_id = $1`
+
+	rows, err := r.pool.Query(ctx, query, albumID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get genres by album: %w", err)
+	}
+	defer rows.Close()
+
+	var genres []*entity.Genre
+	for rows.Next() {
+		var g entity.Genre
+		err := rows.Scan(&g.ID, &g.Title)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan genre: %w", err)
+		}
+		genres = append(genres, &g)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %w", err)
+	}
+
+	return genres, nil
+}

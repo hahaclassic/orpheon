@@ -17,6 +17,7 @@ type GenreRepository interface {
 	GetAll(ctx context.Context) ([]*entity.Genre, error)
 	Update(ctx context.Context, genre *entity.Genre) error
 	Delete(ctx context.Context, genreID uuid.UUID) error
+	GetByAlbum(ctx context.Context, albumID uuid.UUID) ([]*entity.Genre, error)
 }
 
 var (
@@ -99,4 +100,12 @@ func (s *GenreService) DeleteGenre(ctx context.Context, claims *entity.Claims, g
 	}
 
 	return s.repo.Delete(ctx, genreID)
+}
+
+func (s *GenreService) GetGenreByAlbum(ctx context.Context, albumID uuid.UUID) (_ []*entity.Genre, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetGenreByAlbum, err)
+	}()
+
+	return s.repo.GetByAlbum(ctx, albumID)
 }

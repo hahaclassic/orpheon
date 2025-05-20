@@ -17,6 +17,7 @@ type PlaylistFavoriteRepository interface {
 	GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID, withOwner bool) ([]uuid.UUID, error)
 	DeleteFromAllFavorites(ctx context.Context, playlistID uuid.UUID, withOwner bool) error
 	RestoreAllFavorites(ctx context.Context, userIDs []uuid.UUID, playlistID uuid.UUID) error
+	IsFavorite(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) (bool, error)
 }
 
 type PlaylistFavoriteService struct {
@@ -96,4 +97,17 @@ func (s *PlaylistFavoriteService) AddPlaylistToAllFavorites(ctx context.Context,
 	}
 
 	return s.favoriteRepo.RestoreAllFavorites(ctx, userIDs, playlistID)
+}
+
+func (s *PlaylistFavoriteService) IsFavorite(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ bool, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrIsFavorite, err)
+	}()
+
+	err = s.policyService.CanView(ctx, claims, playlistID)
+	if err != nil {
+		return false, err
+	}
+
+	return s.favoriteRepo.IsFavorite(ctx, claims.UserID, playlistID)
 }

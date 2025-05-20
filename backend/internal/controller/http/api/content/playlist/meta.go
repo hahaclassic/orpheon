@@ -17,15 +17,18 @@ type PlaylistMetaController struct {
 	playlistService playlist.PlaylistMetaService
 	deleter         playlist.PlaylistDeletionService
 	privacyService  playlist.PlaylistPrivacyChanger
+	aggregator      playlist.PlaylistAggregator
 }
 
 func NewPlaylistMetaController(playlistService playlist.PlaylistMetaService,
 	deleter playlist.PlaylistDeletionService,
-	privacyService playlist.PlaylistPrivacyChanger) *PlaylistMetaController {
+	privacyService playlist.PlaylistPrivacyChanger,
+	aggregator playlist.PlaylistAggregator) *PlaylistMetaController {
 	return &PlaylistMetaController{
 		playlistService: playlistService,
 		deleter:         deleter,
 		privacyService:  privacyService,
+		aggregator:      aggregator,
 	}
 }
 
@@ -59,7 +62,13 @@ func (c *PlaylistMetaController) GetPlaylist(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, playlist)
+	aggregated, err := c.aggregator.GetPlaylists(ctx.Request.Context(), claims, playlist)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get playlist"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated[0])
 }
 
 // CreatePlaylist godoc
@@ -186,7 +195,13 @@ func (c *PlaylistMetaController) GetMyPlaylists(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, playlists)
+	aggregated, err := c.aggregator.GetPlaylists(ctx.Request.Context(), claims, playlists...)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user playlists"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated)
 }
 
 func (c *PlaylistMetaController) GetUserPlaylists(ctx *gin.Context) {
@@ -208,7 +223,13 @@ func (c *PlaylistMetaController) GetUserPlaylists(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, playlists)
+	aggregated, err := c.aggregator.GetPlaylists(ctx.Request.Context(), claims, playlists...)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user playlists"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated)
 }
 
 func (c *PlaylistMetaController) UpdatePlaylistPrivacy(ctx *gin.Context) {

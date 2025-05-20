@@ -18,8 +18,8 @@ type ArtistAssignRepository interface {
 
 	GetArtistAlbums(ctx context.Context, artistID uuid.UUID) ([]*entity.AlbumMeta, error)
 	GetArtistTracks(ctx context.Context, artistID uuid.UUID) ([]*entity.TrackMeta, error)
-	// GetArtistByAlbum(ctx context.Context, albumID uuid.UUID) ([]*entity.ArtistMeta, error)
-	// GetArtistByTrack(ctx context.Context, trackID uuid.UUID) ([]*entity.ArtistMeta, error)
+	GetArtistByAlbum(ctx context.Context, albumID uuid.UUID) ([]*entity.ArtistMeta, error)
+	GetArtistByTrack(ctx context.Context, trackID uuid.UUID) ([]*entity.ArtistMeta, error)
 }
 
 type ArtistAssignService struct {
@@ -82,31 +82,31 @@ func (a *ArtistAssignService) GetArtistTracks(ctx context.Context, artistID uuid
 	return tracks, nil
 }
 
-// func (a *ArtistAssignService) GetArtistByAlbum(ctx context.Context, albumID uuid.UUID) (artists []*entity.ArtistMeta, err error) {
-// 	defer func() {
-// 		err = errwrap.WrapIfErr(usecase.ErrGetArtistByAlbum, err)
-// 	}()
+func (a *ArtistAssignService) GetArtistByAlbum(ctx context.Context, albumID uuid.UUID) (artists []*entity.ArtistMeta, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetArtistByAlbum, err)
+	}()
 
-// 	artists, err = a.repo.GetArtistByAlbum(ctx, albumID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	artists, err = a.repo.GetArtistByAlbum(ctx, albumID)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return artists, nil
-// }
+	return artists, nil
+}
 
-// func (a *ArtistAssignService) GetArtistByTrack(ctx context.Context, trackID uuid.UUID) (artists []*entity.ArtistMeta, err error) {
-// 	defer func() {
-// 		err = errwrap.WrapIfErr(usecase.ErrGetArtistByTrack, err)
-// 	}()
+func (a *ArtistAssignService) GetArtistByTrack(ctx context.Context, trackID uuid.UUID) (artists []*entity.ArtistMeta, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrGetArtistByTrack, err)
+	}()
 
-// 	artists, err = a.repo.GetArtistByTrack(ctx, trackID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	artists, err = a.repo.GetArtistByTrack(ctx, trackID)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return artists, nil
-// }
+	return artists, nil
+}
 
 func (a *ArtistAssignService) UnassignArtistFromTrack(ctx context.Context, claims *entity.Claims, artistID uuid.UUID, trackID uuid.UUID) (err error) {
 	defer func() {

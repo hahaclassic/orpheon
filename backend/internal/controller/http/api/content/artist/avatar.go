@@ -12,6 +12,7 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 )
 
 type ArtistAvatarController struct {
@@ -36,7 +37,11 @@ func (c *ArtistAvatarController) UploadAvatar(ctx *gin.Context) {
 	}
 
 	if err := c.service.UploadCover(ctx.Request.Context(), claims, cover); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload avatar"})
+		}
 		return
 	}
 
@@ -78,7 +83,11 @@ func (c *ArtistAvatarController) DeleteAvatar(ctx *gin.Context) {
 	}
 
 	if err := c.service.DeleteCover(ctx.Request.Context(), claims, artistID); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete avatar"})
+		}
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "Avatar deleted successfully"})

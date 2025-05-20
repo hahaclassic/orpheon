@@ -9,17 +9,20 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/dto"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 )
 
 type AlbumController struct {
 	albumService album.AlbumMetaService
+	aggregator   aggregator.ContentAggregator
 }
 
-func NewAlbumMetaController(albumService album.AlbumMetaService) *AlbumController {
+func NewAlbumMetaController(albumService album.AlbumMetaService, aggregator aggregator.ContentAggregator) *AlbumController {
 	return &AlbumController{
 		albumService: albumService,
+		aggregator:   aggregator,
 	}
 }
 
@@ -41,7 +44,13 @@ func (c *AlbumController) GetAlbum(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, album)
+	aggregated, err := c.aggregator.GetAlbums(ctx.Request.Context(), album)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get album"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated[0])
 }
 
 func (c *AlbumController) GetAllAlbums(ctx *gin.Context) {
@@ -51,24 +60,14 @@ func (c *AlbumController) GetAllAlbums(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, albums)
+	aggregated, err := c.aggregator.GetAlbums(ctx.Request.Context(), albums...)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get all albums"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated)
 }
-
-// func (c *AlbumController) GetAlbumByArtist(ctx *gin.Context) {
-// 	artistID, err := uuid.Parse(ctx.Param("artist_id"))
-// 	if err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid artist ID"})
-// 		return
-// 	}
-
-// 	albums, err := c.albumService.GetAlbumByArtist(ctx.Request.Context(), artistID)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get album by artist"})
-// 		return
-// 	}
-
-// 	ctx.JSON(http.StatusOK, albums)
-// }
 
 func (c *AlbumController) CreateAlbum(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)

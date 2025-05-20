@@ -162,3 +162,20 @@ func (r *PlaylistFavoriteRepository) RestoreAllFavorites(ctx context.Context, us
 
 	return nil
 }
+
+func (r *PlaylistFavoriteRepository) IsFavorite(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) (bool, error) {
+	const query = `
+		SELECT EXISTS (
+			SELECT 1
+			FROM favorite_playlists
+			WHERE user_id = $1 AND playlist_id = $2
+		)
+	`
+
+	var exists bool
+	if err := r.pool.QueryRow(ctx, query, userID, playlistID).Scan(&exists); err != nil {
+		return false, fmt.Errorf("is favorite: %w", err)
+	}
+
+	return exists, nil
+}

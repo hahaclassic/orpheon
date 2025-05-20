@@ -61,22 +61,7 @@ func (a *AlbumService) GetAlbum(ctx context.Context, albumID uuid.UUID) (_ *enti
 		err = errwrap.WrapIfErr(usecase.ErrGetAlbum, err)
 	}()
 
-	album, err := a.repo.GetAlbum(ctx, albumID)
-	if err != nil {
-		return nil, err
-	}
-
-	album.Artists, err = a.repo.GetAlbumArtists(ctx, albumID)
-	if err != nil {
-		return nil, err
-	}
-
-	album.Genres, err = a.repo.GetAlbumGenres(ctx, albumID)
-	if err != nil {
-		return nil, err
-	}
-
-	return album, nil
+	return a.repo.GetAlbum(ctx, albumID)
 }
 
 func (a *AlbumService) GetAllAlbums(ctx context.Context) (_ []*entity.AlbumMeta, err error) {
@@ -84,24 +69,7 @@ func (a *AlbumService) GetAllAlbums(ctx context.Context) (_ []*entity.AlbumMeta,
 		err = errwrap.WrapIfErr(usecase.ErrGetAllAlbums, err)
 	}()
 
-	albums, err := a.repo.GetAllAlbums(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, album := range albums {
-		album.Artists, err = a.repo.GetAlbumArtists(ctx, album.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		album.Genres, err = a.repo.GetAlbumGenres(ctx, album.ID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return albums, nil
+	return a.repo.GetAllAlbums(ctx)
 }
 
 func (a *AlbumService) UpdateAlbum(ctx context.Context, claims *entity.Claims, album *entity.AlbumMeta) (err error) {

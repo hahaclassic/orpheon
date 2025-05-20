@@ -7,16 +7,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 )
 
 type ArtistAssignController struct {
 	artistService artist.ArtistAssignService
+	aggregator    aggregator.ContentAggregator
 }
 
-func NewArtistAssignController(artistService artist.ArtistAssignService) *ArtistAssignController {
-	return &ArtistAssignController{artistService: artistService}
+func NewArtistAssignController(artistService artist.ArtistAssignService,
+	aggregator aggregator.ContentAggregator) *ArtistAssignController {
+	return &ArtistAssignController{artistService: artistService, aggregator: aggregator}
 }
 
 func (c *ArtistAssignController) AssignArtistToTrack(ctx *gin.Context) {
@@ -96,7 +99,13 @@ func (c *ArtistAssignController) GetAlbumsByArtist(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, albums)
+	aggregated, err := c.aggregator.GetAlbums(ctx, albums...)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated)
 }
 
 func (c *ArtistAssignController) GetTracksByArtist(ctx *gin.Context) {
@@ -112,40 +121,14 @@ func (c *ArtistAssignController) GetTracksByArtist(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, tracks)
+	aggregated, err := c.aggregator.GetTracks(ctx, tracks...)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, aggregated)
 }
-
-// func (c *ArtistAssignController) GetArtistsByAlbum(ctx *gin.Context) {
-// 	albumID, err := uuid.Parse(ctx.Param("id"))
-// 	if err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid album ID"})
-// 		return
-// 	}
-
-// 	artists, err := c.artistService.GetArtistByAlbum(ctx, albumID)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	ctx.JSON(http.StatusOK, artists)
-// }
-
-// func (c *ArtistAssignController) GetArtistsByTrack(ctx *gin.Context) {
-// 	trackID, err := uuid.Parse(ctx.Param("id"))
-// 	if err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid track ID"})
-// 		return
-// 	}
-
-// 	artists, err := c.artistService.GetArtistByTrack(ctx, trackID)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	ctx.JSON(http.StatusOK, artists)
-// }
 
 func (c *ArtistAssignController) UnassignArtistFromTrack(ctx *gin.Context) {
 	claims := utils.GetClaims(ctx)
