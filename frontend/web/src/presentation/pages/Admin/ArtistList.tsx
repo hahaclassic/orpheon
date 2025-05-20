@@ -18,37 +18,73 @@ import {
   TextField,
   Alert,
   CircularProgress,
+  Grid,
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { api } from '../../../presentation/services/api';
+import { api, apiService } from '../../../presentation/services/api';
 
 interface Artist {
   id: string;
   name: string;
   description: string;
   country: string;
+  avatarUrl?: string;
+}
+
+interface ArtistResponse {
+  id: string;
+  name: string;
+  description: string;
+  country: string;
+  avatar_url?: string;
 }
 
 const ArtistList = () => {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [open, setOpen] = useState(false);
   const [editingArtist, setEditingArtist] = useState<Artist | null>(null);
+  const [artistAvatars, setArtistAvatars] = useState<{ [key: string]: string }>({});
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     country: '',
+    avatarFile: null as File | null,
+    avatarUrl: undefined as string | undefined,
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchArtistAvatar = async (artistId: string) => {
+    try {
+      const response = await apiService.get(`/artists/${artistId}/avatar`, {
+        responseType: 'blob'
+      });
+      const url = URL.createObjectURL(response);
+      setArtistAvatars(prev => ({ ...prev, [artistId]: url }));
+    } catch (err) {
+      console.error('Error fetching artist avatar:', err);
+    }
+  };
 
   const fetchArtists = async () => {
     try {
       setLoading(true);
       const response = await api.getArtists();
       console.log('Raw API response:', response);
-      const artistsData = Array.isArray(response) ? response : [];
+      const artistsData = Array.isArray(response) ? response.map((artist: any) => ({
+        ...artist,
+        avatarUrl: artist.avatar_url ? `/api/v1/artists/${artist.id}/avatar` : undefined
+      })) : [];
       console.log('Processed artists data:', artistsData);
       setArtists(artistsData);
+      
+      // Загружаем аватары для всех артистов
+      artistsData.forEach(artist => {
+        if (artist.avatar_url) {
+          fetchArtistAvatar(artist.id);
+        }
+      });
+      
       setError(null);
     } catch (err) {
       setError('Ошибка при загрузке артистов');
@@ -70,6 +106,8 @@ const ArtistList = () => {
         name: artist.name,
         description: artist.description,
         country: artist.country,
+        avatarFile: null,
+        avatarUrl: artist.avatarUrl,
       });
     } else {
       setEditingArtist(null);
@@ -77,6 +115,8 @@ const ArtistList = () => {
         name: '',
         description: '',
         country: '',
+        avatarFile: null,
+        avatarUrl: undefined,
       });
     }
     setOpen(true);
@@ -89,12 +129,35 @@ const ArtistList = () => {
       name: '',
       description: '',
       country: '',
+      avatarFile: null,
+      avatarUrl: undefined,
     });
     setError(null);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Проверка размера файла (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Размер файла превышает 10MB');
+        return;
+      }
+
+      // Проверка формата файла
+      if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
+        setError('Допустимы только файлы JPEG и PNG');
+        return;
+      }
+
+      setFormData({ ...formData, avatarFile: file });
+      setError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,11 +169,31 @@ const ArtistList = () => {
         country: formData.country.trim(),
       };
 
+      let artistId;
       if (editingArtist) {
         await api.updateArtist(editingArtist.id, trimmedData);
+        artistId = editingArtist.id;
       } else {
-        await api.createArtist(trimmedData);
+        const response = await api.createArtist(trimmedData);
+        artistId = response.id;
       }
+
+      // Загружаем аватар, если он есть
+      if (formData.avatarFile) {
+        const formDataAvatar = new FormData();
+        formDataAvatar.append('avatar', formData.avatarFile);
+        try {
+          await apiService.post(`/artists/${artistId}/avatar`, formDataAvatar, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+        } catch (err) {
+          console.error('Error uploading avatar:', err);
+          throw err;
+        }
+      }
+
       handleClose();
       fetchArtists();
     } catch (err) {
@@ -159,6 +242,7 @@ const ArtistList = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
+                  <TableCell>Аватар</TableCell>
                   <TableCell>Имя</TableCell>
                   <TableCell>Страна</TableCell>
                   <TableCell>Описание</TableCell>
@@ -168,7 +252,7 @@ const ArtistList = () => {
               <TableBody>
                 {artists.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
+                    <TableCell colSpan={6} align="center">
                       Нет доступных артистов
                     </TableCell>
                   </TableRow>
@@ -176,6 +260,23 @@ const ArtistList = () => {
                   artists.map((artist) => (
                     <TableRow key={artist.id}>
                       <TableCell>{artist.id}</TableCell>
+                      <TableCell>
+                        {artist.avatarUrl ? (
+                          artistAvatars[artist.id] ? (
+                            <Box sx={{ width: 50, height: 50 }}>
+                              <img
+                                src={artistAvatars[artist.id]}
+                                alt={`${artist.name} avatar`}
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                              />
+                            </Box>
+                          ) : (
+                            <Box sx={{ width: 50, height: 50, bgcolor: 'grey.200', borderRadius: '50%' }} />
+                          )
+                        ) : (
+                          <Box sx={{ width: 50, height: 50, bgcolor: 'grey.200', borderRadius: '50%' }} />
+                        )}
+                      </TableCell>
                       <TableCell>{artist.name}</TableCell>
                       <TableCell>{artist.country}</TableCell>
                       <TableCell>{artist.description}</TableCell>
@@ -230,6 +331,34 @@ const ArtistList = () => {
               multiline
               rows={4}
             />
+            <Grid item xs={12}>
+              <input
+                accept="image/jpeg,image/png"
+                type="file"
+                id="avatar-upload"
+                onChange={handleAvatarChange}
+                style={{ display: 'none' }}
+              />
+              <label htmlFor="avatar-upload">
+                <Button variant="outlined" component="span">
+                  {formData.avatarUrl ? 'Изменить аватар' : 'Загрузить аватар'}
+                </Button>
+              </label>
+              {formData.avatarFile && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Выбран новый аватар: {formData.avatarFile.name}
+                </Typography>
+              )}
+              {formData.avatarUrl && !formData.avatarFile && (
+                <Box sx={{ mt: 2, maxWidth: 200 }}>
+                  <img
+                    src={formData.avatarUrl}
+                    alt="Artist avatar"
+                    style={{ width: '100%', height: 'auto', borderRadius: '50%' }}
+                  />
+                </Box>
+              )}
+            </Grid>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>Отмена</Button>

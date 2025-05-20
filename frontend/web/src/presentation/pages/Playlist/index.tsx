@@ -31,6 +31,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  FormControlLabel,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -53,7 +54,21 @@ interface Track {
   duration: number;
   track_number: number;
   artists: Artist[];
-  album_id: string;
+  album: {
+    id: string;
+    title: string;
+    label: string;
+    license_id: string;
+    release_date: string;
+  };
+  coverUrl?: string;
+  total_streams?: number;
+  license?: {
+    id: string;
+    title: string;
+    description: string;
+    url: string;
+  };
 }
 
 interface Artist {
@@ -67,12 +82,14 @@ interface Playlist {
   description?: string;
   is_private: boolean;
   coverImage?: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
   rating: number;
-  isFavorite?: boolean;
-  owner_id: string;
-  owner_name?: string;
+  is_favorite: boolean;
+  owner: {
+    id: string;
+    name: string;
+  };
   tracks: Track[];
 }
 
@@ -107,8 +124,9 @@ const PlaylistPage = () => {
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const [trackMenuAnchorEl, setTrackMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTrackForMenu, setSelectedTrackForMenu] = useState<Track | null>(null);
+  const albumCoversRef = useRef<Map<string, string>>(new Map());
 
-  const isOwner = user && playlist && user.id === playlist.owner_id;
+  const isOwner = user && playlist && user.id === playlist.owner.id;
 
   useEffect(() => {
     const fetchPlaylistData = async () => {
@@ -123,14 +141,6 @@ const PlaylistPage = () => {
         const data = await apiService.get(`/playlists/${id}`);
         setPlaylist(data);
         
-        // Get user information
-        try {
-          const userData = await apiService.get(`/users/${data.owner_id}`);
-          setPlaylist(prev => prev ? { ...prev, owner_name: userData.name } : null);
-        } catch (err) {
-          console.error('Error fetching user data:', err);
-        }
-
         // Get playlist cover
         try {
           const coverResponse = await apiService.get(`/playlists/${id}/cover`, {
@@ -147,7 +157,31 @@ const PlaylistPage = () => {
         try {
           setTracksLoading(true);
           const tracksResponse = await apiService.get(`/playlists/${id}/tracks`);
-          setPlaylist(prev => prev ? { ...prev, tracks: tracksResponse } : null);
+          
+          // Fetch album covers for each track
+          const albumCovers = new Map<string, string>();
+          for (const track of tracksResponse || []) {
+            if (!albumCovers.has(track.album.id)) {
+              try {
+                const response = await apiService.get(`/albums/${track.album.id}/cover`, {
+                  responseType: 'blob'
+                });
+                const url = URL.createObjectURL(response);
+                albumCovers.set(track.album.id, url);
+              } catch (err) {
+                console.error('Error fetching album cover:', err);
+              }
+            }
+          }
+
+          // Combine tracks with album cover URLs
+          const tracksWithCovers = (tracksResponse || []).map((track: Track) => ({
+            ...track,
+            coverUrl: albumCovers.get(track.album.id)
+          }));
+
+          setPlaylist(prev => prev ? { ...prev, tracks: tracksWithCovers } : null);
+          albumCoversRef.current = albumCovers;
         } catch (err) {
           console.error('Error fetching playlist tracks:', err);
           setPlaylist(prev => prev ? { ...prev, tracks: [] } : null);
@@ -166,6 +200,14 @@ const PlaylistPage = () => {
     };
 
     fetchPlaylistData();
+
+    // Cleanup function to revoke object URLs
+    return () => {
+      albumCoversRef.current.forEach((url: string) => URL.revokeObjectURL(url));
+      if (coverUrl) {
+        URL.revokeObjectURL(coverUrl);
+      }
+    };
   }, [id]);
 
   useEffect(() => {
@@ -181,22 +223,34 @@ const PlaylistPage = () => {
     fetchPlaylists();
   }, []);
 
-  const handlePrivacyChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePrivacyChange = async (_: React.ChangeEvent<HTMLInputElement>) => {
     if (!playlist) return;
+
+    const newPrivacyValue = !playlist.is_private;
 
     try {
       setUpdatingPrivacy(true);
       await apiService({
         method: 'patch',
         url: `/playlists/${id}/privacy`,
-        data: { is_private: event.target.checked }
+        data: { is_private: newPrivacyValue }
       });
-      setPlaylist(prev => prev ? { ...prev, is_private: event.target.checked } : null);
-      event.target.checked = !event.target.checked;
+      setPlaylist(prev => prev ? { ...prev, is_private: newPrivacyValue } : null);
     } catch (err) {
       setError('Не удалось изменить настройки приватности');
     } finally {
       setUpdatingPrivacy(false);
+    }
+  };
+
+  const handleDeletePlaylist = async () => {
+    if (!playlist || !window.confirm('Вы уверены, что хотите удалить этот плейлист?')) return;
+
+    try {
+      await apiService.delete(`/playlists/${id}`);
+      navigate('/library');
+    } catch (err) {
+      setError('Не удалось удалить плейлист');
     }
   };
 
@@ -222,18 +276,18 @@ const PlaylistPage = () => {
 
     try {
       setUpdatingFavorite(true);
-      if (playlist.isFavorite) {
+      if (playlist.is_favorite) {
         await apiService.delete(`/me/favorites/${id}`);
         setPlaylist(prev => prev ? {
           ...prev,
-          isFavorite: false,
+          is_favorite: false,
           rating: prev.rating - 1
         } : null);
       } else {
         await apiService.post(`/me/favorites/${id}`);
         setPlaylist(prev => prev ? {
           ...prev,
-          isFavorite: true,
+          is_favorite: true,
           rating: prev.rating + 1
         } : null);
       }
@@ -297,28 +351,15 @@ const PlaylistPage = () => {
     }
   };
 
-  // Меню три точки
-  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) => setMenuAnchor(e.currentTarget);
-  const handleMenuClose = () => {
-    setMenuAnchor(null);
-    setSelectedTrack(null);
-  };
-
-  const handleTrackClick = (trackId: string) => {
-    const track = playlist?.tracks.find(t => t.id === trackId);
-    if (track) {
-      if (currentTrack?.id === trackId) {
-        togglePlay();
-      } else {
-        setTrack(track, playlist?.tracks || []);
-      }
-    }
-  };
-
   const handleAddToPlaylist = (event: React.MouseEvent<HTMLElement>, track: Track) => {
     event.stopPropagation();
     setSelectedTrack(track);
     setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handlePlaylistMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedTrack(null);
   };
 
   const handlePlaylistSelect = async (playlistId: string) => {
@@ -328,9 +369,7 @@ const PlaylistPage = () => {
         const isInPlaylist = playlist && isTrackInPlaylist(playlist, selectedTrack.id);
 
         if (isInPlaylist) {
-          // Удаляем трек из плейлиста
           await apiService.delete(`/playlists/${playlistId}/tracks/${selectedTrack.id}`);
-          // Обновляем локальное состояние плейлиста
           setPlaylists(playlists.map(p => {
             if (p.id === playlistId) {
               return {
@@ -341,9 +380,7 @@ const PlaylistPage = () => {
             return p;
           }));
         } else {
-          // Добавляем трек в плейлист
           await apiService.post(`/playlists/${playlistId}/tracks`, { track_id: selectedTrack.id });
-          // Обновляем локальное состояние плейлиста
           setPlaylists(playlists.map(p => {
             if (p.id === playlistId) {
               return {
@@ -362,14 +399,23 @@ const PlaylistPage = () => {
           playlistId,
           trackId: selectedTrack.id
         });
-      } finally {
-        handleMenuClose();
       }
     }
+    handlePlaylistMenuClose();
+  };
+
+  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    setMenuAnchor(e.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
   };
 
   const handleTrackMenuOpen = (event: React.MouseEvent<HTMLElement>, track: Track) => {
     event.stopPropagation();
+    console.log('Track data:', track);
     setSelectedTrackForMenu(track);
     setTrackMenuAnchorEl(event.currentTarget);
   };
@@ -377,6 +423,17 @@ const PlaylistPage = () => {
   const handleTrackMenuClose = () => {
     setTrackMenuAnchorEl(null);
     setSelectedTrackForMenu(null);
+  };
+
+  const handleTrackClick = (trackId: string) => {
+    const track = playlist?.tracks.find(t => t.id === trackId);
+    if (track) {
+      if (currentTrack?.id === trackId) {
+        togglePlay();
+      } else {
+        setTrack(track, playlist?.tracks || []);
+      }
+    }
   };
 
   const isTrackInPlaylist = (playlist: Playlist, trackId: string) => {
@@ -436,21 +493,34 @@ const PlaylistPage = () => {
                 }}
               />
               {isOwner && (
-                <IconButton
-                  sx={{
-                    position: 'absolute',
-                    bottom: 8,
-                    right: 8,
-                    bgcolor: 'rgba(0, 0, 0, 0.6)',
-                    '&:hover': {
-                      bgcolor: 'rgba(0, 0, 0, 0.8)',
-                    },
-                  }}
-                  onClick={handleCoverClick}
-                  disabled={uploadingCover}
-                >
-                  <PhotoCameraIcon sx={{ color: 'white' }} />
-                </IconButton>
+                <Box sx={{ position: 'absolute', bottom: 8, right: 8, display: 'flex', gap: 1 }}>
+                  <IconButton
+                    sx={{
+                      bgcolor: 'rgba(0, 0, 0, 0.6)',
+                      '&:hover': {
+                        bgcolor: 'rgba(0, 0, 0, 0.8)',
+                      },
+                    }}
+                    onClick={handleCoverClick}
+                    disabled={uploadingCover}
+                  >
+                    <PhotoCameraIcon sx={{ color: 'white' }} />
+                  </IconButton>
+                  {coverUrl && coverUrl !== '/default-playlist.png' && (
+                    <IconButton
+                      sx={{
+                        bgcolor: 'rgba(0, 0, 0, 0.6)',
+                        '&:hover': {
+                          bgcolor: 'rgba(0, 0, 0, 0.8)',
+                        },
+                      }}
+                      onClick={handleDeleteCover}
+                      disabled={uploadingCover}
+                    >
+                      <DeleteIcon sx={{ color: 'white' }} />
+                    </IconButton>
+                  )}
+                </Box>
               )}
             </Box>
           </Card>
@@ -464,63 +534,98 @@ const PlaylistPage = () => {
         </Grid>
         <Grid item xs={12} md={8}>
           <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
               плейлист
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-              <Typography variant="h3" component="h1">
-                {playlist.name}
-              </Typography>
-              {isOwner && (
-                <IconButton onClick={() => {
+            <Typography 
+              variant="h2" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 700,
+                fontSize: { xs: '2.5rem', md: '3.5rem' },
+                mb: 1
+              }}
+            >
+              {playlist?.name}
+            </Typography>
+
+            {/* Description */}
+            <Box 
+              onClick={() => {
+                if (isOwner) {
                   setEditForm({
-                    name: playlist.name,
-                    description: playlist.description || ''
+                    name: playlist?.name || '',
+                    description: playlist?.description || ''
                   });
                   setEditDialogOpen(true);
-                }}>
-                  <EditIcon />
-                </IconButton>
-              )}
+                }
+              }}
+              sx={{ 
+                mb: 3,
+                cursor: isOwner ? 'pointer' : 'default',
+                '&:hover': isOwner ? {
+                  opacity: 0.8
+                } : {}
+              }}
+            >
+              {playlist?.description ? (
+                <Typography variant="body1" color="text.secondary">
+                  {playlist.description}
+                </Typography>
+              ) : isOwner ? (
+                <Typography variant="body1" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  Добавить описание
+                </Typography>
+              ) : null}
             </Box>
             
-            {/* Owner */}
-            <Box sx={{ mb: 2 }}>
+            {/* Owner and Meta information */}
+            <Box sx={{ mb: 3 }}>
               <Typography
                 variant="h6"
                 component="a"
-                href={`/users/${playlist.owner_id}`}
+                href={`/users/${playlist?.owner.id}`}
                 sx={{ 
                   display: 'inline-block',
                   textDecoration: 'none', 
                   color: 'inherit',
+                  mb: 0.5,
                   '&:hover': {
                     textDecoration: 'underline',
                   }
                 }}
               >
-                {playlist.owner_name || 'Unknown user'}
+                {playlist?.owner.name}
+              </Typography>
+
+              <Typography variant="body2" color="text.secondary">
+                Создан: {new Date(playlist?.created_at || '').toLocaleString()}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Обновлен: {new Date(playlist?.updated_at || '').toLocaleString()}
               </Typography>
             </Box>
 
-            {/* Description */}
-            {playlist.description && (
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-                {playlist.description}
-              </Typography>
-            )}
-
-            {/* Privacy Switch for owner */}
-            {isOwner && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                <Typography>Приватный плейлист</Typography>
-                <Switch
-                  checked={playlist.is_private}
-                  onChange={handlePrivacyChange}
-                  disabled={updatingPrivacy}
-                />
+            {/* Actions */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <IconButton onClick={handleFavoriteClick} disabled={updatingFavorite}>
+                  {playlist?.is_favorite ? (
+                    <FavoriteIcon sx={{ color: 'white' }} />
+                  ) : (
+                    <FavoriteBorderIcon sx={{ color: 'white' }} />
+                  )}
+                </IconButton>
+                <Typography variant="body2" color="text.secondary">
+                  {playlist?.rating}
+                </Typography>
               </Box>
-            )}
+              {isOwner && (
+                <IconButton onClick={handleMenuOpen}>
+                  <MoreVertIcon />
+                </IconButton>
+              )}
+            </Box>
           </Box>
         </Grid>
 
@@ -573,7 +678,8 @@ const PlaylistPage = () => {
       <Menu
         anchorEl={menuAnchorEl}
         open={Boolean(menuAnchorEl)}
-        onClose={handleMenuClose}
+        onClose={handlePlaylistMenuClose}
+        onClick={(e) => e.stopPropagation()}
         PaperProps={{
           sx: { 
             maxHeight: '280px',
@@ -615,6 +721,7 @@ const PlaylistPage = () => {
         anchorEl={trackMenuAnchorEl}
         open={Boolean(trackMenuAnchorEl)}
         onClose={handleTrackMenuClose}
+        onClick={(e) => e.stopPropagation()}
         PaperProps={{
           sx: { 
             '& .MuiList-root': {
@@ -628,16 +735,53 @@ const PlaylistPage = () => {
           }
         }}
       >
-        {selectedTrackForMenu && (
+        {selectedTrackForMenu && selectedTrackForMenu.album && (
           <MenuItem 
             onClick={() => {
               handleTrackMenuClose();
-              navigate(`/albums/${selectedTrackForMenu.album_id}`);
+              navigate(`/albums/${selectedTrackForMenu.album.id}`);
             }}
           >
             Перейти к альбому
           </MenuItem>
         )}
+      </Menu>
+
+      {/* Menu */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={handleMenuClose}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <MenuItem onClick={() => {
+          handleMenuClose();
+          setEditDialogOpen(true);
+        }}>
+          Редактировать
+        </MenuItem>
+        <MenuItem>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={playlist.is_private}
+                onChange={handlePrivacyChange}
+                disabled={updatingPrivacy}
+              />
+            }
+            label="Приватный плейлист"
+          />
+        </MenuItem>
+        <Divider />
+        <MenuItem 
+          onClick={() => {
+            handleMenuClose();
+            handleDeletePlaylist();
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          Удалить плейлист
+        </MenuItem>
       </Menu>
     </Container>
   );

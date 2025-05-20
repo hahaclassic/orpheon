@@ -83,7 +83,7 @@ const GenreList = () => {
     e.preventDefault();
     try {
       const trimmedData = {
-        title: formData.title.trim(),
+        title: formData.title,
       };
 
       console.log('Sending data:', trimmedData);
@@ -120,7 +120,7 @@ const GenreList = () => {
           <Typography variant="h5" fontWeight={700}>
             Управление жанрами
           </Typography>
-          <Button variant="contained" color="primary" onClick={() => handleOpen()}>
+          <Button variant="contained" color="primary" onClick={() => handleOpen()} sx={{ ml: 4 }}>
             Добавить жанр
           </Button>
         </Box>

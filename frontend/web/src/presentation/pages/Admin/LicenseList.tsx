@@ -26,13 +26,14 @@ interface License {
   id: string;
   title: string;
   description: string;
+  url: string;
 }
 
 const LicenseList = () => {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [open, setOpen] = useState(false);
   const [editingLicense, setEditingLicense] = useState<License | null>(null);
-  const [formData, setFormData] = useState({ title: '', description: '' });
+  const [formData, setFormData] = useState({ title: '', description: '', url: '' });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -61,10 +62,10 @@ const LicenseList = () => {
   const handleOpen = (license?: License) => {
     if (license) {
       setEditingLicense(license);
-      setFormData({ title: license.title, description: license.description });
+      setFormData({ title: license.title, description: license.description, url: license.url });
     } else {
       setEditingLicense(null);
-      setFormData({ title: '', description: '' });
+      setFormData({ title: '', description: '', url: '' });
     }
     setOpen(true);
   };
@@ -72,7 +73,7 @@ const LicenseList = () => {
   const handleClose = () => {
     setOpen(false);
     setEditingLicense(null);
-    setFormData({ title: '', description: '' });
+    setFormData({ title: '', description: '', url: '' });
     setError(null);
   };
 
@@ -86,6 +87,7 @@ const LicenseList = () => {
       const trimmedData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
+        url: formData.url.trim(),
       };
 
       console.log('Sending data:', trimmedData);
@@ -122,7 +124,7 @@ const LicenseList = () => {
           <Typography variant="h5" fontWeight={700}>
             Управление лицензиями
           </Typography>
-          <Button variant="contained" color="primary" onClick={() => handleOpen()}>
+          <Button variant="contained" color="primary" onClick={() => handleOpen()} sx={{ ml: 4 }}>
             Добавить лицензию
           </Button>
         </Box>
@@ -145,13 +147,14 @@ const LicenseList = () => {
                   <TableCell>ID</TableCell>
                   <TableCell>Название</TableCell>
                   <TableCell>Описание</TableCell>
+                  <TableCell>URL лицензии</TableCell>
                   <TableCell align="right">Действия</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {licenses.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={5} align="center">
                       Нет доступных лицензий
                     </TableCell>
                   </TableRow>
@@ -161,6 +164,13 @@ const LicenseList = () => {
                       <TableCell>{license.id}</TableCell>
                       <TableCell>{license.title}</TableCell>
                       <TableCell>{license.description}</TableCell>
+                      <TableCell>
+                        {license.url && (
+                          <a href={license.url} target="_blank" rel="noopener noreferrer">
+                            {license.url}
+                          </a>
+                        )}
+                      </TableCell>
                       <TableCell align="right">
                         <IconButton onClick={() => handleOpen(license)} color="primary">
                           <EditIcon />
@@ -203,6 +213,15 @@ const LicenseList = () => {
               value={formData.description}
               onChange={handleChange}
               name="description"
+            />
+            <TextField
+              margin="dense"
+              label="URL лицензии"
+              fullWidth
+              value={formData.url}
+              onChange={handleChange}
+              name="url"
+              placeholder="https://example.com/license"
             />
           </DialogContent>
           <DialogActions>

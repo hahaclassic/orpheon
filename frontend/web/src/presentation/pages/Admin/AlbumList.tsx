@@ -24,7 +24,7 @@ import {
   InputLabel,
   Chip,
   OutlinedInput,
-  Stack,
+  // Stack,
   Switch,
   FormControlLabel,
   Grid,
@@ -32,6 +32,13 @@ import {
 import { Edit as EditIcon, Delete as DeleteIcon, Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { api, apiService } from '../../../presentation/services/api';
+
+interface License {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+}
 
 interface Track {
   id?: string;
@@ -50,7 +57,7 @@ interface Album {
   id: string;
   title: string;
   label: string;
-  license_id: string;
+  license: License;
   release_date: string;
   artists: Artist[];
   genres: Genre[];
@@ -71,11 +78,6 @@ interface Genre {
   title: string;
 }
 
-interface License {
-  id: string;
-  title: string;
-}
-
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {
@@ -87,11 +89,23 @@ const MenuProps = {
   },
 };
 
+// Добавляем функции конвертации
+const secondsToMMSS = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
+const mmssToSeconds = (mmss: string): number => {
+  const [minutes, seconds] = mmss.split(':').map(Number);
+  return minutes * 60 + seconds;
+};
+
 const AlbumList = () => {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
-  const [licenses, setLicenses] = useState<License[]>([]);
+  const [licenses, setLicenses] = useState<{ id: string; title: string; description: string; url: string; }[]>([]);
   const [open, setOpen] = useState(false);
   const [editingAlbum, setEditingAlbum] = useState<Album | null>(null);
   const [formData, setFormData] = useState({
@@ -150,7 +164,7 @@ const AlbumList = () => {
     try {
       const response = await api.getLicenses();
       const licensesData = Array.isArray(response) ? response : [];
-      setLicenses(licensesData);
+      setLicenses(licensesData as any);
     } catch (err) {
       console.error('Error fetching licenses:', err);
     }
@@ -189,7 +203,7 @@ const AlbumList = () => {
             genre_id: validGenreId,
             duration: track.duration || 0,
             explicit: track.explicit || false,
-            license_id: track.license_id || '',
+            license_id: track.license.id,
             track_number: track.track_number || 1,
             hasAudio: true,
             additionalArtists: additionalArtists
@@ -200,7 +214,7 @@ const AlbumList = () => {
           title: album.title,
           label: album.label,
           releaseDate: album.release_date,
-          licenseId: album.license_id,
+          licenseId: album.license.id,
           selectedArtists: album.artists.map(artist => artist.id),
           selectedGenres: album.genres.map(genre => genre.id),
           coverFile: null,
@@ -458,7 +472,7 @@ const AlbumList = () => {
           genre_id: defaultGenreId,
           duration: 0,
           explicit: false,
-          license_id: '',
+          license_id: licenses[0].id,
           track_number: formData.tracks.length + 1,
           hasAudio: false,
           additionalArtists: [],
@@ -493,7 +507,16 @@ const AlbumList = () => {
 
   const handleTrackChange = (index: number, field: keyof Track, value: any) => {
     const newTracks = [...formData.tracks];
-    newTracks[index] = { ...newTracks[index], [field]: value };
+    if (field === 'duration') {
+      // Если значение в формате MM:SS, конвертируем в секунды
+      if (typeof value === 'string' && value.includes(':')) {
+        newTracks[index] = { ...newTracks[index], [field]: mmssToSeconds(value) };
+      } else {
+        newTracks[index] = { ...newTracks[index], [field]: value };
+      }
+    } else {
+      newTracks[index] = { ...newTracks[index], [field]: value };
+    }
     setFormData({ ...formData, tracks: newTracks });
   };
 
@@ -586,7 +609,7 @@ const AlbumList = () => {
                         {album.genres?.map(genre => genre.title).join(', ') || 'Нет жанров'}
                       </TableCell>
                       <TableCell>
-                        {licenses.find(license => license.id === album.license_id)?.title || 'Нет лицензии'}
+                        {album.license?.title || 'Нет лицензии'}
                       </TableCell>
                       <TableCell>{new Date(album.release_date).toLocaleDateString()}</TableCell>
                       <TableCell align="right">
@@ -786,12 +809,16 @@ const AlbumList = () => {
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField
-                          label="Длительность (в секундах)"
-                          type="number"
+                          label="Длительность (ММ:СС)"
                           fullWidth
-                          value={track.duration}
-                          onChange={(e) => handleTrackChange(index, 'duration', parseInt(e.target.value))}
+                          value={secondsToMMSS(track.duration)}
+                          onChange={(e) => handleTrackChange(index, 'duration', e.target.value)}
+                          placeholder="3:45"
                           required
+                          inputProps={{
+                            pattern: '^[0-9]+:[0-5][0-9]$',
+                            title: 'Формат: минуты:секунды (например, 3:45)'
+                          }}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
