@@ -14,18 +14,33 @@ import {
   ListItemText,
   Divider,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Select,
+  MenuItem,
+  Menu,
 } from '@mui/material';
-import { ArrowBack, PlayArrow, Pause } from '@mui/icons-material';
+import { ArrowBack, PlayArrow, Pause, Add as AddIcon, Check, MoreVert } from '@mui/icons-material';
 import { albumService } from '../../core/infrastructure/services/albumService';
 import type { Album, Artist, Genre } from '../../core/infrastructure/services/albumService';
 import { apiService } from '../services/api';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import TrackList from '../components/TrackList';
 
 interface Track {
   id: string;
   name: string;
   duration: number;
   track_number: number;
+  artists: Artist[];
+}
+
+interface Playlist {
+  id: string;
+  name: string;
+  tracks: Track[];
 }
 
 const AlbumPage = () => {
@@ -37,6 +52,11 @@ const AlbumPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const { currentTrack, isPlaying, setTrack, togglePlay } = usePlayerContext();
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
+  const [trackMenuAnchorEl, setTrackMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedTrackForMenu, setSelectedTrackForMenu] = useState<Track | null>(null);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -85,6 +105,19 @@ const AlbumPage = () => {
     fetchAlbumData();
   }, [id]);
 
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      try {
+        const response = await apiService.get('/me/playlists');
+        setPlaylists(response);
+      } catch (err) {
+        console.error('Error fetching playlists:', err);
+      }
+    };
+
+    fetchPlaylists();
+  }, []);
+
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -100,6 +133,77 @@ const AlbumPage = () => {
         setTrack(track, tracks);
       }
     }
+  };
+
+  const handleAddToPlaylist = (event: React.MouseEvent<HTMLElement>, track: Track) => {
+    event.stopPropagation();
+    setSelectedTrack(track);
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handlePlaylistSelect = async (playlistId: string) => {
+    if (selectedTrack) {
+      try {
+        const playlist = playlists.find(p => p.id === playlistId);
+        const isInPlaylist = playlist && isTrackInPlaylist(playlist, selectedTrack.id);
+
+        if (isInPlaylist) {
+          // Удаляем трек из плейлиста
+          await apiService.delete(`/playlists/${playlistId}/tracks/${selectedTrack.id}`);
+          // Обновляем локальное состояние плейлиста
+          setPlaylists(playlists.map(p => {
+            if (p.id === playlistId) {
+              return {
+                ...p,
+                tracks: (p.tracks || []).filter(t => t.id !== selectedTrack.id)
+              };
+            }
+            return p;
+          }));
+        } else {
+          // Добавляем трек в плейлист
+          await apiService.post(`/playlists/${playlistId}/tracks`, { track_id: selectedTrack.id });
+          // Обновляем локальное состояние плейлиста
+          setPlaylists(playlists.map(p => {
+            if (p.id === playlistId) {
+              return {
+                ...p,
+                tracks: [...(p.tracks || []), selectedTrack]
+              };
+            }
+            return p;
+          }));
+        }
+      } catch (err: any) {
+        console.error('Error managing track in playlist:', {
+          error: err,
+          response: err.response?.data,
+          status: err.response?.status,
+          playlistId,
+          trackId: selectedTrack.id
+        });
+      }
+    }
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedTrack(null);
+  };
+
+  const isTrackInPlaylist = (playlist: Playlist, trackId: string) => {
+    return playlist.tracks?.some(track => track.id === trackId) || false;
+  };
+
+  const handleTrackMenuOpen = (event: React.MouseEvent<HTMLElement>, track: Track) => {
+    event.stopPropagation();
+    setSelectedTrackForMenu(track);
+    setTrackMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleTrackMenuClose = () => {
+    setTrackMenuAnchorEl(null);
+    setSelectedTrackForMenu(null);
   };
 
   if (loading) {
@@ -229,67 +333,86 @@ const AlbumPage = () => {
           <Typography variant="h5" sx={{ mb: 2 }}>
             Треки
           </Typography>
-          <List>
-            {tracks.map((track, index) => (
-              <Box key={track.id}>
-                <ListItem
-                  sx={{
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: 'action.hover',
-                    },
-                  }}
-                  onClick={() => handleTrackClick(track.id)}
-                >
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mr: 2,
-                      position: 'relative',
-                      '&:hover .play-icon': {
-                        opacity: 1,
-                      },
-                      '&:hover .track-number': {
-                        opacity: 0,
-                      },
-                    }}
-                  >
-                    <Typography
-                      className="track-number"
-                      sx={{
-                        position: 'absolute',
-                        transition: 'opacity 0.2s',
-                      }}
-                    >
-                      {track.track_number}
-                    </Typography>
-                    <IconButton
-                      size="small"
-                      className="play-icon"
-                      sx={{
-                        position: 'absolute',
-                        opacity: currentTrack?.id === track.id ? 1 : 0,
-                        transition: 'opacity 0.2s',
-                      }}
-                    >
-                      {currentTrack?.id === track.id && isPlaying ? <Pause /> : <PlayArrow />}
-                    </IconButton>
-                  </Box>
-                  <ListItemText
-                    primary={track.name}
-                    secondary={formatDuration(track.duration)}
-                  />
-                </ListItem>
-                {index < tracks.length - 1 && <Divider />}
-              </Box>
-            ))}
-          </List>
+          <TrackList
+            tracks={tracks}
+            currentTrackId={currentTrack?.id}
+            isPlaying={isPlaying}
+            onTrackClick={handleTrackClick}
+            onAddToPlaylist={handleAddToPlaylist}
+            showTrackNumber={true}
+            showAlbumLink={true}
+            albumId={id}
+          />
         </Grid>
       </Grid>
+
+      {/* Track Menu */}
+      <Menu
+        anchorEl={trackMenuAnchorEl}
+        open={Boolean(trackMenuAnchorEl)}
+        onClose={handleTrackMenuClose}
+        PaperProps={{
+          sx: { 
+            '& .MuiList-root': {
+              padding: 0
+            }
+          }
+        }}
+        MenuListProps={{
+          sx: {
+            padding: 0
+          }
+        }}
+      >
+        <MenuItem 
+          onClick={() => {
+            handleTrackMenuClose();
+            navigate(`/albums/${id}`);
+          }}
+        >
+          Перейти к альбому
+        </MenuItem>
+      </Menu>
+
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: { 
+            maxHeight: '280px',
+            '& .MuiList-root': {
+              padding: 0
+            }
+          }
+        }}
+        MenuListProps={{
+          sx: {
+            padding: 0
+          }
+        }}
+      >
+        {playlists.map((playlist) => (
+          <MenuItem 
+            key={playlist.id} 
+            onClick={() => handlePlaylistSelect(playlist.id)}
+            sx={{ 
+              minHeight: '40px',
+              '&:hover': {
+                backgroundColor: 'action.hover'
+              },
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <span>{playlist.name}</span>
+            {selectedTrack && isTrackInPlaylist(playlist, selectedTrack.id) && (
+              <Check sx={{ ml: 1, color: 'white' }} />
+            )}
+          </MenuItem>
+        ))}
+      </Menu>
     </Container>
   );
 };

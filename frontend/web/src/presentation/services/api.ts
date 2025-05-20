@@ -165,6 +165,8 @@ export const api = {
   createArtist: (data: Omit<Artist, 'id'>) => apiService.post<Artist>('/artists', data),
   updateArtist: (id: string, data: Omit<Artist, 'id'>) => apiService.put<Artist>(`/artists/${id}`, data),
   deleteArtist: (id: string) => apiService.delete(`/artists/${id}`),
+  getArtistTracks: (id: string) => apiService.get(`/artists/${id}/tracks`),
+  getArtistAlbums: (id: string) => apiService.get(`/artists/${id}/albums`),
 
   // Genres
   getGenres: (): Promise<Genre[]> => apiService.get('/genres'),

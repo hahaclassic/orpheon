@@ -43,6 +43,7 @@ interface Track {
   track_number: number;
   audioFile?: File;
   hasAudio?: boolean;
+  additionalArtists?: string[];
 }
 
 interface Album {
@@ -177,6 +178,11 @@ const AlbumList = () => {
             ? track.genre_id 
             : genres.length > 0 ? genres[0].id : '';
 
+          // Получаем дополнительных артистов из TrackMeta
+          const additionalArtists = track.artists
+            ?.filter((artist: any) => !album.artists.some(a => a.id === artist.id))
+            .map((artist: any) => artist.id) || [];
+
           return {
             id: track.id,
             name: track.name,
@@ -185,7 +191,8 @@ const AlbumList = () => {
             explicit: track.explicit || false,
             license_id: track.license_id || '',
             track_number: track.track_number || 1,
-            hasAudio: true
+            hasAudio: true,
+            additionalArtists: additionalArtists
           };
         });
 
@@ -371,6 +378,24 @@ const AlbumList = () => {
           trackID = trackResponse.id;
         }
 
+        // Связываем трек со всеми артистами (и основными артистами альбома, и дополнительными)
+        const allArtists = [...formData.selectedArtists];
+        if (track.additionalArtists) {
+          allArtists.push(...track.additionalArtists);
+        }
+
+        // Удаляем дубликаты
+        const uniqueArtists = [...new Set(allArtists)];
+
+        for (const artistId of uniqueArtists) {
+          try {
+            await apiService.post(`/artists/${artistId}/tracks/${trackID}`);
+          } catch (err) {
+            console.error(`Error adding artist ${artistId} to track ${trackID}:`, err);
+            // Продолжаем выполнение даже если не удалось добавить артиста
+          }
+        }
+
         if (track.audioFile) {
           const formDataAudio = new FormData();
           formDataAudio.append('audio', track.audioFile, track.audioFile.name);
@@ -435,7 +460,8 @@ const AlbumList = () => {
           explicit: false,
           license_id: '',
           track_number: formData.tracks.length + 1,
-          hasAudio: false
+          hasAudio: false,
+          additionalArtists: [],
         },
       ],
     });
@@ -795,6 +821,36 @@ const AlbumList = () => {
                           }
                           label="Explicit"
                         />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <FormControl fullWidth>
+                          <InputLabel>Дополнительные артисты</InputLabel>
+                          <Select
+                            multiple
+                            value={track.additionalArtists || []}
+                            onChange={(e) => handleTrackChange(index, 'additionalArtists', e.target.value)}
+                            input={<OutlinedInput label="Дополнительные артисты" />}
+                            renderValue={(selected) => (
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {selected.map((value) => (
+                                  <Chip
+                                    key={value}
+                                    label={artists.find(artist => artist.id === value)?.name || value}
+                                  />
+                                ))}
+                              </Box>
+                            )}
+                            MenuProps={MenuProps}
+                          >
+                            {artists
+                              .filter(artist => !formData.selectedArtists.includes(artist.id)) // Исключаем артистов альбома
+                              .map((artist) => (
+                                <MenuItem key={artist.id} value={artist.id}>
+                                  {artist.name}
+                                </MenuItem>
+                              ))}
+                          </Select>
+                        </FormControl>
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <input

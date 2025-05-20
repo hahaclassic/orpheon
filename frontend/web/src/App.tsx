@@ -24,6 +24,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { AuthProvider } from './presentation/contexts/AuthContext';
 import { PlayerProvider } from './presentation/contexts/PlayerContext';
+import { SearchProvider } from './presentation/contexts/SearchContext';
 
 const App = () => {
   return (
@@ -31,33 +32,35 @@ const App = () => {
       <CssBaseline />
       <AuthProvider>
         <PlayerProvider>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route element={<Layout><Outlet /></Layout>}>
-                  <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/library" element={<Library />} />
-                    <Route path="/search" element={<Search />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/playlists/:id" element={<PlaylistPage />} />
-                    <Route path="/artists/:id" element={<ArtistPage />} />
-                    <Route path="/albums/:id" element={<AlbumPage />} />
-                    <Route path="/tracks/:id" element={<TrackPage />} />
-                    <Route path="/admin" element={<AdminRoute><Outlet /></AdminRoute>}>
-                      <Route index element={<AdminPanel />} />
-                      <Route path="genres" element={<GenreList />} />
-                      <Route path="licenses" element={<LicenseList />} />
-                      <Route path="artists" element={<ArtistList />} />
-                      <Route path="albums" element={<AlbumList />} />
+          <SearchProvider>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route element={<Layout><Outlet /></Layout>}>
+                    <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/library" element={<Library />} />
+                      <Route path="/search" element={<Search />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/playlists/:id" element={<PlaylistPage />} />
+                      <Route path="/artists/:id" element={<ArtistPage />} />
+                      <Route path="/albums/:id" element={<AlbumPage />} />
+                      <Route path="/tracks/:id" element={<TrackPage />} />
+                      <Route path="/admin" element={<AdminRoute><Outlet /></AdminRoute>}>
+                        <Route index element={<AdminPanel />} />
+                        <Route path="genres" element={<GenreList />} />
+                        <Route path="licenses" element={<LicenseList />} />
+                        <Route path="artists" element={<ArtistList />} />
+                        <Route path="albums" element={<AlbumList />} />
+                      </Route>
                     </Route>
                   </Route>
-                </Route>
-              </Routes>
-            </BrowserRouter>
-          </LocalizationProvider>
+                </Routes>
+              </BrowserRouter>
+            </LocalizationProvider>
+          </SearchProvider>
         </PlayerProvider>
       </AuthProvider>
     </ThemeProvider>
