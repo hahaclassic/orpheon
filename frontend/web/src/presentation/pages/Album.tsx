@@ -51,7 +51,9 @@ const AlbumPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const { currentTrack, isPlaying, setTrack, togglePlay } = usePlayerContext();
+  const { state, controls } = usePlayerContext();
+  const { currentTrack, isPlaying } = state;
+  const { setTrack, togglePlay } = controls;
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
@@ -130,7 +132,7 @@ const AlbumPage = () => {
       if (currentTrack?.id === trackId) {
         togglePlay();
       } else {
-        setTrack(track, tracks);
+        controls.startPlayback(track, tracks);
       }
     }
   };

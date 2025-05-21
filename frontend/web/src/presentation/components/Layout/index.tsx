@@ -36,6 +36,16 @@ const ContentArea = styled(Box)({
   border: '1px solid rgba(255, 255, 255, 0.1)',
 });
 
+const PlayerBarContainer = styled(Box)({
+  height: 80,
+  backgroundColor: 'background.paper',
+  borderTop: '1px solid',
+  borderColor: 'divider',
+  margin: '0 12px 12px 0',
+  borderRadius: '12px',
+  boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1)',
+});
+
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -49,7 +59,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <ContentArea>
           {children}
         </ContentArea>
-        <PlayerBar />
+        <PlayerBarContainer>
+          <PlayerBar />
+        </PlayerBarContainer>
       </MainContent>
     </LayoutContainer>
   );

@@ -117,7 +117,9 @@ const PlaylistPage = () => {
   const [updatingFavorite, setUpdatingFavorite] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const { currentTrack, isPlaying, setTrack, togglePlay } = usePlayerContext();
+  const { state, controls } = usePlayerContext();
+  const { currentTrack, isPlaying } = state;
+  const { setTrack, togglePlay } = controls;
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
@@ -431,7 +433,7 @@ const PlaylistPage = () => {
       if (currentTrack?.id === trackId) {
         togglePlay();
       } else {
-        setTrack(track, playlist?.tracks || []);
+        controls.startPlayback(track, playlist?.tracks || []);
       }
     }
   };

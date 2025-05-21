@@ -6,22 +6,13 @@ import { api, apiService } from '../services/api';
 import AlbumCard from '../components/ContentCards/AlbumCard';
 import TrackList from '../components/TrackList';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import type { Track } from '../types';
 
 interface Artist {
   id: string;
   name: string;
   description: string;
   country: string;
-}
-
-interface Track {
-  id: string;
-  name: string;
-  duration: number;
-  album_id: string;
-  track_number: number;
-  artists: Artist[];
-  albumCoverUrl?: string;
 }
 
 interface TrackResponse {
@@ -69,7 +60,8 @@ interface Playlist {
 const ArtistPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { setTrack } = usePlayerContext();
+  const { controls } = usePlayerContext();
+  const { setTrack } = controls;
   const [artist, setArtist] = useState<Artist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -124,6 +116,7 @@ const ArtistPage = () => {
             name: track.name,
             duration: parseInt(track.duration),
             album_id: track.album.id,
+            album: track.album,
             track_number: 0,
             artists: track.artists,
             coverUrl: albumCovers.get(track.album.id),
@@ -177,6 +170,13 @@ const ArtistPage = () => {
       }
     };
   }, [id]);
+
+  const handleTrackClick = (trackId: string) => {
+    const track = tracks.find(t => t.id === trackId);
+    if (track) {
+      setTrack(track, tracks);
+    }
+  };
 
   const handleAddToPlaylist = (event: React.MouseEvent<HTMLElement>, track: Track) => {
     event.stopPropagation();
@@ -308,12 +308,7 @@ const ArtistPage = () => {
           </Typography>
           <TrackList
             tracks={tracks}
-            onTrackClick={(trackId) => {
-              const track = tracks.find(t => t.id === trackId);
-              if (track) {
-                setTrack(track, tracks);
-              }
-            }}
+            onTrackClick={handleTrackClick}
             onAddToPlaylist={handleAddToPlaylist}
             showTrackNumber={false}
             showAlbumLink={true}

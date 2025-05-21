@@ -300,6 +300,14 @@ const AlbumList = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Проверяем длительность всех треков
+    const invalidTrack = formData.tracks.find(track => track.duration <= 0);
+    if (invalidTrack) {
+      setError('Длительность трека должна быть больше 0');
+      return;
+    }
+
     try {
       // 1. Создаем альбом
       const albumData = {
@@ -510,8 +518,17 @@ const AlbumList = () => {
     if (field === 'duration') {
       // Если значение в формате MM:SS, конвертируем в секунды
       if (typeof value === 'string' && value.includes(':')) {
-        newTracks[index] = { ...newTracks[index], [field]: mmssToSeconds(value) };
+        const seconds = mmssToSeconds(value);
+        if (seconds <= 0) {
+          setError('Длительность трека должна быть больше 0');
+          return;
+        }
+        newTracks[index] = { ...newTracks[index], [field]: seconds };
       } else {
+        if (value <= 0) {
+          setError('Длительность трека должна быть больше 0');
+          return;
+        }
         newTracks[index] = { ...newTracks[index], [field]: value };
       }
     } else {

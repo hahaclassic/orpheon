@@ -33,6 +33,7 @@ import ArtistCard from "../../components/ContentCards/ArtistCard";
 import PlaylistCard from "../../components/ContentCards/PlaylistCard";
 import TrackList from "../../components/TrackList";
 import { usePlayerContext } from "../../contexts/PlayerContext";
+import type { Track } from '../../types';
 
 type ContentType = "track" | "album" | "playlist" | "artist";
 
@@ -79,7 +80,8 @@ interface Track {
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { setTrack } = usePlayerContext();
+  const { controls } = usePlayerContext();
+  const { setTrack } = controls;
   const [searchQuery, setSearchQuery] = useState(searchParams.get('query') || '');
   const [country, setCountry] = useState(searchParams.get('country') || '');
   const [genre, setGenre] = useState<Genre | null>(null);
@@ -93,6 +95,13 @@ const Search = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const handleTrackClick = (trackId: string) => {
+    const track = results.find(t => t.id === trackId);
+    if (track) {
+      setTrack(track, results);
+    }
+  };
 
   // Функция для очистки URL-объектов
   const cleanupUrls = (urlMap: Map<string, string>) => {
@@ -287,12 +296,7 @@ const Search = () => {
         return (
           <TrackList
             tracks={tracksWithCovers}
-            onTrackClick={(trackId: string) => {
-              const track = tracksWithCovers.find(t => t.id === trackId);
-              if (track) {
-                setTrack(track, tracksWithCovers);
-              }
-            }}
+            onTrackClick={handleTrackClick}
             showTrackNumber={false}
             showAlbumLink={true}
           />
