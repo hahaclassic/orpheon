@@ -59,7 +59,7 @@ jobs:
 
       - name: Run linter
         working-directory: backend
-        run: golangci-lint run --no-cache ./...
+        run: golangci-lint run ./...
 
   unit-test:
     name: Unit Tests
