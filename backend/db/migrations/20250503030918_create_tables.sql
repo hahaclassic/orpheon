@@ -4,7 +4,7 @@ CREATE TABLE licenses (
     id UUID PRIMARY KEY,
     title TEXT NOT NULL UNIQUE,
     description TEXT,
-    license_url TEXT NOT NULL
+    url TEXT NOT NULL
 );
 
 CREATE TABLE genres (
