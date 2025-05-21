@@ -30,6 +30,10 @@ const ContentArea = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
   minHeight: 0,
+  borderRadius: '12px',
+  margin: '12px 12px 12px 0',
+  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
 });
 
 const Layout = ({ children }: { children: React.ReactNode }) => {

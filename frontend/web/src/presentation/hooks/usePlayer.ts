@@ -15,7 +15,7 @@ interface PlayerState {
 const initialState: PlayerState = {
   currentTrack: null,
   isPlaying: false,
-  volume: 50,
+  volume: 1,
   progress: 0,
   duration: 0,
   playlist: [],
@@ -30,6 +30,7 @@ export const usePlayer = () => {
   useEffect(() => {
     audioRef.current = new Audio();
     audioRef.current.preload = 'metadata';
+    audioRef.current.volume = state.volume;
 
     const handleTimeUpdate = () => {
       if (audioRef.current) {
@@ -107,8 +108,6 @@ export const usePlayer = () => {
       const trackIndex = playlist.findIndex(t => t.id === track.id);
       const audioUrl = `http://localhost:8080/api/v1/tracks/${track.id}/audio`;
       
-      console.log('Loading audio from:', audioUrl); // Для отладки
-      
       // Сначала пауза текущего трека
       audioRef.current.pause();
       
@@ -121,50 +120,8 @@ export const usePlayer = () => {
       // Устанавливаем тип контента
       audioRef.current.setAttribute('type', 'audio/mpeg');
       
-      // Добавляем заголовки для Range запроса
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', audioUrl, true);
-      xhr.responseType = 'blob';
-      xhr.setRequestHeader('Range', 'bytes=0-');
-      
-      xhr.onload = function() {
-        if (xhr.status === 206) {
-          const blob = xhr.response;
-          const url = URL.createObjectURL(blob);
-          
-          // Создаем новый аудио элемент
-          const audio = new Audio();
-          audio.setAttribute('type', 'audio/mpeg');
-          audio.src = url;
-          audio.preload = 'metadata';
-          
-          // Добавляем обработчики событий
-          audio.addEventListener('loadedmetadata', () => {
-            console.log('Audio metadata loaded');
-            play();
-          });
-          
-          audio.addEventListener('error', (e) => {
-            console.error('Audio error:', e);
-          });
-          
-          // Заменяем старый аудио элемент на новый
-          if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = audio;
-          }
-          
-          audio.load();
-        } else {
-          console.error('Failed to load audio:', xhr.status, xhr.statusText);
-        }
-      };
-      
-      xhr.onerror = function() {
-        console.error('Error loading audio:', xhr.statusText);
-      };
-      
-      xhr.send();
+      // Загружаем аудио
+      audioRef.current.load();
       
       setState(prev => ({
         ...prev,
@@ -174,6 +131,11 @@ export const usePlayer = () => {
         currentTrackIndex: trackIndex,
         progress: 0
       }));
+
+      // Автоматически начинаем воспроизведение после загрузки метаданных
+      audioRef.current.addEventListener('loadedmetadata', () => {
+        play();
+      }, { once: true });
     }
   }, [play]);
 
@@ -193,7 +155,7 @@ export const usePlayer = () => {
 
   const setVolume = useCallback((volume: number) => {
     if (audioRef.current) {
-      audioRef.current.volume = volume / 100;
+      audioRef.current.volume = volume;
       setState(prev => ({ ...prev, volume }));
     }
   }, []);

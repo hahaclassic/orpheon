@@ -29,6 +29,12 @@ interface Artist {
   country: string;
 }
 
+interface Playlist {
+  id: string;
+  title: string;
+  // Add any other necessary properties for a playlist
+}
+
 // Создаем тип для apiService, который возвращает данные напрямую
 type ApiService = {
   get: <T = any>(url: string, config?: AxiosRequestConfig) => Promise<T>;
@@ -124,6 +130,11 @@ export const api = {
     apiService.post('/auth/change-password', { oldPassword, newPassword }),
 
   getMe: (): Promise<User> => apiService.get('/me'),
+
+  // User endpoints
+  getUser: (id: string): Promise<User> => apiService.get(`/users/${id}`),
+  getUserPlaylists: (id: string): Promise<Playlist[]> => apiService.get(`/users/${id}/playlists`),
+  getUserFavorites: (id: string): Promise<Playlist[]> => apiService.get(`/users/${id}/favorites`),
 
   // Tracks
   getTracks: () => apiService.get('/tracks'),

@@ -11,6 +11,7 @@ import Search from './presentation/pages/Search';
 import Login from './presentation/pages/Login';
 import Register from './presentation/pages/Register';
 import Profile from './presentation/pages/Profile';
+import UserProfile from './presentation/pages/UserProfile';
 import PlaylistPage from './presentation/pages/Playlist';
 import ArtistPage from './presentation/pages/Artist';
 import AlbumPage from './presentation/pages/Album';
@@ -42,6 +43,7 @@ const App = () => {
                     <Route path="/library" element={<Library />} />
                     <Route path="/search" element={<Search />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/users/:id" element={<UserProfile />} />
                     <Route path="/playlists/:id" element={<PlaylistPage />} />
                     <Route path="/artists/:id" element={<ArtistPage />} />
                     <Route path="/albums/:id" element={<AlbumPage />} />

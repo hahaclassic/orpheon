@@ -1,4 +1,4 @@
-import { Box, IconButton, Typography, Slider } from '@mui/material';
+import { Box, IconButton, Typography, Slider, Menu, MenuItem } from '@mui/material';
 import {
   PlayArrow,
   Pause,
@@ -6,14 +6,20 @@ import {
   SkipPrevious,
   VolumeUp,
   VolumeOff,
+  Add as AddIcon,
+  MoreVert,
+  Check,
 } from '@mui/icons-material';
 import { usePlayerContext } from '../../contexts/PlayerContext';
 import { useCallback, useEffect, useState } from 'react';
 import type { SyntheticEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { apiService } from '../../services/api';
 
 const PlayerBar = () => {
+  const navigate = useNavigate();
   const {
-    state: { currentTrack, isPlaying, volume, progress },
+    state: { currentTrack, isPlaying, volume, progress, duration },
     togglePlay,
     playNext,
     playPrevious,
@@ -22,6 +28,21 @@ const PlayerBar = () => {
   } = usePlayerContext();
 
   const [isDragging, setIsDragging] = useState(false);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [playlists, setPlaylists] = useState<Array<{ id: string; name: string; tracks: any[] }>>([]);
+
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      try {
+        const response = await apiService.get('/me/playlists');
+        setPlaylists(response);
+      } catch (err) {
+        console.error('Error fetching playlists:', err);
+      }
+    };
+
+    fetchPlaylists();
+  }, []);
 
   const handleProgressChange = useCallback(
     (_: Event | SyntheticEvent, newValue: number | number[]) => {
@@ -51,6 +72,67 @@ const PlayerBar = () => {
     setVolume(volume === 0 ? 1 : 0);
   }, [volume, setVolume]);
 
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  const handleGoToAlbum = () => {
+    if (currentTrack?.album_id) {
+      navigate(`/albums/${currentTrack.album_id}`);
+      handleMenuClose();
+    }
+  };
+
+  const handlePlaylistSelect = async (playlistId: string) => {
+    if (currentTrack) {
+      try {
+        const playlist = playlists.find(p => p.id === playlistId);
+        const isInPlaylist = playlist && isTrackInPlaylist(playlist, currentTrack.id);
+
+        if (isInPlaylist) {
+          await apiService.delete(`/playlists/${playlistId}/tracks/${currentTrack.id}`);
+          setPlaylists(playlists.map(p => {
+            if (p.id === playlistId) {
+              return {
+                ...p,
+                tracks: (p.tracks || []).filter(t => t.id !== currentTrack.id)
+              };
+            }
+            return p;
+          }));
+        } else {
+          await apiService.post(`/playlists/${playlistId}/tracks`, { track_id: currentTrack.id });
+          setPlaylists(playlists.map(p => {
+            if (p.id === playlistId) {
+              return {
+                ...p,
+                tracks: [...(p.tracks || []), currentTrack]
+              };
+            }
+            return p;
+          }));
+        }
+      } catch (err: any) {
+        console.error('Error managing track in playlist:', {
+          error: err,
+          response: err.response?.data,
+          status: err.response?.status,
+          playlistId,
+          trackId: currentTrack.id
+        });
+      }
+    }
+    handleMenuClose();
+  };
+
+  const isTrackInPlaylist = (playlist: { tracks: any[] }, trackId: string) => {
+    return playlist.tracks?.some(track => track.id === trackId) || false;
+  };
+
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.code === 'Space' && !event.repeat) {
@@ -62,6 +144,13 @@ const PlayerBar = () => {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [togglePlay]);
+
+  // Auto-play next track when current track ends
+  useEffect(() => {
+    if (progress >= duration && duration > 0) {
+      playNext();
+    }
+  }, [progress, duration, playNext]);
 
   return (
     <Box
@@ -75,6 +164,8 @@ const PlayerBar = () => {
         gap: 2,
         width: '100%',
         minWidth: 0,
+        borderRadius: '12px 12px 0 0',
+        boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1)',
       }}
     >
       <Box
@@ -124,7 +215,7 @@ const PlayerBar = () => {
               textOverflow: 'ellipsis',
             }}
           >
-            {currentTrack?.track_number || ''}
+            {currentTrack?.artists?.map(artist => artist.name).join(', ') || ''}
           </Typography>
         </Box>
       </Box>
@@ -158,6 +249,7 @@ const PlayerBar = () => {
             onMouseDown={() => setIsDragging(true)}
             aria-label="track progress"
             disabled={!currentTrack}
+            max={duration}
             sx={{
               color: 'primary.main',
               height: 4,
@@ -236,6 +328,55 @@ const PlayerBar = () => {
             }}
           />
         </Box>
+        {currentTrack && (
+          <>
+            <IconButton size="small" onClick={handleMenuOpen}>
+              <AddIcon />
+            </IconButton>
+            <IconButton size="small" onClick={handleGoToAlbum}>
+              <MoreVert />
+            </IconButton>
+            <Menu
+              anchorEl={menuAnchorEl}
+              open={Boolean(menuAnchorEl)}
+              onClose={handleMenuClose}
+              PaperProps={{
+                sx: { 
+                  maxHeight: '280px',
+                  '& .MuiList-root': {
+                    padding: 0
+                  }
+                }
+              }}
+              MenuListProps={{
+                sx: {
+                  padding: 0
+                }
+              }}
+            >
+              {playlists.map((playlist) => (
+                <MenuItem 
+                  key={playlist.id} 
+                  onClick={() => handlePlaylistSelect(playlist.id)}
+                  sx={{ 
+                    minHeight: '40px',
+                    '&:hover': {
+                      backgroundColor: 'action.hover'
+                    },
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <span>{playlist.name}</span>
+                  {currentTrack && isTrackInPlaylist(playlist, currentTrack.id) && (
+                    <Check sx={{ ml: 1, color: 'white' }} />
+                  )}
+                </MenuItem>
+              ))}
+            </Menu>
+          </>
+        )}
       </Box>
     </Box>
   );

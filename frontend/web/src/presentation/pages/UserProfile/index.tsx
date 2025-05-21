@@ -1,17 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
   Paper,
   Avatar,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Alert,
   Grid,
   Container,
   Tabs,
@@ -19,15 +12,11 @@ import {
   Card,
   CardContent,
   CardMedia,
-  IconButton,
   CircularProgress,
+  Alert,
 } from '@mui/material';
-import LockIcon from '@mui/icons-material/Lock';
-import EditIcon from '@mui/icons-material/Edit';
 import ImageIcon from '@mui/icons-material/Image';
-import axios from 'axios';
-import { apiService } from '../../services/api';
-import { useAuthContext } from '../../contexts/AuthContext';
+import { api } from '../../services/api';
 
 interface User {
   id: string;
@@ -45,38 +34,26 @@ interface Playlist {
   is_favorite: boolean;
 }
 
-const Profile = () => {
+const UserProfile = () => {
+  const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState(0);
-  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [passwordData, setPasswordData] = useState({
-    old: '',
-    new: '',
-    confirm: '',
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const [user, setUser] = useState<User | null>(null);
-  const [myPlaylists, setMyPlaylists] = useState<Playlist[]>([]);
+  const [userPlaylists, setUserPlaylists] = useState<Playlist[]>([]);
   const [favoritePlaylists, setFavoritePlaylists] = useState<Playlist[]>([]);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: '',
-    birth_date: '',
-  });
 
   const navigate = useNavigate();
-  const { user: authUser } = useAuthContext();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [userData, myPlaylistsData, favoritePlaylistsData] = await Promise.all([
-          apiService.get('/me'),
-          apiService.get('/me/playlists'),
-          apiService.get('/me/favorites'),
+        const [userData, userPlaylistsData, favoritePlaylistsData] = await Promise.all([
+          api.getUser(id!),
+          api.getUserPlaylists(id!),
+          api.getUserFavorites(id!),
         ]);
 
         // Загрузка обложек для плейлистов
@@ -97,74 +74,26 @@ const Profile = () => {
           );
         };
 
-        const [myPlaylistsWithCovers, favoritePlaylistsWithCovers] = await Promise.all([
-          loadPlaylistCovers(myPlaylistsData),
+        const [userPlaylistsWithCovers, favoritePlaylistsWithCovers] = await Promise.all([
+          loadPlaylistCovers(userPlaylistsData),
           loadPlaylistCovers(favoritePlaylistsData)
         ]);
 
         setUser(userData);
-        setMyPlaylists(myPlaylistsWithCovers);
+        setUserPlaylists(userPlaylistsWithCovers);
         setFavoritePlaylists(favoritePlaylistsWithCovers);
       } catch (err) {
-        console.error('Error fetching profile data:', err);
-        setError('Ошибка при загрузке данных профиля');
+        console.error('Error fetching user data:', err);
+        setError('Ошибка при загрузке данных пользователя');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswordData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    if (passwordData.new !== passwordData.confirm) {
-      setError('Новые пароли не совпадают');
-      return;
+    if (id) {
+      fetchData();
     }
-    try {
-      await apiService.put('/me/password', {
-        old: passwordData.old,
-        new: passwordData.new
-      });
-      setSuccess('Пароль успешно изменён!');
-      setPasswordData({ old: '', new: '', confirm: '' });
-      setPasswordDialogOpen(false);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Ошибка при смене пароля');
-    }
-  };
-
-  const handleEditClick = () => {
-    if (user) {
-      setEditForm({
-        name: user.name,
-        birth_date: user.birth_date === '0001-01-01T00:00:00Z' ? '' : user.birth_date.split('T')[0],
-      });
-      setEditDialogOpen(true);
-    }
-  };
-
-  const handleEditSubmit = async () => {
-    try {
-      const updatedUser = await apiService.put('/me', {
-        name: editForm.name,
-        birth_date: editForm.birth_date ? new Date(editForm.birth_date).toISOString() : '0001-01-01T00:00:00Z'
-      });
-      setUser(updatedUser);
-      setEditDialogOpen(false);
-    } catch (err) {
-      console.error('Error updating profile:', err);
-      setError('Ошибка при обновлении профиля');
-    }
-  };
+  }, [id]);
 
   const handlePlaylistClick = (playlistId: string) => {
     navigate(`/playlists/${playlistId}`);
@@ -183,7 +112,7 @@ const Profile = () => {
   if (error || !user) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>{error || 'Профиль не найден'}</Alert>
+        <Alert severity="error" sx={{ mb: 2 }}>{error || 'Пользователь не найден'}</Alert>
       </Container>
     );
   }
@@ -193,7 +122,7 @@ const Profile = () => {
       maxWidth="lg" 
       sx={{ 
         py: 4,
-        height: 'calc(100vh - 90px)', // Высота экрана минус высота плеера
+        height: 'calc(100vh - 90px)',
         display: 'flex',
         flexDirection: 'column'
       }}
@@ -202,24 +131,8 @@ const Profile = () => {
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Typography variant="h4" component="h1">
-            Профиль
+            Профиль пользователя
           </Typography>
-          <Box>
-            <Button
-              variant="outlined"
-              startIcon={<EditIcon />}
-              onClick={handleEditClick}
-              sx={{ mr: 2 }}
-            >
-              Редактировать
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => setPasswordDialogOpen(true)}
-            >
-              Изменить пароль
-            </Button>
-          </Box>
         </Box>
 
         <Grid container spacing={3}>
@@ -279,7 +192,7 @@ const Profile = () => {
             onChange={(_, newValue) => setActiveTab(newValue)}
             sx={{ minHeight: 64 }}
           >
-            <Tab label="Мои плейлисты" />
+            <Tab label="Плейлисты пользователя" />
             <Tab label="Избранные плейлисты" />
           </Tabs>
         </Container>
@@ -289,21 +202,21 @@ const Profile = () => {
       <Box sx={{ 
         flex: 1, 
         py: 4,
-        overflow: 'auto' // Добавляем прокрутку при необходимости
+        overflow: 'auto'
       }}>
         <Container maxWidth="xl">
           {activeTab === 0 && (
             <Box>
-              <Typography variant="h5" gutterBottom>Мои плейлисты</Typography>
+              <Typography variant="h5" gutterBottom>Плейлисты пользователя</Typography>
               <Grid container spacing={3}>
-                {myPlaylists.length === 0 ? (
+                {userPlaylists.length === 0 ? (
                   <Grid item xs={12}>
                     <Typography variant="h6" textAlign="center" color="text.secondary">
-                      У вас пока нет плейлистов
+                      У пользователя пока нет плейлистов
                     </Typography>
                   </Grid>
                 ) : (
-                  myPlaylists.map((playlist) => (
+                  userPlaylists.map((playlist) => (
                     <Grid item xs={12} sm={6} md={3} key={playlist.id}>
                       <Card
                         sx={{
@@ -368,7 +281,7 @@ const Profile = () => {
                 {favoritePlaylists.length === 0 ? (
                   <Grid item xs={12}>
                     <Typography variant="h6" textAlign="center" color="text.secondary">
-                      У вас пока нет избранных плейлистов
+                      У пользователя пока нет избранных плейлистов
                     </Typography>
                   </Grid>
                 ) : (
@@ -431,86 +344,8 @@ const Profile = () => {
           )}
         </Container>
       </Box>
-
-      {/* Password Change Dialog */}
-      <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)}>
-        <DialogTitle>Изменение пароля</DialogTitle>
-        <form onSubmit={handlePasswordSubmit}>
-          <DialogContent>
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-            <TextField
-              autoFocus
-              margin="dense"
-              name="old"
-              label="Текущий пароль"
-              type="password"
-              fullWidth
-              value={passwordData.old}
-              onChange={handlePasswordChange}
-              required
-            />
-            <TextField
-              margin="dense"
-              name="new"
-              label="Новый пароль"
-              type="password"
-              fullWidth
-              value={passwordData.new}
-              onChange={handlePasswordChange}
-              required
-            />
-            <TextField
-              margin="dense"
-              name="confirm"
-              label="Подтвердите новый пароль"
-              type="password"
-              fullWidth
-              value={passwordData.confirm}
-              onChange={handlePasswordChange}
-              required
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setPasswordDialogOpen(false)}>Отмена</Button>
-            <Button type="submit" variant="contained">
-              Сохранить
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
-        <DialogTitle>Редактировать профиль</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Имя пользователя"
-              value={editForm.name}
-              onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Дата рождения"
-              type="date"
-              value={editForm.birth_date}
-              onChange={(e) => setEditForm(prev => ({ ...prev, birth_date: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditDialogOpen(false)}>Отмена</Button>
-          <Button onClick={handleEditSubmit} variant="contained">
-            Сохранить
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 };
 
-export default Profile; 
+export default UserProfile; 

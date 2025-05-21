@@ -11,6 +11,11 @@ export interface Track {
   duration: number;
   track_number: number;
   coverUrl?: string;
+  artists: Array<{
+    id: string;
+    name: string;
+  }>;
+  album_id: string;
 }
 
 export interface Playlist {
