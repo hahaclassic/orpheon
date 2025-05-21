@@ -67,7 +67,7 @@ func (u *UserService) UpdateUser(ctx context.Context, claims *entity.Claims, use
 		err = errwrap.WrapIfErr(usecase.ErrUpdateUser, err)
 	}()
 
-	if claims != nil && claims.UserID != user.ID {
+	if claims == nil || claims.UserID != user.ID {
 		return commonerr.ErrForbidden
 	}
 
@@ -79,7 +79,7 @@ func (u *UserService) DeleteUser(ctx context.Context, claims *entity.Claims, use
 		err = errwrap.WrapIfErr(usecase.ErrDeleteUser, err)
 	}()
 
-	if claims != nil && claims.UserID != userID && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.UserID != userID && claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

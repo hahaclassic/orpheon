@@ -1,5 +1,7 @@
 package entity
 
+import "github.com/google/uuid"
+
 type SearchRequest struct {
 	Query   string
 	Filters Filters
@@ -8,6 +10,6 @@ type SearchRequest struct {
 }
 
 type Filters struct {
-	Genre   string
+	GenreID uuid.UUID
 	Country string
 }

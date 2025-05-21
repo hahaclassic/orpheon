@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -32,9 +33,9 @@ func (r *SearchRepository) SearchTracks(ctx context.Context, req *entity.SearchR
 		args = append(args, fmt.Sprintf("%%%s%%", req.Query))
 		argIdx++
 	}
-	if req.Filters.Genre != "" {
+	if req.Filters.GenreID != uuid.Nil {
 		query += fmt.Sprintf(" AND t.genre_id = $%d", argIdx)
-		args = append(args, req.Filters.Genre)
+		args = append(args, req.Filters.GenreID)
 		argIdx++
 	}
 	if req.Filters.Country != "" {
@@ -70,6 +71,8 @@ func (r *SearchRepository) SearchAlbums(ctx context.Context, req *entity.SearchR
 		SELECT DISTINCT a.id, a.title, a.label, a.license_id, a.release_date
 		FROM albums a
 		LEFT JOIN tracks t ON a.id = t.album_id
+		LEFT JOIN artist_tracks at ON t.id = at.track_id
+		LEFT JOIN artists ar ON at.artist_id = ar.id
 		WHERE true
 	`
 	args := []any{}
@@ -80,9 +83,14 @@ func (r *SearchRepository) SearchAlbums(ctx context.Context, req *entity.SearchR
 		args = append(args, fmt.Sprintf("%%%s%%", req.Query))
 		argIdx++
 	}
-	if req.Filters.Genre != "" {
+	if req.Filters.GenreID != uuid.Nil {
 		query += fmt.Sprintf(" AND t.genre_id = $%d", argIdx)
-		args = append(args, req.Filters.Genre)
+		args = append(args, req.Filters.GenreID)
+		argIdx++
+	}
+	if req.Filters.Country != "" {
+		query += fmt.Sprintf(" AND ar.country = $%d", argIdx)
+		args = append(args, req.Filters.Country)
 		argIdx++
 	}
 
@@ -130,9 +138,9 @@ func (r *SearchRepository) SearchArtists(ctx context.Context, req *entity.Search
 		args = append(args, req.Filters.Country)
 		argIdx++
 	}
-	if req.Filters.Genre != "" {
+	if req.Filters.GenreID != uuid.Nil {
 		query += fmt.Sprintf(" AND t.genre_id = $%d", argIdx)
-		args = append(args, req.Filters.Genre)
+		args = append(args, req.Filters.GenreID)
 		argIdx++
 	}
 
@@ -160,7 +168,7 @@ func (r *SearchRepository) SearchArtists(ctx context.Context, req *entity.Search
 
 func (r *SearchRepository) SearchPlaylists(ctx context.Context, req *entity.SearchRequest) ([]*entity.PlaylistMeta, error) {
 	query := `
-		SELECT DISTINCT p.id, p.name, p.description, p.is_private, p.owner_id, p.created_at, p.updated_at
+		SELECT DISTINCT p.id, p.name, p.description, p.is_private, p.owner_id, p.created_at, p.updated_at, rating
 		FROM playlists p
 		LEFT JOIN playlist_tracks pt ON p.id = pt.playlist_id
 		LEFT JOIN tracks t ON pt.track_id = t.id
@@ -174,13 +182,13 @@ func (r *SearchRepository) SearchPlaylists(ctx context.Context, req *entity.Sear
 		args = append(args, fmt.Sprintf("%%%s%%", req.Query))
 		argIdx++
 	}
-	if req.Filters.Genre != "" {
+	if req.Filters.GenreID != uuid.Nil {
 		query += fmt.Sprintf(" AND t.genre_id = $%d", argIdx)
-		args = append(args, req.Filters.Genre)
+		args = append(args, req.Filters.GenreID)
 		argIdx++
 	}
 
-	query += fmt.Sprintf(" ORDER BY p.created_at DESC LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
+	query += fmt.Sprintf(" ORDER BY p.rating DESC LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
 	args = append(args, req.Limit, req.Offset)
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -192,7 +200,8 @@ func (r *SearchRepository) SearchPlaylists(ctx context.Context, req *entity.Sear
 	var playlists []*entity.PlaylistMeta
 	for rows.Next() {
 		var playlist entity.PlaylistMeta
-		err := rows.Scan(&playlist.ID, &playlist.Name, &playlist.Description, &playlist.IsPrivate, &playlist.OwnerID, &playlist.CreatedAt, &playlist.UpdatedAt)
+		err := rows.Scan(&playlist.ID, &playlist.Name, &playlist.Description, &playlist.IsPrivate, &playlist.OwnerID,
+			&playlist.CreatedAt, &playlist.UpdatedAt, &playlist.Rating)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan playlist: %w", err)
 		}

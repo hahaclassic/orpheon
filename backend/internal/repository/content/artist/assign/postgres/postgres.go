@@ -79,7 +79,7 @@ func (r *ArtistAssignRepository) GetArtistAlbums(ctx context.Context, artistID u
 
 func (r *ArtistAssignRepository) GetArtistTracks(ctx context.Context, artistID uuid.UUID) ([]*entity.TrackMeta, error) {
 	query := `
-		SELECT t.id, t.name, t.album_id, t.duration, t.explicit, t.license_id, t.genre_id, t.total_streams
+		SELECT t.id, t.name, t.album_id, t.duration, t.explicit, t.license_id, t.genre_id, t.total_streams, t.track_number
 		FROM tracks t
 		JOIN artist_tracks at ON t.id = at.track_id
 		WHERE at.artist_id = $1 ORDER BY t.total_streams DESC
@@ -94,7 +94,7 @@ func (r *ArtistAssignRepository) GetArtistTracks(ctx context.Context, artistID u
 	for rows.Next() {
 		var track entity.TrackMeta
 		err := rows.Scan(&track.ID, &track.Name, &track.AlbumID, &track.Duration, &track.Explicit,
-			&track.LicenseID, &track.GenreID, &track.TotalStreams)
+			&track.LicenseID, &track.GenreID, &track.TotalStreams, &track.TrackNumber)
 		if err != nil {
 			return nil, fmt.Errorf("get artist tracks: %w", err)
 		}

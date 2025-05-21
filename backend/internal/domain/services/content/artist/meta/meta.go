@@ -52,7 +52,7 @@ func (s *ArtistMetaService) CreateArtistMeta(ctx context.Context, claims *entity
 		err = errwrap.WrapIfErr(usecase.ErrCreateArtistMeta, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -68,7 +68,7 @@ func (s *ArtistMetaService) UpdateArtistMeta(ctx context.Context, claims *entity
 		err = errwrap.WrapIfErr(usecase.ErrUpdateArtistMeta, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -80,7 +80,7 @@ func (s *ArtistMetaService) DeleteArtistMeta(ctx context.Context, claims *entity
 		err = errwrap.WrapIfErr(usecase.ErrDeleteArtistMeta, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
@@ -41,7 +42,7 @@ func (c *SearchController) RegisterRoutes(router *gin.RouterGroup) {
 }
 
 func (c *SearchController) parseSearchRequest(ctx *gin.Context) (*entity.SearchRequest, error) {
-	limit, err := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
+	limit, err := strconv.Atoi(ctx.DefaultQuery("limit", "30"))
 	if err != nil {
 		return nil, fmt.Errorf("invalid limit parameter")
 	}
@@ -51,15 +52,18 @@ func (c *SearchController) parseSearchRequest(ctx *gin.Context) (*entity.SearchR
 	}
 
 	query := ctx.Query("query")
-	genre := ctx.Query("genre")
 	country := ctx.Query("country")
+	genreID, err := uuid.Parse(ctx.Query("genre_id"))
+	if err != nil {
+		genreID = uuid.Nil
+	}
 
 	searchRequest := &entity.SearchRequest{
 		Query:  query,
 		Limit:  limit,
 		Offset: offset,
 		Filters: entity.Filters{
-			Genre:   genre,
+			GenreID: genreID,
 			Country: country,
 		},
 	}

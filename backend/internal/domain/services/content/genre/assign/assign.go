@@ -28,7 +28,7 @@ func (s *GenreAssignService) AssignGenreToAlbum(ctx context.Context, claims *ent
 		err = errwrap.WrapIfErr(usecase.ErrAssignGenreToAlbum, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -40,7 +40,7 @@ func (s *GenreAssignService) UnassignGenreFromAlbum(ctx context.Context, claims 
 		err = errwrap.WrapIfErr(usecase.ErrUnassignGenreFromAlbum, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

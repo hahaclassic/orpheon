@@ -39,7 +39,7 @@ func (s *ArtistCoverService) UploadCover(ctx context.Context, claims *entity.Cla
 		err = errwrap.WrapIfErr(usecase.ErrUploadAvatar, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -51,7 +51,7 @@ func (s *ArtistCoverService) DeleteCover(ctx context.Context, claims *entity.Cla
 		err = errwrap.WrapIfErr(usecase.ErrDeleteAvatar, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

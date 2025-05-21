@@ -50,7 +50,7 @@ func (s *TrackMetaService) CreateTrackMeta(ctx context.Context, claims *entity.C
 		err = errwrap.WrapIfErr(usecase.ErrCreateTrackMeta, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return uuid.Nil, commonerr.ErrForbidden
 	}
 
@@ -75,7 +75,7 @@ func (s *TrackMetaService) UpdateTrackMeta(ctx context.Context, claims *entity.C
 		err = errwrap.WrapIfErr(usecase.ErrUpdateTrackMeta, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -87,7 +87,7 @@ func (s *TrackMetaService) DeleteTrackMeta(ctx context.Context, claims *entity.C
 		err = errwrap.WrapIfErr(usecase.ErrDeleteTrackMeta, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

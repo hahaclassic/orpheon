@@ -20,7 +20,7 @@ func (r *AlbumTrackRepository) GetAllTracks(ctx context.Context, albumID uuid.UU
 	query := `
 		SELECT t.id, t.name, t.duration, t.explicit, t.license_id, t.album_id,
 			   t.track_number, t.total_streams, t.genre_id
-		FROM tracks t WHERE t.album_id = $1
+		FROM tracks t WHERE t.album_id = $1 ORDER BY t.track_number ASC
 	`
 	rows, err := r.pool.Query(ctx, query, albumID)
 	if err != nil {

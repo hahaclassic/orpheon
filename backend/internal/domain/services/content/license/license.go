@@ -37,7 +37,7 @@ func (s *LicenseService) CreateLicense(ctx context.Context, claims *entity.Claim
 		err = errwrap.WrapIfErr(usecase.ErrCreateLicense, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -74,7 +74,7 @@ func (s *LicenseService) UpdateLicense(ctx context.Context, claims *entity.Claim
 		err = errwrap.WrapIfErr(usecase.ErrUpdateLicense, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 
@@ -90,7 +90,7 @@ func (s *LicenseService) DeleteLicense(ctx context.Context, claims *entity.Claim
 		err = errwrap.WrapIfErr(usecase.ErrDeleteLicense, err)
 	}()
 
-	if claims != nil && claims.AccessLvl != entity.Admin {
+	if claims == nil || claims.AccessLvl != entity.Admin {
 		return commonerr.ErrForbidden
 	}
 

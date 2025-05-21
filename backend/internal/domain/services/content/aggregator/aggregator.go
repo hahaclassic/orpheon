@@ -70,14 +70,16 @@ func (a *ContentAggregator) GetTracksByIDs(ctx context.Context, trackIDs ...uuid
 		}
 
 		tracks[i] = &entity.TrackMetaAggregated{
-			ID:       trackMeta.ID,
-			Name:     trackMeta.Name,
-			Duration: trackMeta.Duration,
-			Explicit: trackMeta.Explicit,
-			License:  license,
-			Album:    album,
-			Artists:  artists,
-			Genre:    genre,
+			ID:           trackMeta.ID,
+			Name:         trackMeta.Name,
+			Duration:     trackMeta.Duration,
+			Explicit:     trackMeta.Explicit,
+			TrackNumber:  trackMeta.TrackNumber,
+			TotalStreams: trackMeta.TotalStreams,
+			License:      license,
+			Album:        album,
+			Artists:      artists,
+			Genre:        genre,
 		}
 	}
 
