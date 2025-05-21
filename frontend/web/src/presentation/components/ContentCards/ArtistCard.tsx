@@ -6,11 +6,11 @@ interface ArtistCardProps {
   name: string;
   country: string;
   genre: string;
-  albumCount: number;
+  albumCount?: number;
   coverImage?: string;
 }
 
-const ArtistCard = ({ id, name, country, genre, albumCount, coverImage }: ArtistCardProps) => {
+const ArtistCard = ({ id, name, country, genre, coverImage }: ArtistCardProps) => {
   const navigate = useNavigate();
 
   const handleArtistClick = () => {
@@ -58,9 +58,6 @@ const ArtistCard = ({ id, name, country, genre, albumCount, coverImage }: Artist
             sx={{ mr: 0.5, mb: 0.5 }}
           />
         </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {albumCount} альбомов
-        </Typography>
       </CardContent>
     </Card>
   );

@@ -11,13 +11,26 @@ import {
   Alert,
   Button,
   Container,
+  IconButton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ImageIcon from '@mui/icons-material/Image';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { apiService } from '../../../presentation/services/api';
 import { useApi } from '../../../presentation/hooks/useApi';
 import PlaylistDialog from '../../../presentation/components/PlaylistDialog';
-import type { Track, Playlist } from '../../../presentation/types';
+import type { Track } from '../../../presentation/types';
+
+interface Playlist {
+  id: number;
+  name: string;
+  coverImage?: string;
+  trackCount: number;
+  tracks: Track[];
+  is_favorite: boolean;
+  rating: number;
+}
 
 const Library = () => {
   const [myPlaylists, setMyPlaylists] = useState<Playlist[]>([]);
@@ -25,6 +38,7 @@ const Library = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [updatingFavorite, setUpdatingFavorite] = useState(false);
   const navigate = useNavigate();
   const { createPlaylist } = useApi();
 
@@ -87,13 +101,43 @@ const Library = () => {
 
   // Объединяем обычные и избранные плейлисты, помечая избранные
   const allPlaylists = [
-    ...myPlaylists.map((p) => ({ ...p, isFavorite: false })),
-    ...favoritePlaylists.map((p) => ({ ...p, isFavorite: true })),
+    ...myPlaylists,
+    ...favoritePlaylists,
   ];
   // Убираем дубли по id (если плейлист есть и в моих, и в избранных)
   const uniquePlaylists = allPlaylists.filter(
     (playlist, idx, arr) => arr.findIndex((p) => p.id === playlist.id) === idx
   );
+
+  const handleFavoriteClick = async (e: React.MouseEvent, playlistId: number) => {
+    e.stopPropagation();
+    if (updatingFavorite) return;
+
+    try {
+      setUpdatingFavorite(true);
+      const playlist = uniquePlaylists.find(p => p.id === playlistId);
+      if (!playlist) return;
+
+      if (playlist.is_favorite) {
+        await apiService.delete(`/me/favorites/${playlistId}`);
+        setMyPlaylists(prev => prev.map(p => 
+          p.id === playlistId ? { ...p, is_favorite: false, rating: p.rating - 1 } : p
+        ));
+        setFavoritePlaylists(prev => prev.filter(p => p.id !== playlistId));
+      } else {
+        await apiService.post(`/me/favorites/${playlistId}`);
+        setMyPlaylists(prev => prev.map(p => 
+          p.id === playlistId ? { ...p, is_favorite: true, rating: p.rating + 1 } : p
+        ));
+        setFavoritePlaylists(prev => [...prev, { ...playlist, is_favorite: true, rating: playlist.rating + 1 }]);
+      }
+    } catch (err) {
+      console.error("Error updating favorite status:", err);
+      setError("Не удалось обновить статус избранного");
+    } finally {
+      setUpdatingFavorite(false);
+    }
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -134,12 +178,9 @@ const Library = () => {
                       display: 'flex',
                       flexDirection: 'column',
                       cursor: 'pointer',
-                      border: playlist.isFavorite ? '2px solid #a78bfa' : undefined,
-                      boxShadow: playlist.isFavorite ? '0 0 0 2px #a78bfa' : undefined,
                       '&:hover': {
                         transform: 'scale(1.02)',
                         transition: 'transform 0.2s ease-in-out',
-                        boxShadow: playlist.isFavorite ? '0 0 0 4px #a78bfa' : undefined,
                       },
                     }}
                     onClick={() => handlePlaylistClick(playlist.id)}
@@ -175,14 +216,25 @@ const Library = () => {
                       <Typography gutterBottom variant="h6" component="div" noWrap>
                         {playlist.name}
                       </Typography>
-                      {playlist.isFavorite && (
-                        <Typography variant="body2" color="#a78bfa">
-                          ★ Избранное
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <IconButton 
+                          onClick={(e) => handleFavoriteClick(e, playlist.id)}
+                          size="small"
+                          sx={{ 
+                            color: 'white',
+                            '&:hover': { color: 'white' }
+                          }}
+                        >
+                          {playlist.is_favorite ? (
+                            <FavoriteIcon sx={{ fontSize: 20 }} />
+                          ) : (
+                            <FavoriteBorderIcon sx={{ fontSize: 20 }} />
+                          )}
+                        </IconButton>
+                        <Typography variant="body2" color="white">
+                          {playlist.rating || 0}
                         </Typography>
-                      )}
-                      <Typography variant="body2" color="text.secondary">
-                        {playlist.trackCount} треков
-                      </Typography>
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>
@@ -211,12 +263,9 @@ const Library = () => {
                         display: 'flex',
                         flexDirection: 'column',
                         cursor: 'pointer',
-                        border: '2px solid #a78bfa',
-                        boxShadow: '0 0 0 2px #a78bfa',
                         '&:hover': {
                           transform: 'scale(1.02)',
                           transition: 'transform 0.2s ease-in-out',
-                          boxShadow: '0 0 0 4px #a78bfa',
                         },
                       }}
                       onClick={() => handlePlaylistClick(playlist.id)}
@@ -252,12 +301,25 @@ const Library = () => {
                         <Typography gutterBottom variant="h6" component="div" noWrap>
                           {playlist.name}
                         </Typography>
-                        <Typography variant="body2" color="#a78bfa">
-                          ★ Избранное
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {playlist.trackCount} треков
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <IconButton 
+                            onClick={(e) => handleFavoriteClick(e, playlist.id)}
+                            size="small"
+                            sx={{ 
+                              color: 'white',
+                              '&:hover': { color: 'white' }
+                            }}
+                          >
+                            {playlist.is_favorite ? (
+                              <FavoriteIcon sx={{ fontSize: 20 }} />
+                            ) : (
+                              <FavoriteBorderIcon sx={{ fontSize: 20 }} />
+                            )}
+                          </IconButton>
+                          <Typography variant="body2" color="white">
+                            {playlist.rating || 0}
+                          </Typography>
+                        </Box>
                       </CardContent>
                     </Card>
                   </Grid>

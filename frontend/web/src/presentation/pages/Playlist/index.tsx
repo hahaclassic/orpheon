@@ -735,7 +735,7 @@ const PlaylistPage = () => {
           }
         }}
       >
-        {selectedTrackForMenu && selectedTrackForMenu.album && (
+        {selectedTrackForMenu && (
           <MenuItem 
             onClick={() => {
               handleTrackMenuClose();
