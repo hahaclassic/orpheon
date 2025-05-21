@@ -177,6 +177,65 @@ func (_c *GenreRepository_GetAll_Call) RunAndReturn(run func(context.Context) ([
 	return _c
 }
 
+// GetByAlbum provides a mock function with given fields: ctx, albumID
+func (_m *GenreRepository) GetByAlbum(ctx context.Context, albumID uuid.UUID) ([]*entity.Genre, error) {
+	ret := _m.Called(ctx, albumID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByAlbum")
+	}
+
+	var r0 []*entity.Genre
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.Genre, error)); ok {
+		return rf(ctx, albumID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.Genre); ok {
+		r0 = rf(ctx, albumID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.Genre)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, albumID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GenreRepository_GetByAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByAlbum'
+type GenreRepository_GetByAlbum_Call struct {
+	*mock.Call
+}
+
+// GetByAlbum is a helper method to define mock.On call
+//   - ctx context.Context
+//   - albumID uuid.UUID
+func (_e *GenreRepository_Expecter) GetByAlbum(ctx interface{}, albumID interface{}) *GenreRepository_GetByAlbum_Call {
+	return &GenreRepository_GetByAlbum_Call{Call: _e.mock.On("GetByAlbum", ctx, albumID)}
+}
+
+func (_c *GenreRepository_GetByAlbum_Call) Run(run func(ctx context.Context, albumID uuid.UUID)) *GenreRepository_GetByAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *GenreRepository_GetByAlbum_Call) Return(_a0 []*entity.Genre, _a1 error) *GenreRepository_GetByAlbum_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *GenreRepository_GetByAlbum_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.Genre, error)) *GenreRepository_GetByAlbum_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByID provides a mock function with given fields: ctx, genreID
 func (_m *GenreRepository) GetByID(ctx context.Context, genreID uuid.UUID) (*entity.Genre, error) {
 	ret := _m.Called(ctx, genreID)

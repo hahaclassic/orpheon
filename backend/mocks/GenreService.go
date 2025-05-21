@@ -179,6 +179,65 @@ func (_c *GenreService_GetAllGenres_Call) RunAndReturn(run func(context.Context)
 	return _c
 }
 
+// GetGenreByAlbum provides a mock function with given fields: ctx, albumID
+func (_m *GenreService) GetGenreByAlbum(ctx context.Context, albumID uuid.UUID) ([]*entity.Genre, error) {
+	ret := _m.Called(ctx, albumID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGenreByAlbum")
+	}
+
+	var r0 []*entity.Genre
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.Genre, error)); ok {
+		return rf(ctx, albumID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.Genre); ok {
+		r0 = rf(ctx, albumID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.Genre)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, albumID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GenreService_GetGenreByAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGenreByAlbum'
+type GenreService_GetGenreByAlbum_Call struct {
+	*mock.Call
+}
+
+// GetGenreByAlbum is a helper method to define mock.On call
+//   - ctx context.Context
+//   - albumID uuid.UUID
+func (_e *GenreService_Expecter) GetGenreByAlbum(ctx interface{}, albumID interface{}) *GenreService_GetGenreByAlbum_Call {
+	return &GenreService_GetGenreByAlbum_Call{Call: _e.mock.On("GetGenreByAlbum", ctx, albumID)}
+}
+
+func (_c *GenreService_GetGenreByAlbum_Call) Run(run func(ctx context.Context, albumID uuid.UUID)) *GenreService_GetGenreByAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *GenreService_GetGenreByAlbum_Call) Return(_a0 []*entity.Genre, err error) *GenreService_GetGenreByAlbum_Call {
+	_c.Call.Return(_a0, err)
+	return _c
+}
+
+func (_c *GenreService_GetGenreByAlbum_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.Genre, error)) *GenreService_GetGenreByAlbum_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetGenreByID provides a mock function with given fields: ctx, genreID
 func (_m *GenreService) GetGenreByID(ctx context.Context, genreID uuid.UUID) (*entity.Genre, error) {
 	ret := _m.Called(ctx, genreID)

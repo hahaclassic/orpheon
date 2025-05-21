@@ -179,6 +179,124 @@ func (_c *ArtistAssignRepository_GetArtistAlbums_Call) RunAndReturn(run func(con
 	return _c
 }
 
+// GetArtistByAlbum provides a mock function with given fields: ctx, albumID
+func (_m *ArtistAssignRepository) GetArtistByAlbum(ctx context.Context, albumID uuid.UUID) ([]*entity.ArtistMeta, error) {
+	ret := _m.Called(ctx, albumID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetArtistByAlbum")
+	}
+
+	var r0 []*entity.ArtistMeta
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.ArtistMeta, error)); ok {
+		return rf(ctx, albumID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.ArtistMeta); ok {
+		r0 = rf(ctx, albumID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.ArtistMeta)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, albumID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ArtistAssignRepository_GetArtistByAlbum_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetArtistByAlbum'
+type ArtistAssignRepository_GetArtistByAlbum_Call struct {
+	*mock.Call
+}
+
+// GetArtistByAlbum is a helper method to define mock.On call
+//   - ctx context.Context
+//   - albumID uuid.UUID
+func (_e *ArtistAssignRepository_Expecter) GetArtistByAlbum(ctx interface{}, albumID interface{}) *ArtistAssignRepository_GetArtistByAlbum_Call {
+	return &ArtistAssignRepository_GetArtistByAlbum_Call{Call: _e.mock.On("GetArtistByAlbum", ctx, albumID)}
+}
+
+func (_c *ArtistAssignRepository_GetArtistByAlbum_Call) Run(run func(ctx context.Context, albumID uuid.UUID)) *ArtistAssignRepository_GetArtistByAlbum_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *ArtistAssignRepository_GetArtistByAlbum_Call) Return(_a0 []*entity.ArtistMeta, _a1 error) *ArtistAssignRepository_GetArtistByAlbum_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ArtistAssignRepository_GetArtistByAlbum_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.ArtistMeta, error)) *ArtistAssignRepository_GetArtistByAlbum_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetArtistByTrack provides a mock function with given fields: ctx, trackID
+func (_m *ArtistAssignRepository) GetArtistByTrack(ctx context.Context, trackID uuid.UUID) ([]*entity.ArtistMeta, error) {
+	ret := _m.Called(ctx, trackID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetArtistByTrack")
+	}
+
+	var r0 []*entity.ArtistMeta
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*entity.ArtistMeta, error)); ok {
+		return rf(ctx, trackID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*entity.ArtistMeta); ok {
+		r0 = rf(ctx, trackID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.ArtistMeta)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, trackID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ArtistAssignRepository_GetArtistByTrack_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetArtistByTrack'
+type ArtistAssignRepository_GetArtistByTrack_Call struct {
+	*mock.Call
+}
+
+// GetArtistByTrack is a helper method to define mock.On call
+//   - ctx context.Context
+//   - trackID uuid.UUID
+func (_e *ArtistAssignRepository_Expecter) GetArtistByTrack(ctx interface{}, trackID interface{}) *ArtistAssignRepository_GetArtistByTrack_Call {
+	return &ArtistAssignRepository_GetArtistByTrack_Call{Call: _e.mock.On("GetArtistByTrack", ctx, trackID)}
+}
+
+func (_c *ArtistAssignRepository_GetArtistByTrack_Call) Run(run func(ctx context.Context, trackID uuid.UUID)) *ArtistAssignRepository_GetArtistByTrack_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *ArtistAssignRepository_GetArtistByTrack_Call) Return(_a0 []*entity.ArtistMeta, _a1 error) *ArtistAssignRepository_GetArtistByTrack_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ArtistAssignRepository_GetArtistByTrack_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]*entity.ArtistMeta, error)) *ArtistAssignRepository_GetArtistByTrack_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetArtistTracks provides a mock function with given fields: ctx, artistID
 func (_m *ArtistAssignRepository) GetArtistTracks(ctx context.Context, artistID uuid.UUID) ([]*entity.TrackMeta, error) {
 	ret := _m.Called(ctx, artistID)

@@ -179,6 +179,64 @@ func (_c *PlaylistFavoriteService_GetUserFavorites_Call) RunAndReturn(run func(c
 	return _c
 }
 
+// IsFavorite provides a mock function with given fields: ctx, claims, playlistID
+func (_m *PlaylistFavoriteService) IsFavorite(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error) {
+	ret := _m.Called(ctx, claims, playlistID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsFavorite")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) (bool, error)); ok {
+		return rf(ctx, claims, playlistID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) bool); ok {
+		r0 = rf(ctx, claims, playlistID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *entity.Claims, uuid.UUID) error); ok {
+		r1 = rf(ctx, claims, playlistID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// PlaylistFavoriteService_IsFavorite_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsFavorite'
+type PlaylistFavoriteService_IsFavorite_Call struct {
+	*mock.Call
+}
+
+// IsFavorite is a helper method to define mock.On call
+//   - ctx context.Context
+//   - claims *entity.Claims
+//   - playlistID uuid.UUID
+func (_e *PlaylistFavoriteService_Expecter) IsFavorite(ctx interface{}, claims interface{}, playlistID interface{}) *PlaylistFavoriteService_IsFavorite_Call {
+	return &PlaylistFavoriteService_IsFavorite_Call{Call: _e.mock.On("IsFavorite", ctx, claims, playlistID)}
+}
+
+func (_c *PlaylistFavoriteService_IsFavorite_Call) Run(run func(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID)) *PlaylistFavoriteService_IsFavorite_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*entity.Claims), args[2].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *PlaylistFavoriteService_IsFavorite_Call) Return(_a0 bool, _a1 error) *PlaylistFavoriteService_IsFavorite_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *PlaylistFavoriteService_IsFavorite_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) (bool, error)) *PlaylistFavoriteService_IsFavorite_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewPlaylistFavoriteService creates a new instance of PlaylistFavoriteService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewPlaylistFavoriteService(t interface {
