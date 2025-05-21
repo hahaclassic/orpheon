@@ -43,7 +43,7 @@ func PrintArtists(artists []*entity.ArtistMeta) {
 	var tableData [][]any
 	for _, artist := range artists {
 		tableData = append(tableData, []any{artist.ID, artist.Name, artist.Country,
-			artist.Description[:min(len(artist.Description), 30)]})
+			artist.Description[:min(len(artist.Description), 70)]})
 	}
 
 	tableoutput.PrintTable(table.StyleColoredDark,
@@ -112,7 +112,8 @@ func PrintLicense(license *entity.License) {
 func PrintLicenses(licenses []*entity.License) {
 	var tableData [][]any
 	for _, license := range licenses {
-		tableData = append(tableData, []any{license.ID, license.Title, license.Description})
+		tableData = append(tableData, []any{license.ID, license.Title,
+			license.Description[:min(len(license.Description), 70)]})
 	}
 
 	tableoutput.PrintTable(table.StyleColoredDark,

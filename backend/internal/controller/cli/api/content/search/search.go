@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/output"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/cli/session"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
@@ -117,10 +118,14 @@ func (c *SearchController) getRequest() (req *entity.SearchRequest, err error) {
 	scanner.Scan()
 	country = scanner.Text()
 
-	var genreID string
+	var genreIDStr string
 	fmt.Print("Enter genre (leave empty for all): ")
 	scanner.Scan()
-	genreID = scanner.Text()
+	genreIDStr = scanner.Text()
+	genreID, err := uuid.Parse(genreIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse genre id: %w", err)
+	}
 
 	var limit int
 	fmt.Print("Enter limit (leave empty for 10): ")
@@ -152,7 +157,7 @@ func (c *SearchController) getRequest() (req *entity.SearchRequest, err error) {
 		Query: query,
 		Filters: entity.Filters{
 			Country: country,
-			Genre:   genreID,
+			GenreID: genreID,
 		},
 		Limit:  limit,
 		Offset: offset,

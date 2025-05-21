@@ -24,7 +24,7 @@ func (r *PlaylistMetaRepository) Create(ctx context.Context, playlist *entity.Pl
 	`
 
 	_, err := r.pool.Exec(ctx, query, playlist.ID, playlist.Name, playlist.Description,
-		playlist.IsPrivate, playlist.OwnerID, playlist.CreatedAt, playlist.UpdatedAt, playlist.Rating)
+		playlist.IsPrivate, playlist.OwnerID, playlist.CreatedAt, playlist.UpdatedAt, 0)
 	if err != nil {
 		return fmt.Errorf("create playlist: %w", err)
 	}
@@ -79,12 +79,12 @@ func (r *PlaylistMetaRepository) GetByUser(ctx context.Context, userID uuid.UUID
 func (r *PlaylistMetaRepository) Update(ctx context.Context, playlist *entity.PlaylistMeta) error {
 	const query = `
 		UPDATE playlists
-		SET name = $1, description = $2, is_private = $3, rating = $4, updated_at = $5
-		WHERE id = $6
+		SET name = $1, description = $2, is_private = $3, updated_at = $4
+		WHERE id = $5
 	`
 
-	ct, err := r.pool.Exec(ctx, query, playlist.Name, playlist.Description, playlist.IsPrivate, playlist.Rating,
-		playlist.UpdatedAt, playlist.ID)
+	ct, err := r.pool.Exec(ctx, query, playlist.Name, playlist.Description, playlist.IsPrivate, playlist.UpdatedAt,
+		playlist.ID)
 	if err != nil {
 		return fmt.Errorf("update playlist: %w", err)
 	}
