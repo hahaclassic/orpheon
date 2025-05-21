@@ -3,23 +3,27 @@
 CREATE OR REPLACE FUNCTION update_playlist_updated_at() 
 RETURNS TRIGGER AS $$
 BEGIN
-    UPDATE playlists
-    SET last_updated = CURRENT_TIMESTAMP
-    WHERE id = NEW.playlist_id;
-    RETURN NEW;
+    IF (TG_OP = 'DELETE') THEN
+        UPDATE playlists
+        SET updated_at = CURRENT_TIMESTAMP
+        WHERE id = OLD.playlist_id;
+    ELSE
+        UPDATE playlists
+        SET updated_at = CURRENT_TIMESTAMP
+        WHERE id = NEW.playlist_id;
+    END IF;
+    RETURN NULL;
 END;
-$$ LANGUAGE plpgsql; 
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_update_playlist_updated_at
-AFTER INSERT OR UPDATE or Delete ON playlist_tracks
+AFTER INSERT OR UPDATE OR DELETE ON playlist_tracks
 FOR EACH ROW
 EXECUTE FUNCTION update_playlist_updated_at();
-
-drop trigger trigger_update_playlist_updated_at on playlist_tracks;
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TRIGGER IF EXISTS playlist_updated_at_updater ON playlist_tracks;
-DROP FUNCTION IF EXISTS update_playlist_timestamp();
+DROP TRIGGER IF EXISTS trigger_update_playlist_updated_at ON playlist_tracks;
+DROP FUNCTION IF EXISTS update_playlist_updated_at();
 -- +goose StatementEnd

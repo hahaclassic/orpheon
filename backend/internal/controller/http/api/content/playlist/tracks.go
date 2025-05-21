@@ -1,6 +1,7 @@
 package playlist_ctrl
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,6 +11,7 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 )
 
 type PlaylistTrackController struct {
@@ -40,13 +42,21 @@ func (c *PlaylistTrackController) GetPlaylistTracks(ctx *gin.Context) {
 
 	tracks, err := c.tracksService.GetAllTracks(ctx.Request.Context(), claims, id)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to get playlist tracks"})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Failed to get playlist tracks"})
+		}
 		return
 	}
 
 	aggregated, err := c.aggregator.GetTracks(ctx.Request.Context(), tracks...)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get playlist tracks"})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get playlist tracks"})
+		}
 		return
 	}
 
@@ -77,7 +87,11 @@ func (c *PlaylistTrackController) AddTrackToPlaylist(ctx *gin.Context) {
 		TrackID:    request.TrackID,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to add track to playlist"})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add track to playlist"})
+		}
 		return
 	}
 
@@ -108,7 +122,11 @@ func (c *PlaylistTrackController) DeleteTrackFromPlaylist(ctx *gin.Context) {
 		TrackID:    trackID,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to remove track from playlist"})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove track from playlist"})
+		}
 		return
 	}
 
@@ -146,7 +164,13 @@ func (c *PlaylistTrackController) ChangeTrackPosition(ctx *gin.Context) {
 		Position:   request.Position,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to change track position"})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to change track position"})
+		}
 		return
 	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Track position changed"})
 }
