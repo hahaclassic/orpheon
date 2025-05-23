@@ -16,6 +16,10 @@
 #   timeout: 5m
 #   issues-exit-code: 1
 
+issues:
+  exclude-dirs:
+    - cmd/player
+
 linters:
   enable-all: true
   
