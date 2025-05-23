@@ -22,6 +22,8 @@ issues:
 
 linters:
   enable-all: true
+  disable:
+    - goanalysis_metalinter
   
 linters-settings:
   tagliatelle:
