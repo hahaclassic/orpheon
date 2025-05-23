@@ -7,12 +7,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
-	ErrForbidden          = errors.New("permission denied")
 	ErrInvalidChunkParams = errors.New("invalid chunk parameters")
+	ErrInvalidTrackID     = errors.New("invalid track id")
 )
 
 type AudioFileRepository interface {
@@ -55,10 +56,12 @@ func (a *AudioFileService) UploadAudioFile(ctx context.Context, claims *entity.C
 	}()
 
 	switch {
-	case claims.AccessLvl != entity.Admin:
-		return ErrForbidden
-	case chunk.End <= chunk.Start || chunk.Start != 0 || chunk.End != uint64(len(chunk.Data)):
+	case claims == nil || claims.AccessLvl != entity.Admin:
+		return commonerr.ErrForbidden
+	case chunk.End <= chunk.Start || chunk.Start != 0 || chunk.End != int64(len(chunk.Data)):
 		return ErrInvalidChunkParams
+	case chunk.TrackID == uuid.Nil:
+		return ErrInvalidTrackID
 	}
 
 	converted, err := a.converter.ChangeBitrate(ctx, chunk)
@@ -74,8 +77,8 @@ func (a *AudioFileService) DeleteAudioFile(ctx context.Context, claims *entity.C
 		err = errwrap.WrapIfErr(usecase.ErrDeleteAudioFile, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+	if claims == nil || claims.AccessLvl != entity.Admin {
+		return commonerr.ErrForbidden
 	}
 
 	return a.repo.DeleteFile(ctx, trackID)

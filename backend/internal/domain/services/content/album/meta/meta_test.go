@@ -12,6 +12,7 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/meta"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
@@ -25,22 +26,22 @@ func TestCreateAlbum(t *testing.T) {
 		repo := mocks.NewAlbumRepository(t)
 		repo.On("CreateAlbum", ctx, mock.AnythingOfType("*entity.AlbumMeta")).Return(nil)
 		svc := meta.New(repo)
-		err := svc.CreateAlbum(ctx, adminClaims, album)
+		_, err := svc.CreateAlbum(ctx, adminClaims, album)
 		assert.NoError(t, err)
 	})
 
 	t.Run("forbidden", func(t *testing.T) {
 		repo := mocks.NewAlbumRepository(t)
 		svc := meta.New(repo)
-		err := svc.CreateAlbum(ctx, userClaims, album)
-		assert.ErrorIs(t, err, meta.ErrForbidden)
+		_, err := svc.CreateAlbum(ctx, userClaims, album)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
 		repo := mocks.NewAlbumRepository(t)
 		repo.On("CreateAlbum", ctx, mock.AnythingOfType("*entity.AlbumMeta")).Return(errors.New("db error"))
 		svc := meta.New(repo)
-		err := svc.CreateAlbum(ctx, adminClaims, album)
+		_, err := svc.CreateAlbum(ctx, adminClaims, album)
 		assert.ErrorIs(t, err, usecase.ErrCreateAlbum)
 	})
 }
@@ -86,7 +87,7 @@ func TestUpdateAlbum(t *testing.T) {
 		repo := mocks.NewAlbumRepository(t)
 		svc := meta.New(repo)
 		err := svc.UpdateAlbum(ctx, userClaims, album)
-		assert.ErrorIs(t, err, meta.ErrForbidden)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
@@ -116,7 +117,7 @@ func TestDeleteAlbum(t *testing.T) {
 		repo := mocks.NewAlbumRepository(t)
 		svc := meta.New(repo)
 		err := svc.DeleteAlbum(ctx, userClaims, albumID)
-		assert.ErrorIs(t, err, meta.ErrForbidden)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 
 	t.Run("repo error", func(t *testing.T) {

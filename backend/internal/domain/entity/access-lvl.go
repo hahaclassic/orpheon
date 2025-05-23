@@ -7,3 +7,7 @@ const (
 	User
 	Admin
 )
+
+func (a AccessLevel) String() string {
+	return []string{"Unauthorized", "User", "Admin"}[a]
+}

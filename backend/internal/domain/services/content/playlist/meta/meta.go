@@ -3,6 +3,7 @@ package meta
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
@@ -22,15 +23,21 @@ type PlaylistMetaRepository interface {
 	Delete(ctx context.Context, playlistID uuid.UUID) error
 }
 
-type PlaylistMetaService struct {
-	repo   PlaylistMetaRepository
-	policy usecase.PlaylistPolicyService
+type PlaylistAccessMetaDeleter interface {
+	DeleteAccessMeta(ctx context.Context, playlistID uuid.UUID) error
 }
 
-func NewPlaylistMetaService(repo PlaylistMetaRepository, policy usecase.PlaylistPolicyService) *PlaylistMetaService {
+type PlaylistMetaService struct {
+	repo       PlaylistMetaRepository
+	policy     usecase.PlaylistPolicyService
+	accessRepo PlaylistAccessMetaDeleter
+}
+
+func NewPlaylistMetaService(repo PlaylistMetaRepository, policy usecase.PlaylistPolicyService, accessRepo PlaylistAccessMetaDeleter) *PlaylistMetaService {
 	return &PlaylistMetaService{
-		repo:   repo,
-		policy: policy,
+		repo:       repo,
+		policy:     policy,
+		accessRepo: accessRepo,
 	}
 }
 
@@ -43,7 +50,14 @@ func (p *PlaylistMetaService) CreateMeta(ctx context.Context, claims *entity.Cla
 		return ErrEmptyPlaylistName
 	}
 
-	playlist.OwnerID = claims.UserID // may be
+	playlist.ID, err = uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+	playlist.OwnerID = claims.UserID
+
+	playlist.CreatedAt = time.Now()
+	playlist.UpdatedAt = playlist.CreatedAt
 
 	return p.repo.Create(ctx, playlist)
 }
@@ -70,7 +84,7 @@ func (p *PlaylistMetaService) GetUserAllPlaylistsMeta(ctx context.Context, claim
 		return nil, err
 	}
 
-	// if user is owner, show all playlists
+	// if user is owner, show all playlists (user can see all his playlists)
 	if claims.UserID == userID {
 		return playlists, nil
 	}
@@ -96,15 +110,21 @@ func (p *PlaylistMetaService) UpdateMeta(ctx context.Context, claims *entity.Cla
 		return err
 	}
 
+	playlist.UpdatedAt = time.Now()
+
 	return p.repo.Update(ctx, playlist)
 }
 
 func (p *PlaylistMetaService) DeleteMeta(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
 	defer func() {
-		err = errwrap.WrapIfErr(usecase.ErrDeletePlaylist, err)
+		err = errwrap.WrapIfErr(usecase.ErrDeleteMeta, err)
 	}()
 
 	if err = p.policy.CanDelete(ctx, claims, playlistID); err != nil {
+		return err
+	}
+
+	if err = p.accessRepo.DeleteAccessMeta(ctx, playlistID); err != nil {
 		return err
 	}
 

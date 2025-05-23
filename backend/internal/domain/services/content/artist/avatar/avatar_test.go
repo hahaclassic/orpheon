@@ -11,6 +11,7 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/avatar"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
@@ -63,7 +64,7 @@ func TestUploadCover(t *testing.T) {
 		svc := avatar.NewArtistCoverService(repo)
 		err := svc.UploadCover(ctx, user, cover)
 
-		assert.ErrorIs(t, err, avatar.ErrForbidden)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
@@ -99,7 +100,7 @@ func TestDeleteCover(t *testing.T) {
 		svc := avatar.NewArtistCoverService(repo)
 		err := svc.DeleteCover(ctx, user, artistID)
 
-		assert.ErrorIs(t, err, avatar.ErrForbidden)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 
 	t.Run("repo error", func(t *testing.T) {

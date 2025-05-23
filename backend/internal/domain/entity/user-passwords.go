@@ -1,6 +1,6 @@
 package entity
 
 type UserPasswords struct {
-	Old string
-	New string
+	Old string `json:"old"`
+	New string `json:"new"`
 }

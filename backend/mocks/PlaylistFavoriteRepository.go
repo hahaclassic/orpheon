@@ -73,17 +73,17 @@ func (_c *PlaylistFavoriteRepository_AddToFavorites_Call) RunAndReturn(run func(
 	return _c
 }
 
-// DeleteFromAllFavorites provides a mock function with given fields: ctx, playlistID
-func (_m *PlaylistFavoriteRepository) DeleteFromAllFavorites(ctx context.Context, playlistID uuid.UUID) error {
-	ret := _m.Called(ctx, playlistID)
+// DeleteFromAllFavorites provides a mock function with given fields: ctx, playlistID, withOwner
+func (_m *PlaylistFavoriteRepository) DeleteFromAllFavorites(ctx context.Context, playlistID uuid.UUID, withOwner bool) error {
+	ret := _m.Called(ctx, playlistID, withOwner)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteFromAllFavorites")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
-		r0 = rf(ctx, playlistID)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, bool) error); ok {
+		r0 = rf(ctx, playlistID, withOwner)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -99,13 +99,14 @@ type PlaylistFavoriteRepository_DeleteFromAllFavorites_Call struct {
 // DeleteFromAllFavorites is a helper method to define mock.On call
 //   - ctx context.Context
 //   - playlistID uuid.UUID
-func (_e *PlaylistFavoriteRepository_Expecter) DeleteFromAllFavorites(ctx interface{}, playlistID interface{}) *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call {
-	return &PlaylistFavoriteRepository_DeleteFromAllFavorites_Call{Call: _e.mock.On("DeleteFromAllFavorites", ctx, playlistID)}
+//   - withOwner bool
+func (_e *PlaylistFavoriteRepository_Expecter) DeleteFromAllFavorites(ctx interface{}, playlistID interface{}, withOwner interface{}) *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call {
+	return &PlaylistFavoriteRepository_DeleteFromAllFavorites_Call{Call: _e.mock.On("DeleteFromAllFavorites", ctx, playlistID, withOwner)}
 }
 
-func (_c *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call) Run(run func(ctx context.Context, playlistID uuid.UUID)) *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call {
+func (_c *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call) Run(run func(ctx context.Context, playlistID uuid.UUID, withOwner bool)) *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(bool))
 	})
 	return _c
 }
@@ -115,7 +116,7 @@ func (_c *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call) Return(_a0 err
 	return _c
 }
 
-func (_c *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call) RunAndReturn(run func(context.Context, uuid.UUID) error) *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call {
+func (_c *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call) RunAndReturn(run func(context.Context, uuid.UUID, bool) error) *PlaylistFavoriteRepository_DeleteFromAllFavorites_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -227,9 +228,9 @@ func (_c *PlaylistFavoriteRepository_GetUserFavorites_Call) RunAndReturn(run fun
 	return _c
 }
 
-// GetUsersWithFavoritePlaylist provides a mock function with given fields: ctx, playlistID
-func (_m *PlaylistFavoriteRepository) GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID) ([]uuid.UUID, error) {
-	ret := _m.Called(ctx, playlistID)
+// GetUsersWithFavoritePlaylist provides a mock function with given fields: ctx, playlistID, withOwner
+func (_m *PlaylistFavoriteRepository) GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID, withOwner bool) ([]uuid.UUID, error) {
+	ret := _m.Called(ctx, playlistID, withOwner)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUsersWithFavoritePlaylist")
@@ -237,19 +238,19 @@ func (_m *PlaylistFavoriteRepository) GetUsersWithFavoritePlaylist(ctx context.C
 
 	var r0 []uuid.UUID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]uuid.UUID, error)); ok {
-		return rf(ctx, playlistID)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, bool) ([]uuid.UUID, error)); ok {
+		return rf(ctx, playlistID, withOwner)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []uuid.UUID); ok {
-		r0 = rf(ctx, playlistID)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, bool) []uuid.UUID); ok {
+		r0 = rf(ctx, playlistID, withOwner)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]uuid.UUID)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, playlistID)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, bool) error); ok {
+		r1 = rf(ctx, playlistID, withOwner)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -265,13 +266,14 @@ type PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call struct {
 // GetUsersWithFavoritePlaylist is a helper method to define mock.On call
 //   - ctx context.Context
 //   - playlistID uuid.UUID
-func (_e *PlaylistFavoriteRepository_Expecter) GetUsersWithFavoritePlaylist(ctx interface{}, playlistID interface{}) *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call {
-	return &PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call{Call: _e.mock.On("GetUsersWithFavoritePlaylist", ctx, playlistID)}
+//   - withOwner bool
+func (_e *PlaylistFavoriteRepository_Expecter) GetUsersWithFavoritePlaylist(ctx interface{}, playlistID interface{}, withOwner interface{}) *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call {
+	return &PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call{Call: _e.mock.On("GetUsersWithFavoritePlaylist", ctx, playlistID, withOwner)}
 }
 
-func (_c *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call) Run(run func(ctx context.Context, playlistID uuid.UUID)) *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call {
+func (_c *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call) Run(run func(ctx context.Context, playlistID uuid.UUID, withOwner bool)) *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(bool))
 	})
 	return _c
 }
@@ -281,7 +283,65 @@ func (_c *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call) Return(_
 	return _c
 }
 
-func (_c *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]uuid.UUID, error)) *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call {
+func (_c *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call) RunAndReturn(run func(context.Context, uuid.UUID, bool) ([]uuid.UUID, error)) *PlaylistFavoriteRepository_GetUsersWithFavoritePlaylist_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// IsFavorite provides a mock function with given fields: ctx, userID, playlistID
+func (_m *PlaylistFavoriteRepository) IsFavorite(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) (bool, error) {
+	ret := _m.Called(ctx, userID, playlistID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsFavorite")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) (bool, error)); ok {
+		return rf(ctx, userID, playlistID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) bool); ok {
+		r0 = rf(ctx, userID, playlistID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
+		r1 = rf(ctx, userID, playlistID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// PlaylistFavoriteRepository_IsFavorite_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsFavorite'
+type PlaylistFavoriteRepository_IsFavorite_Call struct {
+	*mock.Call
+}
+
+// IsFavorite is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - playlistID uuid.UUID
+func (_e *PlaylistFavoriteRepository_Expecter) IsFavorite(ctx interface{}, userID interface{}, playlistID interface{}) *PlaylistFavoriteRepository_IsFavorite_Call {
+	return &PlaylistFavoriteRepository_IsFavorite_Call{Call: _e.mock.On("IsFavorite", ctx, userID, playlistID)}
+}
+
+func (_c *PlaylistFavoriteRepository_IsFavorite_Call) Run(run func(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID)) *PlaylistFavoriteRepository_IsFavorite_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *PlaylistFavoriteRepository_IsFavorite_Call) Return(_a0 bool, _a1 error) *PlaylistFavoriteRepository_IsFavorite_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *PlaylistFavoriteRepository_IsFavorite_Call) RunAndReturn(run func(context.Context, uuid.UUID, uuid.UUID) (bool, error)) *PlaylistFavoriteRepository_IsFavorite_Call {
 	_c.Call.Return(run)
 	return _c
 }

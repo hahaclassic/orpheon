@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hahaclassic/orpheon/backend/internal/config"
 	"github.com/redis/go-redis/v9"
 )
 
-type RedisConfig struct {
-	Addr     string `env:"REDIS_ADDR" env-required:"true"`
-	Password string `env:"REDIS_PASSWORD"`           // не обязательный
-	DB       int    `env:"REDIS_DB" env-default:"0"` // 0 по умолчанию
-}
+type RedisConfig = config.RedisConfig
+
+// type RedisConfig struct {
+// 	Addr     string `env:"REDIS_ADDR" env-required:"true"`
+// 	Password string `env:"REDIS_PASSWORD"`           // не обязательный
+// 	DB       int    `env:"REDIS_DB" env-default:"0"` // 0 по умолчанию
+// }
 
 func NewRedisClient(cfg RedisConfig) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{

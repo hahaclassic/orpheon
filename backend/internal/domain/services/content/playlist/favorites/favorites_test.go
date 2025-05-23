@@ -10,6 +10,7 @@ import (
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
@@ -26,7 +27,7 @@ func TestAddToUserFavorites(t *testing.T) {
 		wantErr   error
 	}{
 		{"success", nil, nil, nil},
-		{"policy error", usecase.ErrForbidden, nil, usecase.ErrForbidden},
+		{"policy error", commonerr.ErrForbidden, nil, commonerr.ErrForbidden},
 		{"repo error", nil, errors.New("repo error"), usecase.ErrAddToUserFavorites},
 	}
 
@@ -81,27 +82,26 @@ func TestDeleteFromUserFavorites(t *testing.T) {
 	claims := &entity.Claims{UserID: userID}
 
 	tests := []struct {
-		name      string
-		policyErr error
-		repoErr   error
-		wantErr   error
+		name    string
+		repoErr error
+		wantErr error
 	}{
-		{"success", nil, nil, nil},
-		{"policy error", usecase.ErrForbidden, nil, usecase.ErrForbidden},
-		{"repo error", nil, errors.New("repo error"), usecase.ErrDeleteFromAllFavorites},
+		{"success", nil, nil},
+		{"repo error", errors.New("repo error"), usecase.ErrDeleteFromUserFavorites},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			policy := mocks.NewPlaylistPolicyService(t)
 			repo := mocks.NewPlaylistFavoriteRepository(t)
-			policy.On("CanDelete", ctx, claims, playlistID).Return(tt.policyErr)
-			if tt.policyErr == nil {
-				repo.On("DeleteFromUserFavorites", ctx, userID, playlistID).Return(tt.repoErr)
-			}
+
+			repo.On("DeleteFromUserFavorites", ctx, userID, playlistID).Return(tt.repoErr)
+
 			svc := NewPlaylistFavoriteService(repo, policy)
 			err := svc.DeleteFromUserFavorites(ctx, claims, playlistID)
 			assert.ErrorIs(t, err, tt.wantErr)
+
+			repo.AssertExpectations(t)
 		})
 	}
 }
@@ -120,7 +120,7 @@ func TestGetUsersWithFavoritePlaylist(t *testing.T) {
 		wantErr   error
 	}{
 		{"success", nil, userList, nil, nil},
-		{"policy error", usecase.ErrForbidden, nil, nil, usecase.ErrForbidden},
+		{"policy error", commonerr.ErrForbidden, nil, nil, commonerr.ErrForbidden},
 		{"repo error", nil, nil, errors.New("repo error"), usecase.ErrGetUsersWithFavoritePlaylist},
 	}
 
@@ -130,10 +130,10 @@ func TestGetUsersWithFavoritePlaylist(t *testing.T) {
 			repo := mocks.NewPlaylistFavoriteRepository(t)
 			policy.On("CanView", ctx, claims, playlistID).Return(tt.policyErr)
 			if tt.policyErr == nil {
-				repo.On("GetUsersWithFavoritePlaylist", ctx, playlistID).Return(tt.repoRes, tt.repoErr)
+				repo.On("GetUsersWithFavoritePlaylist", ctx, playlistID, false).Return(tt.repoRes, tt.repoErr)
 			}
 			svc := NewPlaylistFavoriteService(repo, policy)
-			res, err := svc.GetUsersWithFavoritePlaylist(ctx, claims, playlistID)
+			res, err := svc.GetUsersWithFavoritePlaylist(ctx, claims, playlistID, true)
 			assert.Equal(t, tt.repoRes, res)
 			assert.ErrorIs(t, err, tt.wantErr)
 		})
@@ -152,7 +152,7 @@ func TestDeleteFromAllFavorites(t *testing.T) {
 		wantErr   error
 	}{
 		{"success", nil, nil, nil},
-		{"policy error", usecase.ErrForbidden, nil, usecase.ErrForbidden},
+		{"policy error", commonerr.ErrForbidden, nil, commonerr.ErrForbidden},
 		{"repo error", nil, errors.New("repo error"), usecase.ErrDeleteFromAllFavorites},
 	}
 
@@ -162,10 +162,10 @@ func TestDeleteFromAllFavorites(t *testing.T) {
 			repo := mocks.NewPlaylistFavoriteRepository(t)
 			policy.On("CanDelete", ctx, claims, playlistID).Return(tt.policyErr)
 			if tt.policyErr == nil {
-				repo.On("DeleteFromAllFavorites", ctx, playlistID).Return(tt.repoErr)
+				repo.On("DeleteFromAllFavorites", ctx, playlistID, true).Return(tt.repoErr)
 			}
 			svc := NewPlaylistFavoriteService(repo, policy)
-			err := svc.DeleteFromAllFavorites(ctx, claims, playlistID)
+			err := svc.DeleteFromAllFavorites(ctx, claims, playlistID, true)
 			assert.ErrorIs(t, err, tt.wantErr)
 		})
 	}
@@ -184,7 +184,7 @@ func TestAddPlaylistToAllFavorites(t *testing.T) {
 		wantErr   error
 	}{
 		{"success", nil, nil, nil},
-		{"policy error", usecase.ErrForbidden, nil, usecase.ErrForbidden},
+		{"policy error", commonerr.ErrForbidden, nil, commonerr.ErrForbidden},
 		{"repo error", nil, errors.New("repo error"), usecase.ErrAddPlaylistToAllFavorites},
 	}
 

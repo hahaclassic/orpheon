@@ -12,6 +12,7 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/cover"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 )
 
 type mockRepo struct {
@@ -74,7 +75,7 @@ func TestUploadCover(t *testing.T) {
 	}{
 		{"admin success", admin, nil, nil},
 		{"admin repo error", admin, errors.New("db error"), usecase.ErrUploadCover},
-		{"non-admin forbidden", nonAdmin, nil, cover.ErrForbidden},
+		{"non-admin forbidden", nonAdmin, nil, commonerr.ErrForbidden},
 	}
 
 	for _, tt := range tests {
@@ -104,7 +105,7 @@ func TestDeleteCover(t *testing.T) {
 	}{
 		{"admin success", admin, nil, nil},
 		{"admin repo error", admin, errors.New("db error"), usecase.ErrDeleteCover},
-		{"non-admin forbidden", nonAdmin, nil, cover.ErrForbidden},
+		{"non-admin forbidden", nonAdmin, nil, commonerr.ErrForbidden},
 	}
 
 	for _, tt := range tests {

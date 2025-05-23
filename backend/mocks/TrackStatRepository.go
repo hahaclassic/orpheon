@@ -23,17 +23,17 @@ func (_m *TrackStatRepository) EXPECT() *TrackStatRepository_Expecter {
 	return &TrackStatRepository_Expecter{mock: &_m.Mock}
 }
 
-// IncrementTrackStreamCount provides a mock function with given fields: ctx, trackID, userID
-func (_m *TrackStatRepository) IncrementTrackStreamCount(ctx context.Context, trackID uuid.UUID, userID uuid.UUID) error {
-	ret := _m.Called(ctx, trackID, userID)
+// IncrementTrackTotalStreams provides a mock function with given fields: ctx, trackID
+func (_m *TrackStatRepository) IncrementTrackTotalStreams(ctx context.Context, trackID uuid.UUID) error {
+	ret := _m.Called(ctx, trackID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for IncrementTrackStreamCount")
+		panic("no return value specified for IncrementTrackTotalStreams")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
-		r0 = rf(ctx, trackID, userID)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+		r0 = rf(ctx, trackID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -41,32 +41,31 @@ func (_m *TrackStatRepository) IncrementTrackStreamCount(ctx context.Context, tr
 	return r0
 }
 
-// TrackStatRepository_IncrementTrackStreamCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IncrementTrackStreamCount'
-type TrackStatRepository_IncrementTrackStreamCount_Call struct {
+// TrackStatRepository_IncrementTrackTotalStreams_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IncrementTrackTotalStreams'
+type TrackStatRepository_IncrementTrackTotalStreams_Call struct {
 	*mock.Call
 }
 
-// IncrementTrackStreamCount is a helper method to define mock.On call
+// IncrementTrackTotalStreams is a helper method to define mock.On call
 //   - ctx context.Context
 //   - trackID uuid.UUID
-//   - userID uuid.UUID
-func (_e *TrackStatRepository_Expecter) IncrementTrackStreamCount(ctx interface{}, trackID interface{}, userID interface{}) *TrackStatRepository_IncrementTrackStreamCount_Call {
-	return &TrackStatRepository_IncrementTrackStreamCount_Call{Call: _e.mock.On("IncrementTrackStreamCount", ctx, trackID, userID)}
+func (_e *TrackStatRepository_Expecter) IncrementTrackTotalStreams(ctx interface{}, trackID interface{}) *TrackStatRepository_IncrementTrackTotalStreams_Call {
+	return &TrackStatRepository_IncrementTrackTotalStreams_Call{Call: _e.mock.On("IncrementTrackTotalStreams", ctx, trackID)}
 }
 
-func (_c *TrackStatRepository_IncrementTrackStreamCount_Call) Run(run func(ctx context.Context, trackID uuid.UUID, userID uuid.UUID)) *TrackStatRepository_IncrementTrackStreamCount_Call {
+func (_c *TrackStatRepository_IncrementTrackTotalStreams_Call) Run(run func(ctx context.Context, trackID uuid.UUID)) *TrackStatRepository_IncrementTrackTotalStreams_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(uuid.UUID))
+		run(args[0].(context.Context), args[1].(uuid.UUID))
 	})
 	return _c
 }
 
-func (_c *TrackStatRepository_IncrementTrackStreamCount_Call) Return(_a0 error) *TrackStatRepository_IncrementTrackStreamCount_Call {
+func (_c *TrackStatRepository_IncrementTrackTotalStreams_Call) Return(_a0 error) *TrackStatRepository_IncrementTrackTotalStreams_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *TrackStatRepository_IncrementTrackStreamCount_Call) RunAndReturn(run func(context.Context, uuid.UUID, uuid.UUID) error) *TrackStatRepository_IncrementTrackStreamCount_Call {
+func (_c *TrackStatRepository_IncrementTrackTotalStreams_Call) RunAndReturn(run func(context.Context, uuid.UUID) error) *TrackStatRepository_IncrementTrackTotalStreams_Call {
 	_c.Call.Return(run)
 	return _c
 }

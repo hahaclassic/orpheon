@@ -75,7 +75,7 @@ func TestAudioFileService_UploadAudioFile(t *testing.T) {
 		{
 			name:   "valid upload",
 			claims: admin,
-			chunk:  &entity.AudioChunk{Data: []byte("testdata"), Start: 0, End: 8},
+			chunk:  &entity.AudioChunk{TrackID: uuid.New(), Data: []byte("testdata"), Start: 0, End: 8},
 			mock: func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter) {
 				conv.On("ChangeBitrate", mock.Anything, mock.Anything).Return(&entity.AudioChunk{Data: []byte("converted")}, nil)
 				repo.On("UploadAudioFile", mock.Anything, mock.Anything).Return(nil)
@@ -84,21 +84,21 @@ func TestAudioFileService_UploadAudioFile(t *testing.T) {
 		{
 			name:    "not admin",
 			claims:  user,
-			chunk:   &entity.AudioChunk{Start: 0, End: 5},
+			chunk:   &entity.AudioChunk{TrackID: uuid.New(), Start: 0, End: 5},
 			mock:    func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter) {},
 			wantErr: true,
 		},
 		{
 			name:    "invalid chunk params",
 			claims:  admin,
-			chunk:   &entity.AudioChunk{Start: 1, End: 5},
+			chunk:   &entity.AudioChunk{TrackID: uuid.New(), Start: 1, End: 5},
 			mock:    func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter) {},
 			wantErr: true,
 		},
 		{
 			name:   "converter error",
 			claims: admin,
-			chunk:  &entity.AudioChunk{Data: []byte("testdata"), Start: 0, End: 8},
+			chunk:  &entity.AudioChunk{TrackID: uuid.New(), Data: []byte("testdata"), Start: 0, End: 8},
 			mock: func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter) {
 				conv.On("ChangeBitrate", mock.Anything, mock.Anything).Return(nil, errors.New("convert error"))
 			},
@@ -107,7 +107,7 @@ func TestAudioFileService_UploadAudioFile(t *testing.T) {
 		{
 			name:   "repo upload error",
 			claims: admin,
-			chunk:  &entity.AudioChunk{Data: []byte("testdata"), Start: 0, End: 8},
+			chunk:  &entity.AudioChunk{TrackID: uuid.New(), Data: []byte("testdata"), Start: 0, End: 8},
 			mock: func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter) {
 				conv.On("ChangeBitrate", mock.Anything, mock.Anything).Return(&entity.AudioChunk{}, nil)
 				repo.On("UploadAudioFile", mock.Anything, mock.Anything).Return(errors.New("upload error"))

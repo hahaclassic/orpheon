@@ -9,15 +9,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hahaclassic/orpheon/backend/internal/config"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	access_meta "github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/access-meta/with-cache"
 	"github.com/redis/go-redis/v9"
 )
 
-type TTLConfig struct {
-	TTL    time.Duration `env:"REDIS_TTL" env-required:"true"`
-	Jitter time.Duration `env:"RESID_JITTER" env-required:"true"`
-}
+type TTLConfig = config.RedisAccessMetaConfig
+
+// type TTLConfig struct {
+// 	TTL    time.Duration `env:"REDIS_TTL" env-required:"true"`
+// 	Jitter time.Duration `env:"RESID_JITTER" env-required:"true"`
+// }
 
 type AccessCache struct {
 	client *redis.Client

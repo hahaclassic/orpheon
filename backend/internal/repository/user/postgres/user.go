@@ -35,7 +35,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *entity.UserInfo) 
 
 func (r *UserRepository) GetUser(ctx context.Context, userID uuid.UUID) (*entity.UserInfo, error) {
 	query := `
-		SELECT id, name, status, registration_date, birth_date
+		SELECT id, name, registration_date, birth_date, access_level
 		FROM users
 		WHERE id = $1
 	`
@@ -59,14 +59,13 @@ func (r *UserRepository) GetUser(ctx context.Context, userID uuid.UUID) (*entity
 func (r *UserRepository) UpdateUser(ctx context.Context, user *entity.UserInfo) error {
 	query := `
 		UPDATE users
-		SET name = $1, status = $2, birth_date = $3
-		WHERE id = $4
+		SET name = $1, birth_date = $2
+		WHERE id = $3
 	`
 	cmdTag, err := r.pool.Exec(ctx, query,
 		user.Name,
 		user.BirthDate,
 		user.ID,
-		user.AccessLvl,
 	)
 	if err != nil {
 		return err

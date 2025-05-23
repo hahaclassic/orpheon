@@ -36,9 +36,9 @@ func TestListeningStatService_UpdateStat(t *testing.T) {
 					{Range: &entity.Range{Start: 20, End: 30}},
 					{Range: &entity.Range{Start: 30, End: 40}},
 				}
-				segmentRepo.On("GetTrackSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
-				segmentRepo.On("IncrementSegmentStreamCount", mock.Anything, event.TrackID, mock.Anything).Return(nil).Once()
-				trackRepo.On("IncrementTrackStreamCount", mock.Anything, event.TrackID, event.UserID).Return(nil).Once()
+				segmentRepo.On("GetSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
+				segmentRepo.On("IncrementTotalStreams", mock.Anything, event.TrackID, mock.Anything).Return(nil).Once()
+				trackRepo.On("IncrementTrackTotalStreams", mock.Anything, event.TrackID).Return(nil).Once()
 			},
 			expectedError: false,
 		},
@@ -57,8 +57,8 @@ func TestListeningStatService_UpdateStat(t *testing.T) {
 					{Range: &entity.Range{Start: 10, End: 20}},
 					{Range: &entity.Range{Start: 20, End: 30}},
 				}
-				segmentRepo.On("GetTrackSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
-				segmentRepo.On("IncrementSegmentStreamCount", mock.Anything, event.TrackID, mock.Anything).Return(nil).Once()
+				segmentRepo.On("GetSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
+				segmentRepo.On("IncrementTotalStreams", mock.Anything, event.TrackID, mock.Anything).Return(nil).Once()
 			},
 			expectedError: false,
 		},
@@ -69,7 +69,7 @@ func TestListeningStatService_UpdateStat(t *testing.T) {
 				UserID:  uuid.New(),
 			},
 			setupMock: func(trackRepo *mocks.TrackStatRepository, segmentRepo *mocks.SegmentStatRepository, event *entity.ListeningEvent) {
-				segmentRepo.On("GetTrackSegments", mock.Anything, event.TrackID).Return(nil, errors.New("db error")).Once()
+				segmentRepo.On("GetSegments", mock.Anything, event.TrackID).Return(nil, errors.New("db error")).Once()
 			},
 			expectedError: true,
 		},
@@ -89,8 +89,8 @@ func TestListeningStatService_UpdateStat(t *testing.T) {
 					{Range: &entity.Range{Start: 20, End: 30}},
 					{Range: &entity.Range{Start: 30, End: 40}},
 				}
-				segmentRepo.On("GetTrackSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
-				segmentRepo.On("IncrementSegmentStreamCount", mock.Anything, event.TrackID, mock.Anything).Return(errors.New("increment error")).Once()
+				segmentRepo.On("GetSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
+				segmentRepo.On("IncrementTotalStreams", mock.Anything, event.TrackID, mock.Anything).Return(errors.New("increment error")).Once()
 			},
 			expectedError: true,
 		},
@@ -110,9 +110,9 @@ func TestListeningStatService_UpdateStat(t *testing.T) {
 					{Range: &entity.Range{Start: 20, End: 30}},
 					{Range: &entity.Range{Start: 30, End: 40}},
 				}
-				segmentRepo.On("GetTrackSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
-				segmentRepo.On("IncrementSegmentStreamCount", mock.Anything, event.TrackID, mock.Anything).Return(nil).Once()
-				trackRepo.On("IncrementTrackStreamCount", mock.Anything, event.TrackID, event.UserID).Return(errors.New("increment track plays error")).Once()
+				segmentRepo.On("GetSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
+				segmentRepo.On("IncrementTotalStreams", mock.Anything, event.TrackID, mock.Anything).Return(nil).Once()
+				trackRepo.On("IncrementTrackTotalStreams", mock.Anything, event.TrackID).Return(errors.New("increment track plays error")).Once()
 			},
 			expectedError: true,
 		},

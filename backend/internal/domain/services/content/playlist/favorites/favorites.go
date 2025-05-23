@@ -14,9 +14,10 @@ type PlaylistFavoriteRepository interface {
 	GetUserFavorites(ctx context.Context, userID uuid.UUID) ([]*entity.PlaylistMeta, error)
 	DeleteFromUserFavorites(ctx context.Context, userID uuid.UUID, trackID uuid.UUID) error
 
-	GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID) ([]uuid.UUID, error)
-	DeleteFromAllFavorites(ctx context.Context, playlistID uuid.UUID) error
+	GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID, withOwner bool) ([]uuid.UUID, error)
+	DeleteFromAllFavorites(ctx context.Context, playlistID uuid.UUID, withOwner bool) error
 	RestoreAllFavorites(ctx context.Context, userIDs []uuid.UUID, playlistID uuid.UUID) error
+	IsFavorite(ctx context.Context, userID uuid.UUID, playlistID uuid.UUID) (bool, error)
 }
 
 type PlaylistFavoriteService struct {
@@ -56,17 +57,13 @@ func (s *PlaylistFavoriteService) GetUserFavorites(ctx context.Context, claims *
 
 func (s *PlaylistFavoriteService) DeleteFromUserFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
 	defer func() {
-		err = errwrap.WrapIfErr(usecase.ErrDeleteFromAllFavorites, err)
+		err = errwrap.WrapIfErr(usecase.ErrDeleteFromUserFavorites, err)
 	}()
-
-	if err = s.policyService.CanDelete(ctx, claims, playlistID); err != nil {
-		return err
-	}
 
 	return s.favoriteRepo.DeleteFromUserFavorites(ctx, claims.UserID, playlistID)
 }
 
-func (s *PlaylistFavoriteService) GetUsersWithFavoritePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ []uuid.UUID, err error) {
+func (s *PlaylistFavoriteService) GetUsersWithFavoritePlaylist(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, withOwner bool) (_ []uuid.UUID, err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrGetUsersWithFavoritePlaylist, err)
 	}()
@@ -75,10 +72,10 @@ func (s *PlaylistFavoriteService) GetUsersWithFavoritePlaylist(ctx context.Conte
 		return nil, err
 	}
 
-	return s.favoriteRepo.GetUsersWithFavoritePlaylist(ctx, playlistID)
+	return s.favoriteRepo.GetUsersWithFavoritePlaylist(ctx, playlistID, false)
 }
 
-func (s *PlaylistFavoriteService) DeleteFromAllFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (err error) {
+func (s *PlaylistFavoriteService) DeleteFromAllFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID, withOwner bool) (err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrDeleteFromAllFavorites, err)
 	}()
@@ -87,7 +84,7 @@ func (s *PlaylistFavoriteService) DeleteFromAllFavorites(ctx context.Context, cl
 		return err
 	}
 
-	return s.favoriteRepo.DeleteFromAllFavorites(ctx, playlistID)
+	return s.favoriteRepo.DeleteFromAllFavorites(ctx, playlistID, withOwner)
 }
 
 func (s *PlaylistFavoriteService) AddPlaylistToAllFavorites(ctx context.Context, claims *entity.Claims, userIDs []uuid.UUID, playlistID uuid.UUID) (err error) {
@@ -100,4 +97,17 @@ func (s *PlaylistFavoriteService) AddPlaylistToAllFavorites(ctx context.Context,
 	}
 
 	return s.favoriteRepo.RestoreAllFavorites(ctx, userIDs, playlistID)
+}
+
+func (s *PlaylistFavoriteService) IsFavorite(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (_ bool, err error) {
+	defer func() {
+		err = errwrap.WrapIfErr(usecase.ErrIsFavorite, err)
+	}()
+
+	err = s.policyService.CanView(ctx, claims, playlistID)
+	if err != nil {
+		return false, err
+	}
+
+	return s.favoriteRepo.IsFavorite(ctx, claims.UserID, playlistID)
 }

@@ -34,10 +34,10 @@ func TestPlaylistDeleter_DeletePlaylist(t *testing.T) {
 			name: "success",
 			setupMocks: func(meta, track, fav, coverMock *mock.Mock) {
 				meta.On("DeleteMeta", ctx, claims, playlistID).Return(nil)
-				track.On("GetAllTracks", ctx, claims, playlistID).Return(trackIDs, nil)
+				track.On("GetAllTracks", ctx, claims, playlistID).Return([]*entity.TrackMeta{{ID: trackIDs[0]}}, nil)
 				track.On("DeleteAllTracks", ctx, claims, playlistID).Return(nil)
-				fav.On("GetUsersWithFavoritePlaylist", ctx, claims, playlistID).Return(userIDs, nil)
-				fav.On("DeletePlaylistFromAllFavorites", ctx, claims, playlistID).Return(nil)
+				fav.On("GetUsersWithFavoritePlaylist", ctx, claims, playlistID, true).Return(userIDs, nil)
+				fav.On("DeleteFromAllFavorites", ctx, claims, playlistID, true).Return(nil)
 				coverMock.On("GetCover", ctx, claims, playlistID).Return(cover, nil)
 				coverMock.On("DeleteCover", ctx, claims, playlistID).Return(nil)
 			},
@@ -46,15 +46,15 @@ func TestPlaylistDeleter_DeletePlaylist(t *testing.T) {
 		{
 			name: "error on delete favorites, triggers rollback nothing",
 			setupMocks: func(meta, track, fav, coverMock *mock.Mock) {
-				fav.On("GetUsersWithFavoritePlaylist", ctx, claims, playlistID).Return(nil, errors.New("fail"))
+				fav.On("GetUsersWithFavoritePlaylist", ctx, claims, playlistID, true).Return(nil, errors.New("fail"))
 			},
 			wantErr: usecase.ErrDeletePlaylist,
 		},
 		{
 			name: "error on delete cover, triggers rollback of favorites",
 			setupMocks: func(meta, track, fav, coverMock *mock.Mock) {
-				fav.On("GetUsersWithFavoritePlaylist", ctx, claims, playlistID).Return(userIDs, nil)
-				fav.On("DeletePlaylistFromAllFavorites", ctx, claims, playlistID).Return(nil)
+				fav.On("GetUsersWithFavoritePlaylist", ctx, claims, playlistID, true).Return(userIDs, nil)
+				fav.On("DeleteFromAllFavorites", ctx, claims, playlistID, true).Return(nil)
 				fav.On("AddPlaylistToAllFavorites", ctx, claims, userIDs, playlistID).Return(nil)
 
 				coverMock.On("GetCover", ctx, claims, playlistID).Return(nil, errors.New("cover error"))
@@ -64,13 +64,13 @@ func TestPlaylistDeleter_DeletePlaylist(t *testing.T) {
 		{
 			name: "error on delete tracks, triggers rollback of fav and cover",
 			setupMocks: func(meta, track, fav, coverMock *mock.Mock) {
-				fav.On("GetUsersWithFavoritePlaylist", ctx, claims, playlistID).Return(userIDs, nil)
-				fav.On("DeletePlaylistFromAllFavorites", ctx, claims, playlistID).Return(nil)
+				fav.On("GetUsersWithFavoritePlaylist", ctx, claims, playlistID, true).Return(userIDs, nil)
+				fav.On("DeleteFromAllFavorites", ctx, claims, playlistID, true).Return(nil)
 				fav.On("AddPlaylistToAllFavorites", ctx, claims, userIDs, playlistID).Return(nil)
 
 				coverMock.On("GetCover", ctx, claims, playlistID).Return(cover, nil)
 				coverMock.On("DeleteCover", ctx, claims, playlistID).Return(nil)
-				coverMock.On("SaveCover", ctx, claims, cover).Return(nil)
+				coverMock.On("UploadCover", ctx, claims, cover).Return(nil)
 
 				track.On("GetAllTracks", ctx, claims, playlistID).Return(nil, errors.New("track error"))
 			},
@@ -79,15 +79,15 @@ func TestPlaylistDeleter_DeletePlaylist(t *testing.T) {
 		{
 			name: "error on delete meta, triggers rollback of all",
 			setupMocks: func(meta, track, fav, coverMock *mock.Mock) {
-				fav.On("GetUsersWithFavoritePlaylist", ctx, claims, playlistID).Return(userIDs, nil)
-				fav.On("DeletePlaylistFromAllFavorites", ctx, claims, playlistID).Return(nil)
+				fav.On("GetUsersWithFavoritePlaylist", ctx, claims, playlistID, true).Return(userIDs, nil)
+				fav.On("DeleteFromAllFavorites", ctx, claims, playlistID, true).Return(nil)
 				fav.On("AddPlaylistToAllFavorites", ctx, claims, userIDs, playlistID).Return(nil)
 
 				coverMock.On("GetCover", ctx, claims, playlistID).Return(cover, nil)
 				coverMock.On("DeleteCover", ctx, claims, playlistID).Return(nil)
-				coverMock.On("SaveCover", ctx, claims, cover).Return(nil)
+				coverMock.On("UploadCover", ctx, claims, cover).Return(nil)
 
-				track.On("GetAllTracks", ctx, claims, playlistID).Return(trackIDs, nil)
+				track.On("GetAllTracks", ctx, claims, playlistID).Return([]*entity.TrackMeta{{ID: trackIDs[0]}}, nil)
 				track.On("DeleteAllTracks", ctx, claims, playlistID).Return(nil)
 				track.On("RestoreAllTracks", ctx, claims, playlistID, trackIDs).Return(nil)
 
@@ -110,7 +110,7 @@ func TestPlaylistDeleter_DeletePlaylist(t *testing.T) {
 				deleter.WithMetaDeletion(meta),
 				deleter.WithTracksDeletion(tracks),
 				deleter.WithFavoritesDeletion(fav),
-				deleter.WIthCoverDeletion(coverSvc),
+				deleter.WithCoverDeletion(coverSvc),
 			)
 
 			err := svc.DeletePlaylist(ctx, claims, playlistID)

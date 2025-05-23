@@ -74,23 +74,23 @@ func (_c *TrackDeletionService_DeleteAllTracks_Call) RunAndReturn(run func(conte
 }
 
 // GetAllTracks provides a mock function with given fields: ctx, claims, playlistID
-func (_m *TrackDeletionService) GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]uuid.UUID, error) {
+func (_m *TrackDeletionService) GetAllTracks(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) ([]*entity.TrackMeta, error) {
 	ret := _m.Called(ctx, claims, playlistID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllTracks")
 	}
 
-	var r0 []uuid.UUID
+	var r0 []*entity.TrackMeta
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) ([]uuid.UUID, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) ([]*entity.TrackMeta, error)); ok {
 		return rf(ctx, claims, playlistID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) []uuid.UUID); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Claims, uuid.UUID) []*entity.TrackMeta); ok {
 		r0 = rf(ctx, claims, playlistID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]uuid.UUID)
+			r0 = ret.Get(0).([]*entity.TrackMeta)
 		}
 	}
 
@@ -123,12 +123,12 @@ func (_c *TrackDeletionService_GetAllTracks_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *TrackDeletionService_GetAllTracks_Call) Return(_a0 []uuid.UUID, _a1 error) *TrackDeletionService_GetAllTracks_Call {
+func (_c *TrackDeletionService_GetAllTracks_Call) Return(_a0 []*entity.TrackMeta, _a1 error) *TrackDeletionService_GetAllTracks_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *TrackDeletionService_GetAllTracks_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) ([]uuid.UUID, error)) *TrackDeletionService_GetAllTracks_Call {
+func (_c *TrackDeletionService_GetAllTracks_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) ([]*entity.TrackMeta, error)) *TrackDeletionService_GetAllTracks_Call {
 	_c.Call.Return(run)
 	return _c
 }

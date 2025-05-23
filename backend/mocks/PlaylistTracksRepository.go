@@ -24,17 +24,17 @@ func (_m *PlaylistTracksRepository) EXPECT() *PlaylistTracksRepository_Expecter 
 	return &PlaylistTracksRepository_Expecter{mock: &_m.Mock}
 }
 
-// AddTrackToPlaylist provides a mock function with given fields: ctx, playlistID, trackID
-func (_m *PlaylistTracksRepository) AddTrackToPlaylist(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID) error {
-	ret := _m.Called(ctx, playlistID, trackID)
+// AddTrackToPlaylist provides a mock function with given fields: ctx, playlistTrack
+func (_m *PlaylistTracksRepository) AddTrackToPlaylist(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
+	ret := _m.Called(ctx, playlistTrack)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddTrackToPlaylist")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
-		r0 = rf(ctx, playlistID, trackID)
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.PlaylistTrack) error); ok {
+		r0 = rf(ctx, playlistTrack)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -49,15 +49,14 @@ type PlaylistTracksRepository_AddTrackToPlaylist_Call struct {
 
 // AddTrackToPlaylist is a helper method to define mock.On call
 //   - ctx context.Context
-//   - playlistID uuid.UUID
-//   - trackID uuid.UUID
-func (_e *PlaylistTracksRepository_Expecter) AddTrackToPlaylist(ctx interface{}, playlistID interface{}, trackID interface{}) *PlaylistTracksRepository_AddTrackToPlaylist_Call {
-	return &PlaylistTracksRepository_AddTrackToPlaylist_Call{Call: _e.mock.On("AddTrackToPlaylist", ctx, playlistID, trackID)}
+//   - playlistTrack *entity.PlaylistTrack
+func (_e *PlaylistTracksRepository_Expecter) AddTrackToPlaylist(ctx interface{}, playlistTrack interface{}) *PlaylistTracksRepository_AddTrackToPlaylist_Call {
+	return &PlaylistTracksRepository_AddTrackToPlaylist_Call{Call: _e.mock.On("AddTrackToPlaylist", ctx, playlistTrack)}
 }
 
-func (_c *PlaylistTracksRepository_AddTrackToPlaylist_Call) Run(run func(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID)) *PlaylistTracksRepository_AddTrackToPlaylist_Call {
+func (_c *PlaylistTracksRepository_AddTrackToPlaylist_Call) Run(run func(ctx context.Context, playlistTrack *entity.PlaylistTrack)) *PlaylistTracksRepository_AddTrackToPlaylist_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(uuid.UUID))
+		run(args[0].(context.Context), args[1].(*entity.PlaylistTrack))
 	})
 	return _c
 }
@@ -67,7 +66,54 @@ func (_c *PlaylistTracksRepository_AddTrackToPlaylist_Call) Return(_a0 error) *P
 	return _c
 }
 
-func (_c *PlaylistTracksRepository_AddTrackToPlaylist_Call) RunAndReturn(run func(context.Context, uuid.UUID, uuid.UUID) error) *PlaylistTracksRepository_AddTrackToPlaylist_Call {
+func (_c *PlaylistTracksRepository_AddTrackToPlaylist_Call) RunAndReturn(run func(context.Context, *entity.PlaylistTrack) error) *PlaylistTracksRepository_AddTrackToPlaylist_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ChangeTrackPosition provides a mock function with given fields: ctx, playlistTrack
+func (_m *PlaylistTracksRepository) ChangeTrackPosition(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
+	ret := _m.Called(ctx, playlistTrack)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ChangeTrackPosition")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.PlaylistTrack) error); ok {
+		r0 = rf(ctx, playlistTrack)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// PlaylistTracksRepository_ChangeTrackPosition_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ChangeTrackPosition'
+type PlaylistTracksRepository_ChangeTrackPosition_Call struct {
+	*mock.Call
+}
+
+// ChangeTrackPosition is a helper method to define mock.On call
+//   - ctx context.Context
+//   - playlistTrack *entity.PlaylistTrack
+func (_e *PlaylistTracksRepository_Expecter) ChangeTrackPosition(ctx interface{}, playlistTrack interface{}) *PlaylistTracksRepository_ChangeTrackPosition_Call {
+	return &PlaylistTracksRepository_ChangeTrackPosition_Call{Call: _e.mock.On("ChangeTrackPosition", ctx, playlistTrack)}
+}
+
+func (_c *PlaylistTracksRepository_ChangeTrackPosition_Call) Run(run func(ctx context.Context, playlistTrack *entity.PlaylistTrack)) *PlaylistTracksRepository_ChangeTrackPosition_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*entity.PlaylistTrack))
+	})
+	return _c
+}
+
+func (_c *PlaylistTracksRepository_ChangeTrackPosition_Call) Return(_a0 error) *PlaylistTracksRepository_ChangeTrackPosition_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *PlaylistTracksRepository_ChangeTrackPosition_Call) RunAndReturn(run func(context.Context, *entity.PlaylistTrack) error) *PlaylistTracksRepository_ChangeTrackPosition_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -119,17 +165,17 @@ func (_c *PlaylistTracksRepository_DeleteAllTracksFromPlaylist_Call) RunAndRetur
 	return _c
 }
 
-// DeleteTrackFromPlaylist provides a mock function with given fields: ctx, playlistID, trackID
-func (_m *PlaylistTracksRepository) DeleteTrackFromPlaylist(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID) error {
-	ret := _m.Called(ctx, playlistID, trackID)
+// DeleteTrackFromPlaylist provides a mock function with given fields: ctx, playlistTrack
+func (_m *PlaylistTracksRepository) DeleteTrackFromPlaylist(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
+	ret := _m.Called(ctx, playlistTrack)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteTrackFromPlaylist")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
-		r0 = rf(ctx, playlistID, trackID)
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.PlaylistTrack) error); ok {
+		r0 = rf(ctx, playlistTrack)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -144,15 +190,14 @@ type PlaylistTracksRepository_DeleteTrackFromPlaylist_Call struct {
 
 // DeleteTrackFromPlaylist is a helper method to define mock.On call
 //   - ctx context.Context
-//   - playlistID uuid.UUID
-//   - trackID uuid.UUID
-func (_e *PlaylistTracksRepository_Expecter) DeleteTrackFromPlaylist(ctx interface{}, playlistID interface{}, trackID interface{}) *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call {
-	return &PlaylistTracksRepository_DeleteTrackFromPlaylist_Call{Call: _e.mock.On("DeleteTrackFromPlaylist", ctx, playlistID, trackID)}
+//   - playlistTrack *entity.PlaylistTrack
+func (_e *PlaylistTracksRepository_Expecter) DeleteTrackFromPlaylist(ctx interface{}, playlistTrack interface{}) *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call {
+	return &PlaylistTracksRepository_DeleteTrackFromPlaylist_Call{Call: _e.mock.On("DeleteTrackFromPlaylist", ctx, playlistTrack)}
 }
 
-func (_c *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call) Run(run func(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID)) *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call {
+func (_c *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call) Run(run func(ctx context.Context, playlistTrack *entity.PlaylistTrack)) *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(uuid.UUID))
+		run(args[0].(context.Context), args[1].(*entity.PlaylistTrack))
 	})
 	return _c
 }
@@ -162,7 +207,7 @@ func (_c *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call) Return(_a0 erro
 	return _c
 }
 
-func (_c *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call) RunAndReturn(run func(context.Context, uuid.UUID, uuid.UUID) error) *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call {
+func (_c *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call) RunAndReturn(run func(context.Context, *entity.PlaylistTrack) error) *PlaylistTracksRepository_DeleteTrackFromPlaylist_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -7,13 +7,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/user"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
 )
 
 var (
 	ErrGenerateID = errors.New("id generation error")
-	ErrForbidden  = errors.New("permission denied error")
 )
 
 type UserRepository interface {
@@ -33,29 +33,30 @@ func New(repo UserRepository) *UserService {
 	}
 }
 
-func (u *UserService) CreateUser(ctx context.Context, user *entity.UserInfo) (err error) {
+func (u *UserService) CreateUser(ctx context.Context, user *entity.UserInfo) (_ uuid.UUID, err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrCreateUser, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrCreateUser, err)
 	}()
 
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return ErrGenerateID
+		return uuid.Nil, ErrGenerateID
 	}
 
 	user.ID = id
 	user.RegistrationDate = time.Now()
+	user.AccessLvl = entity.User
 
-	return u.repo.CreateUser(ctx, user)
+	if err = u.repo.CreateUser(ctx, user); err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
 }
 
 func (u *UserService) GetUser(ctx context.Context, userID uuid.UUID) (_ *entity.UserInfo, err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrGetUser, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrGetUser, err)
 	}()
 
 	return u.repo.GetUser(ctx, userID)
@@ -63,13 +64,11 @@ func (u *UserService) GetUser(ctx context.Context, userID uuid.UUID) (_ *entity.
 
 func (u *UserService) UpdateUser(ctx context.Context, claims *entity.Claims, user *entity.UserInfo) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrUpdateUser, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrUpdateUser, err)
 	}()
 
-	if claims.UserID != user.ID {
-		return ErrForbidden
+	if claims == nil || claims.UserID != user.ID {
+		return commonerr.ErrForbidden
 	}
 
 	return u.repo.UpdateUser(ctx, user)
@@ -77,13 +76,11 @@ func (u *UserService) UpdateUser(ctx context.Context, claims *entity.Claims, use
 
 func (u *UserService) DeleteUser(ctx context.Context, claims *entity.Claims, userID uuid.UUID) (err error) {
 	defer func() {
-		if err != nil {
-			err = errwrap.Wrap(usecase.ErrDeleteUser, err)
-		}
+		err = errwrap.WrapIfErr(usecase.ErrDeleteUser, err)
 	}()
 
-	if claims.UserID != userID && claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+	if claims == nil || claims.UserID != userID && claims.AccessLvl != entity.Admin {
+		return commonerr.ErrForbidden
 	}
 
 	return u.repo.DeleteUser(ctx, userID)

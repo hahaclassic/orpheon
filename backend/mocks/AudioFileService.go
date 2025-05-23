@@ -24,12 +24,12 @@ func (_m *AudioFileService) EXPECT() *AudioFileService_Expecter {
 	return &AudioFileService_Expecter{mock: &_m.Mock}
 }
 
-// DeleteFile provides a mock function with given fields: ctx, claims, trackID
-func (_m *AudioFileService) DeleteFile(ctx context.Context, claims *entity.Claims, trackID uuid.UUID) error {
+// DeleteAudioFile provides a mock function with given fields: ctx, claims, trackID
+func (_m *AudioFileService) DeleteAudioFile(ctx context.Context, claims *entity.Claims, trackID uuid.UUID) error {
 	ret := _m.Called(ctx, claims, trackID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteFile")
+		panic("no return value specified for DeleteAudioFile")
 	}
 
 	var r0 error
@@ -42,32 +42,32 @@ func (_m *AudioFileService) DeleteFile(ctx context.Context, claims *entity.Claim
 	return r0
 }
 
-// AudioFileService_DeleteFile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteFile'
-type AudioFileService_DeleteFile_Call struct {
+// AudioFileService_DeleteAudioFile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAudioFile'
+type AudioFileService_DeleteAudioFile_Call struct {
 	*mock.Call
 }
 
-// DeleteFile is a helper method to define mock.On call
+// DeleteAudioFile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - claims *entity.Claims
 //   - trackID uuid.UUID
-func (_e *AudioFileService_Expecter) DeleteFile(ctx interface{}, claims interface{}, trackID interface{}) *AudioFileService_DeleteFile_Call {
-	return &AudioFileService_DeleteFile_Call{Call: _e.mock.On("DeleteFile", ctx, claims, trackID)}
+func (_e *AudioFileService_Expecter) DeleteAudioFile(ctx interface{}, claims interface{}, trackID interface{}) *AudioFileService_DeleteAudioFile_Call {
+	return &AudioFileService_DeleteAudioFile_Call{Call: _e.mock.On("DeleteAudioFile", ctx, claims, trackID)}
 }
 
-func (_c *AudioFileService_DeleteFile_Call) Run(run func(ctx context.Context, claims *entity.Claims, trackID uuid.UUID)) *AudioFileService_DeleteFile_Call {
+func (_c *AudioFileService_DeleteAudioFile_Call) Run(run func(ctx context.Context, claims *entity.Claims, trackID uuid.UUID)) *AudioFileService_DeleteAudioFile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(*entity.Claims), args[2].(uuid.UUID))
 	})
 	return _c
 }
 
-func (_c *AudioFileService_DeleteFile_Call) Return(_a0 error) *AudioFileService_DeleteFile_Call {
+func (_c *AudioFileService_DeleteAudioFile_Call) Return(_a0 error) *AudioFileService_DeleteAudioFile_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *AudioFileService_DeleteFile_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) error) *AudioFileService_DeleteFile_Call {
+func (_c *AudioFileService_DeleteAudioFile_Call) RunAndReturn(run func(context.Context, *entity.Claims, uuid.UUID) error) *AudioFileService_DeleteAudioFile_Call {
 	_c.Call.Return(run)
 	return _c
 }

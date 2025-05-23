@@ -2,12 +2,14 @@ package meta_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/meta"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -45,9 +47,10 @@ func TestCreateMeta(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := mocks.NewPlaylistMetaRepository(t)
 			mockPolicy := mocks.NewPlaylistPolicyService(t)
+			mockAccessRepo := mocks.NewPlaylistAccessMetaDeleter(t)
 			tt.setup(mockRepo)
 
-			svc := meta.NewPlaylistMetaService(mockRepo, mockPolicy)
+			svc := meta.NewPlaylistMetaService(mockRepo, mockPolicy, mockAccessRepo)
 			claims := &entity.Claims{UserID: userID}
 			err := svc.CreateMeta(ctx, claims, tt.playlist)
 
@@ -80,10 +83,10 @@ func TestGetMeta(t *testing.T) {
 		{
 			name: "forbidden",
 			setup: func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanView", ctx, mock.Anything, playlistID).Return(playlist.ErrForbidden)
+				policy.On("CanView", ctx, mock.Anything, playlistID).Return(commonerr.ErrForbidden)
 			},
 			want:    nil,
-			wantErr: playlist.ErrForbidden,
+			wantErr: commonerr.ErrForbidden,
 		},
 	}
 
@@ -91,9 +94,10 @@ func TestGetMeta(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := mocks.NewPlaylistMetaRepository(t)
 			mockPolicy := mocks.NewPlaylistPolicyService(t)
+			mockAccessRepo := mocks.NewPlaylistAccessMetaDeleter(t)
 			tt.setup(mockRepo, mockPolicy)
 
-			svc := meta.NewPlaylistMetaService(mockRepo, mockPolicy)
+			svc := meta.NewPlaylistMetaService(mockRepo, mockPolicy, mockAccessRepo)
 			claims := &entity.Claims{UserID: userID}
 			got, err := svc.GetMeta(ctx, claims, playlistID)
 
@@ -138,9 +142,10 @@ func TestGetUserAllPlaylistsMeta(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := mocks.NewPlaylistMetaRepository(t)
 			mockPolicy := mocks.NewPlaylistPolicyService(t)
+			mockAccessRepo := mocks.NewPlaylistAccessMetaDeleter(t)
 			mockRepo.On("GetByUser", ctx, tt.queryUser).Return(playlists, nil)
 
-			svc := meta.NewPlaylistMetaService(mockRepo, mockPolicy)
+			svc := meta.NewPlaylistMetaService(mockRepo, mockPolicy, mockAccessRepo)
 			got, err := svc.GetUserAllPlaylistsMeta(ctx, tt.claims, tt.queryUser)
 
 			assert.NoError(t, err)
@@ -171,9 +176,9 @@ func TestUpdateMeta(t *testing.T) {
 		{
 			name: "forbidden",
 			setup: func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, mock.Anything, playlistID).Return(playlist.ErrForbidden)
+				policy.On("CanEdit", ctx, mock.Anything, playlistID).Return(commonerr.ErrForbidden)
 			},
-			wantErr: playlist.ErrForbidden,
+			wantErr: commonerr.ErrForbidden,
 		},
 	}
 
@@ -181,9 +186,10 @@ func TestUpdateMeta(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := mocks.NewPlaylistMetaRepository(t)
 			mockPolicy := mocks.NewPlaylistPolicyService(t)
+			mockAccessRepo := mocks.NewPlaylistAccessMetaDeleter(t)
 			tt.setup(mockRepo, mockPolicy)
 
-			svc := meta.NewPlaylistMetaService(mockRepo, mockPolicy)
+			svc := meta.NewPlaylistMetaService(mockRepo, mockPolicy, mockAccessRepo)
 			claims := &entity.Claims{UserID: userID}
 			err := svc.UpdateMeta(ctx, claims, metaToUpdate)
 
@@ -199,23 +205,32 @@ func TestDeleteMeta(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		setup   func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService)
+		setup   func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService, accessRepo *mocks.PlaylistAccessMetaDeleter)
 		wantErr error
 	}{
 		{
 			name: "success",
-			setup: func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService) {
+			setup: func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService, accessRepo *mocks.PlaylistAccessMetaDeleter) {
 				policy.On("CanDelete", ctx, mock.Anything, playlistID).Return(nil)
+				accessRepo.On("DeleteAccessMeta", ctx, playlistID).Return(nil)
 				repo.On("Delete", ctx, playlistID).Return(nil)
 			},
 			wantErr: nil,
 		},
 		{
 			name: "forbidden",
-			setup: func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanDelete", ctx, mock.Anything, playlistID).Return(playlist.ErrForbidden)
+			setup: func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService, accessRepo *mocks.PlaylistAccessMetaDeleter) {
+				policy.On("CanDelete", ctx, mock.Anything, playlistID).Return(commonerr.ErrForbidden)
 			},
-			wantErr: playlist.ErrForbidden,
+			wantErr: commonerr.ErrForbidden,
+		},
+		{
+			name: "access repo error",
+			setup: func(repo *mocks.PlaylistMetaRepository, policy *mocks.PlaylistPolicyService, accessRepo *mocks.PlaylistAccessMetaDeleter) {
+				policy.On("CanDelete", ctx, mock.Anything, playlistID).Return(nil)
+				accessRepo.On("DeleteAccessMeta", ctx, playlistID).Return(errors.New("access error"))
+			},
+			wantErr: usecase.ErrDeleteMeta,
 		},
 	}
 
@@ -223,9 +238,10 @@ func TestDeleteMeta(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := mocks.NewPlaylistMetaRepository(t)
 			mockPolicy := mocks.NewPlaylistPolicyService(t)
-			tt.setup(mockRepo, mockPolicy)
+			mockAccessRepo := mocks.NewPlaylistAccessMetaDeleter(t)
+			tt.setup(mockRepo, mockPolicy, mockAccessRepo)
 
-			svc := meta.NewPlaylistMetaService(mockRepo, mockPolicy)
+			svc := meta.NewPlaylistMetaService(mockRepo, mockPolicy, mockAccessRepo)
 			claims := &entity.Claims{UserID: userID}
 			err := svc.DeleteMeta(ctx, claims, playlistID)
 

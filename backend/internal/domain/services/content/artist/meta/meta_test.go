@@ -12,6 +12,7 @@ import (
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/meta"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
@@ -56,19 +57,19 @@ func TestCreateArtistMeta(t *testing.T) {
 		})).Return(nil)
 
 		svc := meta.New(repo)
-		err := svc.CreateArtistMeta(ctx, user, artist)
+		err := svc.CreateArtistMeta(ctx, admin, artist)
 
 		assert.NoError(t, err)
 		assert.NotEqual(t, uuid.Nil, artist.ID)
 	})
 
-	t.Run("forbidden for admin", func(t *testing.T) {
+	t.Run("forbidden for user", func(t *testing.T) {
 		repo := mocks.NewArtistMetaRepository(t)
 
 		svc := meta.New(repo)
-		err := svc.CreateArtistMeta(ctx, admin, artist)
+		err := svc.CreateArtistMeta(ctx, user, artist)
 
-		assert.ErrorIs(t, err, meta.ErrForbidden)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 }
 
@@ -83,18 +84,18 @@ func TestUpdateArtistMeta(t *testing.T) {
 		repo.On("Update", ctx, artist).Return(nil)
 
 		svc := meta.New(repo)
-		err := svc.UpdateArtistMeta(ctx, user, artist)
+		err := svc.UpdateArtistMeta(ctx, admin, artist)
 
 		assert.NoError(t, err)
 	})
 
-	t.Run("forbidden for admin", func(t *testing.T) {
+	t.Run("forbidden for user", func(t *testing.T) {
 		repo := mocks.NewArtistMetaRepository(t)
 
 		svc := meta.New(repo)
-		err := svc.UpdateArtistMeta(ctx, admin, artist)
+		err := svc.UpdateArtistMeta(ctx, user, artist)
 
-		assert.ErrorIs(t, err, meta.ErrForbidden)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
@@ -102,7 +103,7 @@ func TestUpdateArtistMeta(t *testing.T) {
 		repo.On("Update", ctx, artist).Return(errors.New("update failed"))
 
 		svc := meta.New(repo)
-		err := svc.UpdateArtistMeta(ctx, user, artist)
+		err := svc.UpdateArtistMeta(ctx, admin, artist)
 
 		assert.ErrorIs(t, err, usecase.ErrUpdateArtistMeta)
 	})
@@ -130,7 +131,7 @@ func TestDeleteArtistMeta(t *testing.T) {
 		svc := meta.New(repo)
 		err := svc.DeleteArtistMeta(ctx, user, artistID)
 
-		assert.ErrorIs(t, err, meta.ErrForbidden)
+		assert.ErrorIs(t, err, commonerr.ErrForbidden)
 	})
 
 	t.Run("repo error", func(t *testing.T) {

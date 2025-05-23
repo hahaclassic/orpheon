@@ -133,12 +133,12 @@ func (_c *PlaylistCoverDeletionService_GetCover_Call) RunAndReturn(run func(cont
 	return _c
 }
 
-// SaveCover provides a mock function with given fields: ctx, claims, cover
-func (_m *PlaylistCoverDeletionService) SaveCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) error {
+// UploadCover provides a mock function with given fields: ctx, claims, cover
+func (_m *PlaylistCoverDeletionService) UploadCover(ctx context.Context, claims *entity.Claims, cover *entity.Cover) error {
 	ret := _m.Called(ctx, claims, cover)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SaveCover")
+		panic("no return value specified for UploadCover")
 	}
 
 	var r0 error
@@ -151,32 +151,32 @@ func (_m *PlaylistCoverDeletionService) SaveCover(ctx context.Context, claims *e
 	return r0
 }
 
-// PlaylistCoverDeletionService_SaveCover_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveCover'
-type PlaylistCoverDeletionService_SaveCover_Call struct {
+// PlaylistCoverDeletionService_UploadCover_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UploadCover'
+type PlaylistCoverDeletionService_UploadCover_Call struct {
 	*mock.Call
 }
 
-// SaveCover is a helper method to define mock.On call
+// UploadCover is a helper method to define mock.On call
 //   - ctx context.Context
 //   - claims *entity.Claims
 //   - cover *entity.Cover
-func (_e *PlaylistCoverDeletionService_Expecter) SaveCover(ctx interface{}, claims interface{}, cover interface{}) *PlaylistCoverDeletionService_SaveCover_Call {
-	return &PlaylistCoverDeletionService_SaveCover_Call{Call: _e.mock.On("SaveCover", ctx, claims, cover)}
+func (_e *PlaylistCoverDeletionService_Expecter) UploadCover(ctx interface{}, claims interface{}, cover interface{}) *PlaylistCoverDeletionService_UploadCover_Call {
+	return &PlaylistCoverDeletionService_UploadCover_Call{Call: _e.mock.On("UploadCover", ctx, claims, cover)}
 }
 
-func (_c *PlaylistCoverDeletionService_SaveCover_Call) Run(run func(ctx context.Context, claims *entity.Claims, cover *entity.Cover)) *PlaylistCoverDeletionService_SaveCover_Call {
+func (_c *PlaylistCoverDeletionService_UploadCover_Call) Run(run func(ctx context.Context, claims *entity.Claims, cover *entity.Cover)) *PlaylistCoverDeletionService_UploadCover_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(*entity.Claims), args[2].(*entity.Cover))
 	})
 	return _c
 }
 
-func (_c *PlaylistCoverDeletionService_SaveCover_Call) Return(_a0 error) *PlaylistCoverDeletionService_SaveCover_Call {
+func (_c *PlaylistCoverDeletionService_UploadCover_Call) Return(_a0 error) *PlaylistCoverDeletionService_UploadCover_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *PlaylistCoverDeletionService_SaveCover_Call) RunAndReturn(run func(context.Context, *entity.Claims, *entity.Cover) error) *PlaylistCoverDeletionService_SaveCover_Call {
+func (_c *PlaylistCoverDeletionService_UploadCover_Call) RunAndReturn(run func(context.Context, *entity.Claims, *entity.Cover) error) *PlaylistCoverDeletionService_UploadCover_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -1,8 +1,8 @@
 package entity
 
 type Range struct {
-	Start int
-	End   int
+	Start int `json:"start"`
+	End   int `json:"end"`
 }
 
 func (r Range) Len() int {

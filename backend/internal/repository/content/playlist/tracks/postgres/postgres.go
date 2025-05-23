@@ -6,6 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -17,35 +19,38 @@ func NewPlaylistTracksRepository(pool *pgxpool.Pool) *PlaylistTracksRepository {
 	return &PlaylistTracksRepository{pool: pool}
 }
 
-func (r *PlaylistTracksRepository) AddTrackToPlaylist(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID) error {
+func (r *PlaylistTracksRepository) AddTrackToPlaylist(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
 	const query = `
+		WITH max_position AS (
+			SELECT COALESCE(MAX(position), 0) + 1 as next_position
+			FROM playlist_tracks
+			WHERE playlist_id = $1
+		)
 		INSERT INTO playlist_tracks (playlist_id, track_id, position)
-		VALUES ($1, $2, COALESCE(
-			(SELECT MAX(position) FROM playlist_tracks WHERE playlist_id = $1), -1
-		) + 1)
+		SELECT $1, $2, next_position
+		FROM max_position
 		ON CONFLICT (playlist_id, track_id) DO NOTHING
+		RETURNING position
 	`
 
-	_, err := r.pool.Exec(ctx, query, playlistID, trackID)
+	var position int
+	err := r.pool.QueryRow(ctx, query, playlistTrack.PlaylistID, playlistTrack.TrackID).Scan(&position)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return fmt.Errorf("track %s already exists in playlist %s", playlistTrack.TrackID, playlistTrack.PlaylistID)
+		}
 		return fmt.Errorf("add track to playlist: %w", err)
 	}
 
 	return nil
 }
 
-func (r *PlaylistTracksRepository) DeleteTrackFromPlaylist(ctx context.Context, playlistID uuid.UUID, trackID uuid.UUID) error {
-	const query = `
-		DELETE FROM playlist_tracks
-		WHERE playlist_id = $1 AND track_id = $2
-	`
+func (r *PlaylistTracksRepository) DeleteTrackFromPlaylist(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
+	const query = `CALL delete_track_from_playlist($1, $2);`
 
-	ct, err := r.pool.Exec(ctx, query, playlistID, trackID)
+	_, err := r.pool.Exec(ctx, query, playlistTrack.PlaylistID, playlistTrack.TrackID)
 	if err != nil {
 		return fmt.Errorf("delete track from playlist: %w", err)
-	}
-	if ct.RowsAffected() == 0 {
-		return fmt.Errorf("track %s not found in playlist %s", trackID, playlistID)
 	}
 
 	return nil
@@ -62,7 +67,7 @@ func (r *PlaylistTracksRepository) DeleteAllTracksFromPlaylist(ctx context.Conte
 		return fmt.Errorf("delete all tracks from playlist: %w", err)
 	}
 	if ct.RowsAffected() == 0 {
-		return fmt.Errorf("no tracks found in playlist %s", playlistID)
+		return fmt.Errorf("%w: no tracks found in playlist %s", commonerr.ErrNotFound, playlistID)
 	}
 
 	return nil
@@ -105,4 +110,17 @@ func (r *PlaylistTracksRepository) GetAllPlaylistTracks(ctx context.Context, pla
 	}
 
 	return tracks, nil
+}
+
+func (r *PlaylistTracksRepository) ChangeTrackPosition(ctx context.Context, playlistTrack *entity.PlaylistTrack) error {
+	const query = `
+		CALL change_track_position($1, $2, $3);
+	`
+
+	_, err := r.pool.Exec(ctx, query, playlistTrack.PlaylistID, playlistTrack.TrackID, playlistTrack.Position)
+	if err != nil {
+		return fmt.Errorf("change track position: %w", err)
+	}
+
+	return nil
 }

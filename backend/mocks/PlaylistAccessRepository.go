@@ -24,53 +24,6 @@ func (_m *PlaylistAccessRepository) EXPECT() *PlaylistAccessRepository_Expecter 
 	return &PlaylistAccessRepository_Expecter{mock: &_m.Mock}
 }
 
-// DeleteAccessMeta provides a mock function with given fields: ctx, playlistID
-func (_m *PlaylistAccessRepository) DeleteAccessMeta(ctx context.Context, playlistID uuid.UUID) error {
-	ret := _m.Called(ctx, playlistID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteAccessMeta")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
-		r0 = rf(ctx, playlistID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// PlaylistAccessRepository_DeleteAccessMeta_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAccessMeta'
-type PlaylistAccessRepository_DeleteAccessMeta_Call struct {
-	*mock.Call
-}
-
-// DeleteAccessMeta is a helper method to define mock.On call
-//   - ctx context.Context
-//   - playlistID uuid.UUID
-func (_e *PlaylistAccessRepository_Expecter) DeleteAccessMeta(ctx interface{}, playlistID interface{}) *PlaylistAccessRepository_DeleteAccessMeta_Call {
-	return &PlaylistAccessRepository_DeleteAccessMeta_Call{Call: _e.mock.On("DeleteAccessMeta", ctx, playlistID)}
-}
-
-func (_c *PlaylistAccessRepository_DeleteAccessMeta_Call) Run(run func(ctx context.Context, playlistID uuid.UUID)) *PlaylistAccessRepository_DeleteAccessMeta_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *PlaylistAccessRepository_DeleteAccessMeta_Call) Return(_a0 error) *PlaylistAccessRepository_DeleteAccessMeta_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *PlaylistAccessRepository_DeleteAccessMeta_Call) RunAndReturn(run func(context.Context, uuid.UUID) error) *PlaylistAccessRepository_DeleteAccessMeta_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetAccessMeta provides a mock function with given fields: ctx, playlistID
 func (_m *PlaylistAccessRepository) GetAccessMeta(ctx context.Context, playlistID uuid.UUID) (*entity.PlaylistAccessMeta, error) {
 	ret := _m.Called(ctx, playlistID)
@@ -130,17 +83,17 @@ func (_c *PlaylistAccessRepository_GetAccessMeta_Call) RunAndReturn(run func(con
 	return _c
 }
 
-// UpdateAccessMeta provides a mock function with given fields: ctx, playlistID, meta
-func (_m *PlaylistAccessRepository) UpdateAccessMeta(ctx context.Context, playlistID uuid.UUID, meta *entity.PlaylistAccessMeta) error {
-	ret := _m.Called(ctx, playlistID, meta)
+// UpdatePrivacy provides a mock function with given fields: ctx, playlistID, isPrivate
+func (_m *PlaylistAccessRepository) UpdatePrivacy(ctx context.Context, playlistID uuid.UUID, isPrivate bool) error {
+	ret := _m.Called(ctx, playlistID, isPrivate)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateAccessMeta")
+		panic("no return value specified for UpdatePrivacy")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, *entity.PlaylistAccessMeta) error); ok {
-		r0 = rf(ctx, playlistID, meta)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, bool) error); ok {
+		r0 = rf(ctx, playlistID, isPrivate)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -148,32 +101,32 @@ func (_m *PlaylistAccessRepository) UpdateAccessMeta(ctx context.Context, playli
 	return r0
 }
 
-// PlaylistAccessRepository_UpdateAccessMeta_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAccessMeta'
-type PlaylistAccessRepository_UpdateAccessMeta_Call struct {
+// PlaylistAccessRepository_UpdatePrivacy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePrivacy'
+type PlaylistAccessRepository_UpdatePrivacy_Call struct {
 	*mock.Call
 }
 
-// UpdateAccessMeta is a helper method to define mock.On call
+// UpdatePrivacy is a helper method to define mock.On call
 //   - ctx context.Context
 //   - playlistID uuid.UUID
-//   - meta *entity.PlaylistAccessMeta
-func (_e *PlaylistAccessRepository_Expecter) UpdateAccessMeta(ctx interface{}, playlistID interface{}, meta interface{}) *PlaylistAccessRepository_UpdateAccessMeta_Call {
-	return &PlaylistAccessRepository_UpdateAccessMeta_Call{Call: _e.mock.On("UpdateAccessMeta", ctx, playlistID, meta)}
+//   - isPrivate bool
+func (_e *PlaylistAccessRepository_Expecter) UpdatePrivacy(ctx interface{}, playlistID interface{}, isPrivate interface{}) *PlaylistAccessRepository_UpdatePrivacy_Call {
+	return &PlaylistAccessRepository_UpdatePrivacy_Call{Call: _e.mock.On("UpdatePrivacy", ctx, playlistID, isPrivate)}
 }
 
-func (_c *PlaylistAccessRepository_UpdateAccessMeta_Call) Run(run func(ctx context.Context, playlistID uuid.UUID, meta *entity.PlaylistAccessMeta)) *PlaylistAccessRepository_UpdateAccessMeta_Call {
+func (_c *PlaylistAccessRepository_UpdatePrivacy_Call) Run(run func(ctx context.Context, playlistID uuid.UUID, isPrivate bool)) *PlaylistAccessRepository_UpdatePrivacy_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(*entity.PlaylistAccessMeta))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(bool))
 	})
 	return _c
 }
 
-func (_c *PlaylistAccessRepository_UpdateAccessMeta_Call) Return(_a0 error) *PlaylistAccessRepository_UpdateAccessMeta_Call {
+func (_c *PlaylistAccessRepository_UpdatePrivacy_Call) Return(_a0 error) *PlaylistAccessRepository_UpdatePrivacy_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *PlaylistAccessRepository_UpdateAccessMeta_Call) RunAndReturn(run func(context.Context, uuid.UUID, *entity.PlaylistAccessMeta) error) *PlaylistAccessRepository_UpdateAccessMeta_Call {
+func (_c *PlaylistAccessRepository_UpdatePrivacy_Call) RunAndReturn(run func(context.Context, uuid.UUID, bool) error) *PlaylistAccessRepository_UpdatePrivacy_Call {
 	_c.Call.Return(run)
 	return _c
 }

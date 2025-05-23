@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/hahaclassic/orpheon/backend/internal/config"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 )
 
@@ -24,29 +25,26 @@ type jwtClaims struct {
 	jwt.RegisteredClaims
 }
 
-type AccessTokenConfig struct {
-	TTL    time.Duration
-	Jitter time.Duration
-}
+type AccessTokenConfig = config.AccessTokenConfig
+
+// type AccessTokenConfig struct {
+// 	TTL    time.Duration
+// 	Jitter time.Duration
+// }
 
 type JWTTokenService struct {
-	secretKey []byte
-	accessCnf AccessTokenConfig
+	cfg AccessTokenConfig
 }
 
-func New(config AccessTokenConfig, secretKey []byte) *JWTTokenService {
-	key := make([]byte, len(secretKey))
-	copy(key, secretKey)
-
+func New(config AccessTokenConfig) *JWTTokenService {
 	return &JWTTokenService{
-		accessCnf: config,
-		secretKey: key,
+		cfg: config,
 	}
 }
 
 func (s *JWTTokenService) GenerateAccessToken(claims *entity.Claims) (string, error) {
-	jitter := time.Duration(rand.Int63n(int64(s.accessCnf.Jitter)))
-	exp := time.Now().Add(s.accessCnf.TTL + jitter)
+	jitter := time.Duration(rand.Int63n(int64(s.cfg.Jitter)))
+	exp := time.Now().Add(s.cfg.TTL + jitter)
 
 	jwtClaims := jwtClaims{
 		UserID:    claims.UserID,
@@ -58,7 +56,7 @@ func (s *JWTTokenService) GenerateAccessToken(claims *entity.Claims) (string, er
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaims)
 
-	return token.SignedString(s.secretKey)
+	return token.SignedString(s.cfg.SecretKey)
 }
 
 func (s *JWTTokenService) ParseAccessToken(tokenStr string) (*entity.Claims, error) {
@@ -68,7 +66,7 @@ func (s *JWTTokenService) ParseAccessToken(tokenStr string) (*entity.Claims, err
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidSigningMethod
 		}
-		return s.secretKey, nil
+		return s.cfg.SecretKey, nil
 	})
 
 	switch {

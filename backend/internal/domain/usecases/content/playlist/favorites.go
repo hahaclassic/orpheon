@@ -15,14 +15,12 @@ var (
 	ErrDeleteFromUserFavorites      = errors.New("failed to delete playlist from user favorites")
 	ErrDeleteFromAllFavorites       = errors.New("failed to delete favorite playlist for all users")
 	ErrAddPlaylistToAllFavorites    = errors.New("failed to add playlist to all favorites")
+	ErrIsFavorite                   = errors.New("failed to check if playlist is favorite")
 )
 
 type PlaylistFavoriteService interface {
-	AddToFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
-	GetUserFavorites(ctx context.Context, claims *entity.Claims) ([]uuid.UUID, error)
-	DeleteFromFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
-
-	AddPlaylistToAllFavorites(ctx context.Context, claims *entity.Claims, userIDs []uuid.UUID, playlistID uuid.UUID) error
-	GetUsersWithFavoritePlaylist(ctx context.Context, playlistID uuid.UUID) ([]uuid.UUID, error)
-	DeletePlaylistFromAllFavorites(ctx context.Context, claims *entity.Claims, userIDs []uuid.UUID, playlistID uuid.UUID) error
+	GetUserFavorites(ctx context.Context, claims *entity.Claims) ([]*entity.PlaylistMeta, error)
+	AddToUserFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	DeleteFromUserFavorites(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) error
+	IsFavorite(ctx context.Context, claims *entity.Claims, playlistID uuid.UUID) (bool, error)
 }

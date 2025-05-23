@@ -66,9 +66,8 @@ func (r *AuthRepository) GetPasswordByID(ctx context.Context, userID uuid.UUID) 
 
 func (r *AuthRepository) GetClaimsByLogin(ctx context.Context, login string) (*entity.Claims, error) {
 	const query = `
-		SELECT u.user_id, u.access_lvl
-		FROM credentials c
-		JOIN users u ON u.user_id = c.user_id
+		SELECT u.id, u.access_level FROM users u 
+		JOIN credentials c ON u.id = c.user_id
 		WHERE c.login = $1
 	`
 

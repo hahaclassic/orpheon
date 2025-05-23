@@ -7,8 +7,13 @@ import (
 // meta information about segment
 // !!! UPDATED: NO SEGMENT ID ONLY IDX
 type Segment struct {
-	TrackID     uuid.UUID
-	Idx         uint
-	StreamCount uint64
-	Range       *Range
+	TrackID      uuid.UUID `json:"track_id"`
+	Idx          int       `json:"idx"`
+	TotalStreams uint64    `json:"total_streams"`
+	Range        *Range    `json:"range"`
+}
+
+type SegmentsIdxs struct {
+	TrackID uuid.UUID `json:"track_id"`
+	Idxs    []int     `json:"idxs"`
 }

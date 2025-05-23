@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/tracks"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,6 +19,10 @@ func TestPlaylistTrackService_AddTrack(t *testing.T) {
 	playlistID := uuid.New()
 	trackID := uuid.New()
 	claims := &entity.Claims{UserID: userID}
+	playlistTrack := &entity.PlaylistTrack{
+		PlaylistID: playlistID,
+		TrackID:    trackID,
+	}
 
 	cases := []struct {
 		name      string
@@ -29,22 +33,22 @@ func TestPlaylistTrackService_AddTrack(t *testing.T) {
 			name: "success",
 			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
 				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("AddTrackToPlaylist", ctx, playlistID, trackID).Return(nil)
+				repo.On("AddTrackToPlaylist", ctx, playlistTrack).Return(nil)
 			},
 			expectErr: nil,
 		},
 		{
 			name: "forbidden",
 			setup: func(_ *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(playlist.ErrForbidden)
+				policy.On("CanEdit", ctx, claims, playlistID).Return(commonerr.ErrForbidden)
 			},
-			expectErr: playlist.ErrForbidden,
+			expectErr: commonerr.ErrForbidden,
 		},
 		{
 			name: "repo error",
 			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
 				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("AddTrackToPlaylist", ctx, playlistID, trackID).Return(errors.New("db error"))
+				repo.On("AddTrackToPlaylist", ctx, playlistTrack).Return(errors.New("db error"))
 			},
 			expectErr: errors.New("db error"),
 		},
@@ -57,7 +61,7 @@ func TestPlaylistTrackService_AddTrack(t *testing.T) {
 			tc.setup(repo, policy)
 
 			svc := tracks.NewPlaylistTrackService(repo, policy)
-			err := svc.AddTrack(ctx, claims, playlistID, trackID)
+			err := svc.AddTrack(ctx, claims, playlistTrack)
 
 			if tc.expectErr == nil {
 				assert.NoError(t, err)
@@ -93,10 +97,10 @@ func TestPlaylistTrackService_GetAllTracks(t *testing.T) {
 		{
 			name: "forbidden",
 			setup: func(_ *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanView", ctx, claims, playlistID).Return(playlist.ErrForbidden)
+				policy.On("CanView", ctx, claims, playlistID).Return(commonerr.ErrForbidden)
 			},
 			expectResult: nil,
-			expectErr:    playlist.ErrForbidden,
+			expectErr:    commonerr.ErrForbidden,
 		},
 		{
 			name: "repo error",
@@ -134,6 +138,10 @@ func TestPlaylistTrackService_DeleteTrack(t *testing.T) {
 	playlistID := uuid.New()
 	trackID := uuid.New()
 	claims := &entity.Claims{UserID: userID}
+	playlistTrack := &entity.PlaylistTrack{
+		PlaylistID: playlistID,
+		TrackID:    trackID,
+	}
 
 	cases := []struct {
 		name      string
@@ -144,22 +152,22 @@ func TestPlaylistTrackService_DeleteTrack(t *testing.T) {
 			name: "success",
 			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
 				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("DeleteTrackFromPlaylist", ctx, playlistID, trackID).Return(nil)
+				repo.On("DeleteTrackFromPlaylist", ctx, playlistTrack).Return(nil)
 			},
 			expectErr: nil,
 		},
 		{
 			name: "forbidden",
 			setup: func(_ *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(playlist.ErrForbidden)
+				policy.On("CanEdit", ctx, claims, playlistID).Return(commonerr.ErrForbidden)
 			},
-			expectErr: playlist.ErrForbidden,
+			expectErr: commonerr.ErrForbidden,
 		},
 		{
 			name: "repo error",
 			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
 				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("DeleteTrackFromPlaylist", ctx, playlistID, trackID).Return(errors.New("db error"))
+				repo.On("DeleteTrackFromPlaylist", ctx, playlistTrack).Return(errors.New("db error"))
 			},
 			expectErr: errors.New("db error"),
 		},
@@ -172,7 +180,7 @@ func TestPlaylistTrackService_DeleteTrack(t *testing.T) {
 			tc.setup(repo, policy)
 
 			svc := tracks.NewPlaylistTrackService(repo, policy)
-			err := svc.DeleteTrack(ctx, claims, playlistID, trackID)
+			err := svc.DeleteTrack(ctx, claims, playlistTrack)
 
 			if tc.expectErr == nil {
 				assert.NoError(t, err)
@@ -205,9 +213,9 @@ func TestPlaylistTrackService_DeleteAllTracks(t *testing.T) {
 		{
 			name: "forbidden",
 			setup: func(_ *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(playlist.ErrForbidden)
+				policy.On("CanEdit", ctx, claims, playlistID).Return(commonerr.ErrForbidden)
 			},
-			expectErr: playlist.ErrForbidden,
+			expectErr: commonerr.ErrForbidden,
 		},
 		{
 			name: "repo error",

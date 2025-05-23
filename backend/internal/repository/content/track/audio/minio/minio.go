@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
@@ -51,7 +52,7 @@ func (r *AudioFileRepository) GetAudioChunk(ctx context.Context, chunk *entity.A
 	objectName := chunk.TrackID.String()
 
 	opts := minio.GetObjectOptions{}
-	if err := opts.SetRange(int64(chunk.Start), int64(chunk.End-1)); err != nil {
+	if err := opts.SetRange(chunk.Start, chunk.End-1); err != nil {
 		return nil, fmt.Errorf("invalid range: %w", err)
 	}
 
@@ -69,6 +70,10 @@ func (r *AudioFileRepository) GetAudioChunk(ctx context.Context, chunk *entity.A
 	data, err := io.ReadAll(obj)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read chunk: %w", err)
+	}
+
+	if chunk.End == math.MaxInt64 {
+		chunk.End = int64(len(data))
 	}
 
 	return &entity.AudioChunk{

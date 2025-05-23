@@ -8,14 +8,17 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/hahaclassic/orpheon/backend/internal/config"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/redis/go-redis/v9"
 )
 
-type TTLConfig struct {
-	TTL    time.Duration `env:"REDIS_TTL" env-required:"true"`
-	Jitter time.Duration `env:"RESID_JITTER" env-required:"true"`
-}
+// type TTLConfig struct {
+// 	TTL    time.Duration `env:"REDIS_TTL" env-required:"true"`
+// 	Jitter time.Duration `env:"RESID_JITTER" env-required:"true"`
+// }
+
+type TTLConfig = config.RefreshTokenConfig
 
 type RefreshTokenRepository struct {
 	client *redis.Client

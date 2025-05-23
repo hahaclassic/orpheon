@@ -2,16 +2,12 @@ package cover
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
-)
-
-var (
-	ErrForbidden = errors.New("permission denied")
 )
 
 type AlbumCoverRepository interface {
@@ -43,8 +39,8 @@ func (c *AlbumCoverService) UploadCover(ctx context.Context, claims *entity.Clai
 		err = errwrap.WrapIfErr(usecase.ErrUploadCover, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+	if claims == nil || claims.AccessLvl != entity.Admin {
+		return commonerr.ErrForbidden
 	}
 
 	return c.repo.SaveCover(ctx, cover)
@@ -55,8 +51,8 @@ func (c *AlbumCoverService) DeleteCover(ctx context.Context, claims *entity.Clai
 		err = errwrap.WrapIfErr(usecase.ErrDeleteCover, err)
 	}()
 
-	if claims.AccessLvl != entity.Admin {
-		return ErrForbidden
+	if claims == nil || claims.AccessLvl != entity.Admin {
+		return commonerr.ErrForbidden
 	}
 
 	return c.repo.DeleteCover(ctx, albumID)

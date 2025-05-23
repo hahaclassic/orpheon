@@ -18,5 +18,5 @@ type SearchService interface {
 	SearchTracks(ctx context.Context, request *entity.SearchRequest) ([]*entity.TrackMeta, error)
 	SearchAlbums(ctx context.Context, request *entity.SearchRequest) ([]*entity.AlbumMeta, error)
 	SearchArtists(ctx context.Context, request *entity.SearchRequest) ([]*entity.ArtistMeta, error)
-	SearchPlaylists(ctx context.Context, request *entity.SearchRequest) ([]*entity.PlaylistMeta, error)
+	SearchPlaylists(ctx context.Context, claims *entity.Claims, request *entity.SearchRequest) ([]*entity.PlaylistMeta, error)
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/policy"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 	"github.com/stretchr/testify/assert"
 )
@@ -49,7 +49,7 @@ func TestCanView(t *testing.T) {
 				IsPrivate: true,
 			},
 			claims:  &entity.Claims{UserID: userID},
-			wantErr: playlist.ErrForbidden,
+			wantErr: commonerr.ErrForbidden,
 		},
 	}
 
@@ -91,7 +91,7 @@ func TestCanEdit(t *testing.T) {
 			name:    "not owner cannot edit",
 			meta:    &entity.PlaylistAccessMeta{OwnerID: uuid.New()},
 			claims:  &entity.Claims{UserID: userID},
-			wantErr: playlist.ErrForbidden,
+			wantErr: commonerr.ErrForbidden,
 		},
 	}
 
@@ -148,7 +148,7 @@ func TestCanDelete(t *testing.T) {
 				IsPrivate: true,
 			},
 			claims:  &entity.Claims{UserID: uuid.New(), AccessLvl: entity.Admin},
-			wantErr: playlist.ErrForbidden,
+			wantErr: commonerr.ErrForbidden,
 		},
 		{
 			name: "user cannot delete others' playlist",
@@ -157,7 +157,7 @@ func TestCanDelete(t *testing.T) {
 				IsPrivate: false,
 			},
 			claims:  &entity.Claims{UserID: userID},
-			wantErr: playlist.ErrForbidden,
+			wantErr: commonerr.ErrForbidden,
 		},
 	}
 

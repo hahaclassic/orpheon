@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +34,7 @@ func TestGetCover(t *testing.T) {
 		},
 		{
 			name:      "policy denied",
-			policyErr: playlist.ErrForbidden,
+			policyErr: commonerr.ErrForbidden,
 			wantErr:   playlist.ErrGetCover,
 		},
 		{
@@ -87,7 +88,7 @@ func TestUploadCover(t *testing.T) {
 		},
 		{
 			name:      "policy denied",
-			policyErr: playlist.ErrForbidden,
+			policyErr: commonerr.ErrForbidden,
 			wantErr:   playlist.ErrUploadCover,
 		},
 		{
@@ -138,7 +139,7 @@ func TestDeleteCover(t *testing.T) {
 		},
 		{
 			name:      "policy denied",
-			policyErr: playlist.ErrForbidden,
+			policyErr: commonerr.ErrForbidden,
 			wantErr:   playlist.ErrDeleteCover,
 		},
 		{

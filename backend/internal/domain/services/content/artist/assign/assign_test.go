@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/assign"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -41,7 +42,7 @@ func TestArtistAssignService_AssignArtistToTrack(t *testing.T) {
 				// не вызывается
 			},
 			wantErr:   true,
-			targetErr: assign.ErrForbidden,
+			targetErr: commonerr.ErrForbidden,
 		},
 		{
 			name:   "repo error",
@@ -105,7 +106,7 @@ func TestArtistAssignService_AssignArtistToAlbum(t *testing.T) {
 				// не вызывается
 			},
 			wantErr:   true,
-			targetErr: assign.ErrForbidden,
+			targetErr: commonerr.ErrForbidden,
 		},
 		{
 			name:   "repo error",

@@ -119,12 +119,70 @@ func (_c *LicenseRepository_Delete_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
-// Get provides a mock function with given fields: ctx, licenseID
-func (_m *LicenseRepository) Get(ctx context.Context, licenseID uuid.UUID) (*entity.License, error) {
+// GetAll provides a mock function with given fields: ctx
+func (_m *LicenseRepository) GetAll(ctx context.Context) ([]*entity.License, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAll")
+	}
+
+	var r0 []*entity.License
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*entity.License, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []*entity.License); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*entity.License)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// LicenseRepository_GetAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAll'
+type LicenseRepository_GetAll_Call struct {
+	*mock.Call
+}
+
+// GetAll is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *LicenseRepository_Expecter) GetAll(ctx interface{}) *LicenseRepository_GetAll_Call {
+	return &LicenseRepository_GetAll_Call{Call: _e.mock.On("GetAll", ctx)}
+}
+
+func (_c *LicenseRepository_GetAll_Call) Run(run func(ctx context.Context)) *LicenseRepository_GetAll_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *LicenseRepository_GetAll_Call) Return(_a0 []*entity.License, _a1 error) *LicenseRepository_GetAll_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *LicenseRepository_GetAll_Call) RunAndReturn(run func(context.Context) ([]*entity.License, error)) *LicenseRepository_GetAll_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetByID provides a mock function with given fields: ctx, licenseID
+func (_m *LicenseRepository) GetByID(ctx context.Context, licenseID uuid.UUID) (*entity.License, error) {
 	ret := _m.Called(ctx, licenseID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Get")
+		panic("no return value specified for GetByID")
 	}
 
 	var r0 *entity.License
@@ -149,31 +207,31 @@ func (_m *LicenseRepository) Get(ctx context.Context, licenseID uuid.UUID) (*ent
 	return r0, r1
 }
 
-// LicenseRepository_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
-type LicenseRepository_Get_Call struct {
+// LicenseRepository_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
+type LicenseRepository_GetByID_Call struct {
 	*mock.Call
 }
 
-// Get is a helper method to define mock.On call
+// GetByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - licenseID uuid.UUID
-func (_e *LicenseRepository_Expecter) Get(ctx interface{}, licenseID interface{}) *LicenseRepository_Get_Call {
-	return &LicenseRepository_Get_Call{Call: _e.mock.On("Get", ctx, licenseID)}
+func (_e *LicenseRepository_Expecter) GetByID(ctx interface{}, licenseID interface{}) *LicenseRepository_GetByID_Call {
+	return &LicenseRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, licenseID)}
 }
 
-func (_c *LicenseRepository_Get_Call) Run(run func(ctx context.Context, licenseID uuid.UUID)) *LicenseRepository_Get_Call {
+func (_c *LicenseRepository_GetByID_Call) Run(run func(ctx context.Context, licenseID uuid.UUID)) *LicenseRepository_GetByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uuid.UUID))
 	})
 	return _c
 }
 
-func (_c *LicenseRepository_Get_Call) Return(_a0 *entity.License, _a1 error) *LicenseRepository_Get_Call {
+func (_c *LicenseRepository_GetByID_Call) Return(_a0 *entity.License, _a1 error) *LicenseRepository_GetByID_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *LicenseRepository_Get_Call) RunAndReturn(run func(context.Context, uuid.UUID) (*entity.License, error)) *LicenseRepository_Get_Call {
+func (_c *LicenseRepository_GetByID_Call) RunAndReturn(run func(context.Context, uuid.UUID) (*entity.License, error)) *LicenseRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
