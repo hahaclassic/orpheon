@@ -1,20 +1,4 @@
-# linters-settings:
-#   govet:
-#     check-shadowing: true
-
-# linters:
-#   enable:
-#     - errcheck
-#     - gosimple
-#     - staticcheck
-#     - unused
-#     - revive
-#     - gofmt
-#     - goimports
-
-# run:
-#   timeout: 5m
-#   issues-exit-code: 1
+version: 1
 
 issues:
   exclude-dirs:
@@ -22,9 +6,7 @@ issues:
 
 linters:
   enable-all: true
-  disable:
-    - goanalysis_metalinter
-  
+
 linters-settings:
   tagliatelle:
     case:
