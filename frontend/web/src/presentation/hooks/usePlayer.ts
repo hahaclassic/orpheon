@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Track } from '../types';
+import api from '../../core/infrastructure/services/api';
 
 interface PlayerState {
   currentTrack: Track | null;
@@ -141,7 +142,7 @@ export const usePlayer = () => {
   }, []);
 
   const setTrack = useCallback((track: Track) => {
-    const audioUrl = `http://localhost:8080/api/v1/tracks/${track.id}/audio`;
+    const audioUrl = `${api.defaults.baseURL}/tracks/${track.id}/audio`;
     playerRef.current.setSrc(audioUrl);
     updateState({
       currentTrack: track,

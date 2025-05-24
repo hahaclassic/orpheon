@@ -40,9 +40,9 @@ services:
       dockerfile: Dockerfile.backend
     container_name: orpheon-backend
     env_file:
-      - .env
+      - .env.prod.backend
     volumes:
-      - .env:/.env
+      - .env.prod.backend:/.env
     depends_on:
       - postgres
       - minio
@@ -59,7 +59,10 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    env_file:
+      - .env.prod.frontend
     volumes:
+      - .env.prod.frontend:/.env
       - /home/deploy/orpheon/frontend/web/ssl/:/etc/nginx/ssl/
     restart: unless-stopped
     networks:

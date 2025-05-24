@@ -24,7 +24,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import PlaylistPlayIcon from '@mui/icons-material/PlaylistPlay';
 import PersonIcon from '@mui/icons-material/Person';
-import axios from 'axios';
+import api from '../../../core/infrastructure/services/api';
 
 interface UserProfile {
   username: string;
@@ -65,10 +65,7 @@ const Me = () => {
 
   useEffect(() => {
     setProfileLoading(true);
-    axios.get('/me', {
-      baseURL: 'http://localhost:8080/api/v1',
-      withCredentials: true,
-    })
+    api.get('/me')
       .then(res => setProfile(res.data))
       .catch(() => setProfile(null))
       .finally(() => setProfileLoading(false));
@@ -76,10 +73,7 @@ const Me = () => {
 
   useEffect(() => {
     setPlaylistsLoading(true);
-    axios.get('/me/playlists', {
-      baseURL: 'http://localhost:8080/api/v1',
-      withCredentials: true,
-    })
+    api.get('/me/playlists')
       .then(res => setPlaylists(res.data))
       .catch(() => setPlaylists([]))
       .finally(() => setPlaylistsLoading(false));
@@ -87,10 +81,7 @@ const Me = () => {
 
   useEffect(() => {
     setFavoritesLoading(true);
-    axios.get('/me/favorites', {
-      baseURL: 'http://localhost:8080/api/v1',
-      withCredentials: true,
-    })
+    api.get('/me/favorites')
       .then(res => setFavorites(res.data))
       .catch(() => setFavorites([]))
       .finally(() => setFavoritesLoading(false));
@@ -111,16 +102,7 @@ const Me = () => {
     }
     setLoading(true);
     try {
-      await axios.post(
-        'http://localhost:8080/api/v1/auth/password/update',
-        { old: passwordData.old, new: passwordData.new },
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      await api.post('/auth/password/update', { old: passwordData.old, new: passwordData.new });
       setSuccess('Пароль успешно изменён!');
       setPasswordData({ old: '', new: '', confirm: '' });
       setPasswordDialogOpen(false);

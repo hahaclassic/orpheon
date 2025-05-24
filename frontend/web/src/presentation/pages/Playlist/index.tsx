@@ -43,10 +43,8 @@ import { ArrowBack, PlayArrow, Pause, Add as AddIcon, Check, MoreVert } from '@m
 import axios from 'axios';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { usePlayerContext } from '../../contexts/PlayerContext';
-import { apiService } from '../../services/api';
+import api from '../../../core/infrastructure/services/api';
 import TrackList from '../../components/TrackList';
-
-const API_URL = 'http://localhost:8080/api/v1';
 
 interface Track {
   id: string;
@@ -140,12 +138,12 @@ const PlaylistPage = () => {
       
       try {
         setLoading(true);
-        const data = await apiService.get(`/playlists/${id}`);
+        const data = await api.get(`/playlists/${id}`);
         setPlaylist(data);
         
         // Get playlist cover
         try {
-          const coverResponse = await apiService.get(`/playlists/${id}/cover`, {
+          const coverResponse = await api.get(`/playlists/${id}/cover`, {
             responseType: 'blob'
           });
           const coverUrl = URL.createObjectURL(coverResponse);
@@ -158,14 +156,14 @@ const PlaylistPage = () => {
         // Get playlist tracks
         try {
           setTracksLoading(true);
-          const tracksResponse = await apiService.get(`/playlists/${id}/tracks`);
+          const tracksResponse = await api.get(`/playlists/${id}/tracks`);
           
           // Fetch album covers for each track
           const albumCovers = new Map<string, string>();
           for (const track of tracksResponse || []) {
             if (!albumCovers.has(track.album.id)) {
               try {
-                const response = await apiService.get(`/albums/${track.album.id}/cover`, {
+                const response = await api.get(`/albums/${track.album.id}/cover`, {
                   responseType: 'blob'
                 });
                 const url = URL.createObjectURL(response);
@@ -215,7 +213,7 @@ const PlaylistPage = () => {
   useEffect(() => {
     const fetchPlaylists = async () => {
       try {
-        const response = await apiService.get('/me/playlists');
+        const response = await api.get('/me/playlists');
         setPlaylists(response);
       } catch (err) {
         console.error('Error fetching playlists:', err);
@@ -232,11 +230,7 @@ const PlaylistPage = () => {
 
     try {
       setUpdatingPrivacy(true);
-      await apiService({
-        method: 'patch',
-        url: `/playlists/${id}/privacy`,
-        data: { is_private: newPrivacyValue }
-      });
+      await api.patch(`/playlists/${id}/privacy`, { is_private: newPrivacyValue });
       setPlaylist(prev => prev ? { ...prev, is_private: newPrivacyValue } : null);
     } catch (err) {
       setError('Не удалось изменить настройки приватности');
@@ -249,7 +243,7 @@ const PlaylistPage = () => {
     if (!playlist || !window.confirm('Вы уверены, что хотите удалить этот плейлист?')) return;
 
     try {
-      await apiService.delete(`/playlists/${id}`);
+      await api.delete(`/playlists/${id}`);
       navigate('/library');
     } catch (err) {
       setError('Не удалось удалить плейлист');
@@ -261,7 +255,7 @@ const PlaylistPage = () => {
     if (!playlist) return;
 
     try {
-      const response = await apiService.put(`/playlists/${id}`, {
+      const response = await api.put(`/playlists/${id}`, {
         name: editForm.name,
         description: editForm.description,
         is_private: playlist.is_private
@@ -279,14 +273,14 @@ const PlaylistPage = () => {
     try {
       setUpdatingFavorite(true);
       if (playlist.is_favorite) {
-        await apiService.delete(`/me/favorites/${id}`);
+        await api.delete(`/me/favorites/${id}`);
         setPlaylist(prev => prev ? {
           ...prev,
           is_favorite: false,
           rating: prev.rating - 1
         } : null);
       } else {
-        await apiService.post(`/me/favorites/${id}`);
+        await api.post(`/me/favorites/${id}`);
         setPlaylist(prev => prev ? {
           ...prev,
           is_favorite: true,
@@ -313,14 +307,14 @@ const PlaylistPage = () => {
       const formData = new FormData();
       formData.append('cover', file);
 
-      await apiService.post(`/playlists/${id}/cover`, formData, {
+      await api.post(`/playlists/${id}/cover`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
       // Reload the cover
-      const coverResponse = await apiService.get(`/playlists/${id}/cover`, {
+      const coverResponse = await api.get(`/playlists/${id}/cover`, {
         responseType: 'blob'
       });
       const coverUrl = URL.createObjectURL(coverResponse);
@@ -338,7 +332,7 @@ const PlaylistPage = () => {
 
     try {
       setUploadingCover(true);
-      await apiService.delete(`/playlists/${id}/cover`);
+      await api.delete(`/playlists/${id}/cover`);
 
       // Освобождаем URL если он был
       if (playlist?.coverImage?.startsWith('blob:')) {
@@ -371,7 +365,7 @@ const PlaylistPage = () => {
         const isInPlaylist = playlist && isTrackInPlaylist(playlist, selectedTrack.id);
 
         if (isInPlaylist) {
-          await apiService.delete(`/playlists/${playlistId}/tracks/${selectedTrack.id}`);
+          await api.delete(`/playlists/${playlistId}/tracks/${selectedTrack.id}`);
           setPlaylists(playlists.map(p => {
             if (p.id === playlistId) {
               return {
@@ -382,7 +376,7 @@ const PlaylistPage = () => {
             return p;
           }));
         } else {
-          await apiService.post(`/playlists/${playlistId}/tracks`, { track_id: selectedTrack.id });
+          await api.post(`/playlists/${playlistId}/tracks`, { track_id: selectedTrack.id });
           setPlaylists(playlists.map(p => {
             if (p.id === playlistId) {
               return {
