@@ -99,7 +99,7 @@ apiService.interceptors.response.use(
     if (error.response?.status === 401) {
       try {
         const refreshResponse = await axios.post(
-          `${API_URL}/api/v1/auth/refresh`,
+          `${API_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         );
@@ -119,83 +119,83 @@ apiService.interceptors.response.use(
 // API methods
 export const api = {
   register: (login: string, password: string): Promise<User> =>
-    apiService.post('/api/v1/auth/register', { login, password }),
+    apiService.post('/auth/register', { login, password }),
 
   login: (login: string, password: string): Promise<User> =>
-    apiService.post('/api/v1/auth/login', { login, password }),
+    apiService.post('/auth/login', { login, password }),
 
-  logout: (): Promise<void> => apiService.post('/api/v1/auth/logout'),
+  logout: (): Promise<void> => apiService.post('/auth/logout'),
 
   changePassword: (oldPassword: string, newPassword: string): Promise<void> =>
-    apiService.post('/api/v1/auth/change-password', { oldPassword, newPassword }),
+    apiService.post('/auth/change-password', { oldPassword, newPassword }),
 
-  getMe: (): Promise<User> => apiService.get('/api/v1/me'),
+  getMe: (): Promise<User> => apiService.get('/me'),
 
   // User endpoints
-  getUser: (id: string): Promise<User> => apiService.get(`/api/v1/users/${id}`),
-  getUserPlaylists: (id: string): Promise<Playlist[]> => apiService.get(`/api/v1/users/${id}/playlists`),
-  getUserFavorites: (id: string): Promise<Playlist[]> => apiService.get(`/api/v1/users/${id}/favorites`),
+  getUser: (id: string): Promise<User> => apiService.get(`/users/${id}`),
+  getUserPlaylists: (id: string): Promise<Playlist[]> => apiService.get(`/users/${id}/playlists`),
+  getUserFavorites: (id: string): Promise<Playlist[]> => apiService.get(`/users/${id}/favorites`),
 
   // Tracks
-  getTracks: () => apiService.get('/api/v1/tracks'),
-  getTrack: (id: string) => apiService.get(`/api/v1/tracks/${id}`),
+  getTracks: () => apiService.get('/tracks'),
+  getTrack: (id: string) => apiService.get(`/tracks/${id}`),
   createTrack: (data: FormData) =>
-    apiService.post('/api/v1/tracks', data, {
+    apiService.post('/tracks', data, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     }),
   updateTrack: (id: string, data: FormData) =>
-    apiService.put(`/api/v1/tracks/${id}`, data, {
+    apiService.put(`/tracks/${id}`, data, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     }),
-  deleteTrack: (id: string) => apiService.delete(`/api/v1/tracks/${id}`),
+  deleteTrack: (id: string) => apiService.delete(`/tracks/${id}`),
 
   // Albums
-  getAlbums: () => apiService.get('/api/v1/albums'),
-  getAlbum: (id: string) => apiService.get(`/api/v1/albums/${id}`),
+  getAlbums: () => apiService.get('/albums'),
+  getAlbum: (id: string) => apiService.get(`/albums/${id}`),
   createAlbum: (data: FormData) =>
-    apiService.post('/api/v1/albums', data, {
+    apiService.post('/albums', data, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     }),
   updateAlbum: (id: string, data: FormData) =>
-    apiService.put(`/api/v1/albums/${id}`, data, {
+    apiService.put(`/albums/${id}`, data, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     }),
-  deleteAlbum: (id: string) => apiService.delete(`/api/v1/albums/${id}`),
+  deleteAlbum: (id: string) => apiService.delete(`/albums/${id}`),
 
   // Artists
-  getArtists: () => apiService.get<Artist[]>('/api/v1/artists'),
-  getArtist: (id: string) => apiService.get(`/api/v1/artists/${id}`),
-  createArtist: (data: Omit<Artist, 'id'>) => apiService.post<Artist>('/api/v1/artists', data),
-  updateArtist: (id: string, data: Omit<Artist, 'id'>) => apiService.put<Artist>(`/api/v1/artists/${id}`, data),
-  deleteArtist: (id: string) => apiService.delete(`/api/v1/artists/${id}`),
-  getArtistTracks: (id: string) => apiService.get(`/api/v1/artists/${id}/tracks`),
-  getArtistAlbums: (id: string) => apiService.get(`/api/v1/artists/${id}/albums`),
+  getArtists: () => apiService.get<Artist[]>('/artists'),
+  getArtist: (id: string) => apiService.get(`/artists/${id}`),
+  createArtist: (data: Omit<Artist, 'id'>) => apiService.post<Artist>('/artists', data),
+  updateArtist: (id: string, data: Omit<Artist, 'id'>) => apiService.put<Artist>(`/artists/${id}`, data),
+  deleteArtist: (id: string) => apiService.delete(`/artists/${id}`),
+  getArtistTracks: (id: string) => apiService.get(`/artists/${id}/tracks`),
+  getArtistAlbums: (id: string) => apiService.get(`/artists/${id}/albums`),
 
   // Genres
-  getGenres: (): Promise<Genre[]> => apiService.get('/api/v1/genres'),
-  getGenre: (id: string): Promise<Genre> => apiService.get(`/api/v1/genres/${id}`),
+  getGenres: (): Promise<Genre[]> => apiService.get('/genres'),
+  getGenre: (id: string): Promise<Genre> => apiService.get(`/genres/${id}`),
   createGenre: (data: { title: string }): Promise<Genre> =>
-    apiService.post('/api/v1/genres', data),
+    apiService.post('/genres', data),
   updateGenre: (id: string, data: { title: string }): Promise<Genre> =>
-    apiService.put(`/api/v1/genres/${id}`, data),
-  deleteGenre: (id: string): Promise<void> => apiService.delete(`/api/v1/genres/${id}`),
+    apiService.put(`/genres/${id}`, data),
+  deleteGenre: (id: string): Promise<void> => apiService.delete(`/genres/${id}`),
 
   // Licenses
-  getLicenses: (): Promise<License[]> => apiService.get('/api/v1/licenses'),
-  getLicense: (id: string): Promise<License> => apiService.get(`/api/v1/licenses/${id}`),
+  getLicenses: (): Promise<License[]> => apiService.get('/licenses'),
+  getLicense: (id: string): Promise<License> => apiService.get(`/licenses/${id}`),
   createLicense: (data: { title: string; description: string }): Promise<License> =>
-    apiService.post('/api/v1/licenses', data),
+    apiService.post('/licenses', data),
   updateLicense: (id: string, data: { title: string; description: string }): Promise<License> =>
-    apiService.put(`/api/v1/licenses/${id}`, data),
-  deleteLicense: (id: string): Promise<void> => apiService.delete(`/api/v1/licenses/${id}`),
+    apiService.put(`/licenses/${id}`, data),
+  deleteLicense: (id: string): Promise<void> => apiService.delete(`/licenses/${id}`),
 };
 
 export { apiService }; 

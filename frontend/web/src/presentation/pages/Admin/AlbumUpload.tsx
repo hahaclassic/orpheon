@@ -39,7 +39,7 @@ export const AlbumUpload: React.FC = () => {
 
   const onSubmitAlbum = async (data: AlbumMeta) => {
     try {
-      const response = await fetch('/api/v1/albums', {
+      const response = await fetch('/albums', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ export const AlbumUpload: React.FC = () => {
     formData.append('albumId', albumId);
 
     try {
-      const response = await fetch('/api/v1/tracks', {
+      const response = await fetch('/tracks', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

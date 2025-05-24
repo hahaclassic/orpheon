@@ -73,7 +73,7 @@ const ArtistList = () => {
       console.log('Raw API response:', response);
       const artistsData = Array.isArray(response) ? response.map((artist: any) => ({
         ...artist,
-        avatarUrl: artist.avatar_url ? `/api/v1/artists/${artist.id}/avatar` : undefined
+        avatarUrl: artist.avatar_url ? `/artists/${artist.id}/avatar` : undefined
       })) : [];
       console.log('Processed artists data:', artistsData);
       setArtists(artistsData);

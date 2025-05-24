@@ -266,7 +266,7 @@ const ArtistPage = () => {
               <CardMedia
                 component="img"
                 sx={{ width: 200, height: 200, borderRadius: 2 }}
-                image={avatarUrl || `/api/v1/artists/${artist.id}/avatar`}
+                image={avatarUrl || `/artists/${artist.id}/avatar`}
                 alt={artist.name}
                 onError={() => setAvatarError(true)}
               />
