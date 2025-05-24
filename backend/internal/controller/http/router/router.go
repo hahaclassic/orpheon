@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/middleware"
 )
 
 type RoutersRegistrator interface {
@@ -11,7 +10,7 @@ type RoutersRegistrator interface {
 
 func SetupRouter(controllers ...RoutersRegistrator) *gin.Engine {
 	router := gin.Default()
-	router.Use(middleware.CORSMiddleware())
+	// router.Use(middleware.CORSMiddleware())
 
 	v1 := router.Group("/api/v1")
 	for _, controller := range controllers {
