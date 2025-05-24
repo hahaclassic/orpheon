@@ -8,10 +8,6 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-const (
-	configPath = ".env"
-)
-
 type HTTPConfig struct {
 	Host string `env:"HOST"`
 	Port string `env:"PORT"`
@@ -95,7 +91,7 @@ var (
 	once sync.Once
 )
 
-func MustLoad() *Config {
+func MustLoad(configPath string) *Config {
 	once.Do(func() {
 		log.Println("Loading config from environment variables...")
 		cfg = &Config{}

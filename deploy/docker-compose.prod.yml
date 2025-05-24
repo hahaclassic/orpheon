@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: orpheon-postgres
+    env_file:
+      - .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - orpheon-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: orpheon-minio
+    env_file:
+      - .env
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+    networks:
+      - orpheon-network
+
+  redis:
+    image: redis:7
+    container_name: orpheon-redis
+    env_file:
+      - .env
+    volumes:
+      - redis_data:/data
+    command: redis-server --save "" --appendonly no --loglevel warning
+    restart: unless-stopped
+    networks:
+      - orpheon-network
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.backend
+    container_name: orpheon-backend
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - minio
+      - redis
+    restart: unless-stopped
+    networks:
+      - orpheon-network
+
+  frontend:
+    build:
+      context: ../frontend/web
+      dockerfile: Dockerfile.frontend
+    container_name: orpheon-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./ssl:/etc/nginx/ssl
+    restart: unless-stopped
+    networks:
+      - orpheon-network
+
+networks:
+  orpheon-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
+  redis_data:
