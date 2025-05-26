@@ -201,7 +201,6 @@ const WaveformStats: React.FC<{ segments: any[], progress: number, duration: num
               py: 0.2,
               borderRadius: 1,
               fontSize: 12,
-              minWidth: 32,
               textAlign: 'right',
               boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
               whiteSpace: 'nowrap',
@@ -240,6 +239,11 @@ const PlayerBar = () => {
   const [addingTrackId, setAddingTrackId] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  // Для сбора статистики прослушивания
+  const [listenedRanges, setListenedRanges] = useState<[number, number][]>([]);
+  const [currentRange, setCurrentRange] = useState<[number, number] | null>(null);
+  // Для графика сегментов
+  const [segments, setSegments] = useState<any[]>(mockSegments);
 
   // Загрузка обложки альбома при изменении трека
   useEffect(() => {
@@ -261,6 +265,120 @@ const PlayerBar = () => {
 
     loadAlbumCover();
   }, [currentTrack?.album?.id]);
+
+  // Отправка статистики на сервер
+  const sendListeningStats = useCallback(async (lastRange: [number, number]) => {
+    const allRanges = lastRange ? [...listenedRanges, lastRange] : listenedRanges;
+
+    if (currentTrack && allRanges.length > 0) {
+      try {
+        await apiService.post(`/tracks/${currentTrack.id}/stats`, {
+          track_id: currentTrack.id,
+          ranges: allRanges.map(([start, end]) => ({
+            start: Math.floor(start),
+            end: Math.floor(end),
+          })),
+        });
+      } catch (err) {
+        console.error('Failed to send listening stats:', err);
+      }
+    }
+  }, [currentTrack, listenedRanges]);
+
+  // Инициализация range при начале проигрывания
+  useEffect(() => {
+    if (isPlaying && !currentRange) {
+      setCurrentRange([0, 0]);
+    }
+  }, [isPlaying, currentRange]);
+
+  // Обработка перемотки
+  const handleSetProgress = (value: number) => {
+    if (isPlaying && currentRange) {
+      const [start, _] = currentRange;
+      if (progress - start > 2) {
+        setListenedRanges(prev => [...prev, [start, progress]]);
+      }
+      setCurrentRange([value, value]);
+    }
+    setProgress(value);
+  };
+
+  // Обработка завершения трека
+  useEffect(() => {
+    if (progress >= duration - 0.1 && duration > 0 && currentRange) {
+      const [start, _] = currentRange;
+      if (duration - start > 2) {
+        sendListeningStats([start, duration]);
+      }
+      setListenedRanges([]);
+      setCurrentRange(null);
+      playNext();
+    }
+  }, [progress, duration, currentRange, setListenedRanges, sendListeningStats, playNext]);
+
+  // Обработка переключения трека
+  const handlePlayNext = useCallback(() => {
+    if (currentRange) {
+      const [start, _] = currentRange;
+      if (progress - start > 2) {
+        sendListeningStats([start, progress]);
+      }
+    }
+    setListenedRanges([]);
+    setCurrentRange(null);
+    playNext();
+  }, [currentRange, progress, sendListeningStats, playNext]);
+
+  const handlePlayPrevious = useCallback(() => {
+    if (currentRange) {
+      const [start, _] = currentRange;
+      if (progress - start > 2) {
+        sendListeningStats([start, progress]);
+      }
+    }
+    setListenedRanges([]);
+    setCurrentRange(null);
+    playPrevious();
+  }, [currentRange, progress, sendListeningStats, playPrevious]);
+
+  // Очистка при размонтировании
+  useEffect(() => {
+    return () => {
+      if (currentRange) {
+        const [start, _] = currentRange;
+        if (progress - start > 2) {
+          sendListeningStats([start, progress]);
+        }
+      }
+      setListenedRanges([]);
+      setCurrentRange(null);
+    };
+  }, []);
+
+  // Получение сегментов для графика
+  useEffect(() => {
+    const fetchSegments = async () => {
+      if (currentTrack?.id) {
+        try {
+          const data = await apiService.get(`/tracks/${currentTrack.id}/segments`);
+          setSegments(
+            Array.isArray(data) && data.length > 0
+              ? data.map(seg => ({
+                  ...seg,
+                  totalStreams: seg.totalStreams ?? seg.total_streams,
+                }))
+              : mockSegments
+          );
+        } catch (err) {
+          setSegments(mockSegments);
+        }
+      } else {
+        setSegments(mockSegments);
+      }
+    };
+    fetchSegments();
+  }, [currentTrack?.id]);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
@@ -336,13 +454,6 @@ const PlayerBar = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [togglePlay]);
 
-  // Auto-play next track when current track ends
-  useEffect(() => {
-    if (progress >= duration && duration > 0) {
-      playNext();
-    }
-  }, [progress, duration, playNext]);
-
   const handleArtistClick = (e: React.MouseEvent, artistId: string) => {
     e.stopPropagation();
     navigate(`/artists/${artistId}`);
@@ -372,12 +483,12 @@ const PlayerBar = () => {
     >
       <Box sx={{ width: '100%', height: '40%', minHeight: 40, maxHeight: 60, mb: 1 }}>
         <Box sx={{ width: '100%', height: '100%' }}>
-          <WaveformStats segments={mockSegments} progress={progress} duration={duration} setProgress={setProgress} />
+          <WaveformStats segments={currentTrack ? segments : mockSegments} progress={progress} duration={duration} setProgress={handleSetProgress} />
         </Box>
         <Slider
           value={progress}
           max={duration}
-          onChange={(_, value) => setProgress(value as number)}
+          onChange={(_, value) => handleSetProgress(value as number)}
           disabled={!currentTrack}
           sx={{ width: '100%', mt: -2 }}
         />
@@ -453,13 +564,13 @@ const PlayerBar = () => {
         </Box>
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton onClick={playPrevious} disabled={!currentTrack}>
+            <IconButton onClick={handlePlayPrevious} disabled={!currentTrack}>
               <SkipPrevious />
             </IconButton>
             <IconButton onClick={togglePlay} disabled={!currentTrack}>
               {isPlaying ? <Pause /> : <PlayArrow />}
             </IconButton>
-            <IconButton onClick={playNext} disabled={!currentTrack}>
+            <IconButton onClick={handlePlayNext} disabled={!currentTrack}>
               <SkipNext />
             </IconButton>
           </Box>
