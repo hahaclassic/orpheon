@@ -55,7 +55,7 @@ const Library = () => {
           return { ...playlist, coverImage: coverUrl };
         } catch (err) {
           console.error(`Error fetching cover for playlist ${playlist.id}:`, err);
-          return { ...playlist, coverImage: '/default-playlist-cover.jpg' };
+          return playlist; // Возвращаем плейлист без обложки
         }
       })
     );
