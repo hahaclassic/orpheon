@@ -22,7 +22,7 @@ import type { Playlist } from '../../types';
 
 // Моковые данные для графика
 const mockSegments = [
-  { idx: 0, totalStreams: 10, range: [0, 10] },
+  { idx: 0, totalStreams: 50, range: [0, 10] },
   { idx: 1, totalStreams: 30, range: [10, 20] },
   { idx: 2, totalStreams: 50, range: [20, 30] },
   { idx: 3, totalStreams: 40, range: [30, 40] },
@@ -30,7 +30,16 @@ const mockSegments = [
   { idx: 5, totalStreams: 20, range: [50, 60] },
   { idx: 6, totalStreams: 60, range: [60, 70] },
   { idx: 7, totalStreams: 30, range: [70, 80] },
-  { idx: 8, totalStreams: 10, range: [80, 90] },
+  { idx: 8, totalStreams: 50, range: [80, 90] },
+  { idx: 9, totalStreams: 20, range: [90, 100] },
+  { idx: 10, totalStreams: 20, range: [100, 110] },
+  { idx: 11, totalStreams: 30, range: [110, 120] },
+  { idx: 12, totalStreams: 80, range: [120, 130] },
+  { idx: 13, totalStreams: 100, range: [130, 140] },
+  { idx: 14, totalStreams: 60, range: [140, 150] },
+  { idx: 15, totalStreams: 20, range: [150, 160] },
+  { idx: 16, totalStreams: 10, range: [160, 170] },
+  { idx: 17, totalStreams: 10, range: [170, 180] },
 ];
 
 // Компонент для отображения графика статистики
@@ -43,18 +52,26 @@ const WaveformStats: React.FC<{ segments: any[], progress: number, duration: num
     const y = viewBoxHeight - (seg.totalStreams / maxStreams) * (viewBoxHeight - 8);
     return { x, y };
   });
-  function getSmoothPath(pts: {x: number, y: number}[]) {
-    if (pts.length < 2) return '';
-    let d = `M ${pts[0].x},${pts[0].y}`;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i];
-      const p1 = pts[i + 1];
-      const cpx = (p0.x + p1.x) / 2;
-      d += ` Q ${cpx},${p0.y} ${p1.x},${p1.y}`;
+  // Catmull-Rom to Bezier for smooth curve
+  function catmullRom2bezier(points: {x: number, y: number}[]) {
+    if (points.length < 2) return '';
+    let d = `M ${points[0].x},${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i === 0 ? i : i - 1];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
+
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
     }
     return d;
   }
-  const areaPath = getSmoothPath(points) +
+  const areaPath = catmullRom2bezier(points) +
     ` L ${viewBoxWidth},${viewBoxHeight} L 0,${viewBoxHeight} Z`;
   const progressPercent = duration > 0 ? progress / duration : 0;
 
@@ -106,7 +123,7 @@ const WaveformStats: React.FC<{ segments: any[], progress: number, duration: num
         onClick={handleClick}
       >
         <path d={areaPath} fill="#e0baff" fillOpacity={0.5} stroke="none" />
-        <path d={getSmoothPath(points)} fill="none" stroke="#e0baff" strokeWidth={2} opacity={0.5} />
+        <path d={catmullRom2bezier(points)} fill="none" stroke="#e0baff" strokeWidth={2} opacity={0.5} />
         <rect
           x={progressPercent * viewBoxWidth - 1}
           y={0}
