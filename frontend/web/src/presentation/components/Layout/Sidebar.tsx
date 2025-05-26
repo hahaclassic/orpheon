@@ -34,7 +34,7 @@ const SidebarContainer = styled(Box, {
   height: '100%',
   borderRight: '1px solid rgba(0,0,0,0)',
   padding: '24px 0',
-  backgroundColor: 'background.paper',
+  backgroundColor: 'rgba(20, 18, 30, 0.95)',
   display: 'flex',
   flexDirection: 'column',
   transition: theme.transitions.create('width', {

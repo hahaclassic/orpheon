@@ -367,7 +367,7 @@ const PlayerBar = () => {
         border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: '12px',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-        background: 'rgba(20, 18, 30, 0.95)',
+        background: '#181825',
       }}
     >
       <Box sx={{ width: '100%', height: '40%', minHeight: 40, maxHeight: 60, mb: 1 }}>
