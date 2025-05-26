@@ -95,7 +95,7 @@ CREATE TABLE artist_albums (
 CREATE TABLE playlist_tracks (
     playlist_id UUID NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
     track_id UUID NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
-    position INT NOT NULL CHECK (position >= 0), -- Позиция трека в плейлисте начинается с 0
+    position INT NOT NULL CHECK (position >= 1), -- Позиция трека в плейлисте начинается с 0
     PRIMARY KEY (playlist_id, track_id),
     UNIQUE (playlist_id, position)
 );

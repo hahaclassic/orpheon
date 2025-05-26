@@ -22,27 +22,37 @@ BEGIN
         RETURN;
     END IF;
 
-    UPDATE playlist_tracks
-    SET position = 1000000
-    WHERE playlist_id = p_playlist_id AND track_id = p_track_id;
-
-    IF p_new_position < current_position THEN
+    IF current_position > p_new_position THEN
         UPDATE playlist_tracks
-        SET position = position + 1
+        SET position = position + 1000001
         WHERE playlist_id = p_playlist_id
-          AND position >= p_new_position
-          AND position < current_position;
+          AND position >= p_new_position AND position < current_position;
+
+        UPDATE playlist_tracks
+        SET position = p_new_position
+        WHERE playlist_id = p_playlist_id
+            and track_id = p_track_id;
+
+        UPDATE playlist_tracks
+        SET position = position - 1000000
+        WHERE playlist_id = p_playlist_id
+          AND position > 1000000;
     ELSE
         UPDATE playlist_tracks
-        SET position = position - 1
+        SET position = position + 1000000
         WHERE playlist_id = p_playlist_id
-          AND position <= p_new_position
-          AND position > current_position;
-    END IF;
+          AND position > current_position AND position <= p_new_position;
 
-    UPDATE playlist_tracks
-    SET position = p_new_position
-    WHERE playlist_id = p_playlist_id AND track_id = p_track_id;
+        UPDATE playlist_tracks
+        SET position = p_new_position
+        WHERE playlist_id = p_playlist_id
+            and track_id = p_track_id;
+
+        UPDATE playlist_tracks
+        SET position = position - 1000001
+        WHERE playlist_id = p_playlist_id
+          AND position > 1000000;
+    END IF;
 END;
 $$;
 
