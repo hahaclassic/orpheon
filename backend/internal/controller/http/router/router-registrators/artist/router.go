@@ -1,22 +1,47 @@
-package artist_ctrl
+package artist_router
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
+
+type ArtistController interface {
+	GetArtist(c *gin.Context)
+	GetAllArtists(c *gin.Context)
+	CreateArtist(c *gin.Context)
+	UpdateArtist(c *gin.Context)
+	DeleteArtist(c *gin.Context)
+}
+
+type ArtistAvatarController interface {
+	GetAvatar(c *gin.Context)
+	UploadAvatar(c *gin.Context)
+	DeleteAvatar(c *gin.Context)
+}
+
+type ArtistAssignController interface {
+	GetAlbumsByArtist(c *gin.Context)
+	GetTracksByArtist(c *gin.Context)
+	AssignArtistToTrack(c *gin.Context)
+	UnassignArtistFromTrack(c *gin.Context)
+	AssignArtistToAlbum(c *gin.Context)
+	UnassignArtistFromAlbum(c *gin.Context)
+}
 
 type ArtistRouter struct {
-	artistMetaController   *ArtistMetaController
-	artistAvatarController *ArtistAvatarController
-	artistAssignController *ArtistAssignController
+	artistController       ArtistController
+	artistAvatarController ArtistAvatarController
+	artistAssignController ArtistAssignController
 	authMiddleware         gin.HandlerFunc
 }
 
 func NewArtistRouter(
-	artistMetaController *ArtistMetaController,
-	artistAvatarController *ArtistAvatarController,
-	artistAssignController *ArtistAssignController,
+	artistController ArtistController,
+	artistAvatarController ArtistAvatarController,
+	artistAssignController ArtistAssignController,
 	authMiddleware gin.HandlerFunc,
 ) *ArtistRouter {
 	return &ArtistRouter{
-		artistMetaController:   artistMetaController,
+		artistController:       artistController,
 		artistAvatarController: artistAvatarController,
 		artistAssignController: artistAssignController,
 		authMiddleware:         authMiddleware,
@@ -26,17 +51,17 @@ func NewArtistRouter(
 func (r *ArtistRouter) RegisterRoutes(router *gin.RouterGroup) {
 	artistGroup := router.Group("/artists")
 
-	artistGroup.GET("", r.artistMetaController.GetAllArtists)
-	artistGroup.GET("/:id", r.artistMetaController.GetArtist)
+	artistGroup.GET("", r.artistController.GetAllArtists)
+	artistGroup.GET("/:id", r.artistController.GetArtist)
 	artistGroup.GET("/:id/albums", r.artistAssignController.GetAlbumsByArtist)
 	artistGroup.GET("/:id/tracks", r.artistAssignController.GetTracksByArtist)
 
 	artistProtected := artistGroup.Group("")
 	artistProtected.Use(r.authMiddleware)
 	{
-		artistProtected.POST("", r.artistMetaController.CreateArtist)
-		artistProtected.PUT("/:id", r.artistMetaController.UpdateArtist)
-		artistProtected.DELETE("/:id", r.artistMetaController.DeleteArtist)
+		artistProtected.POST("", r.artistController.CreateArtist)
+		artistProtected.PUT("/:id", r.artistController.UpdateArtist)
+		artistProtected.DELETE("/:id", r.artistController.DeleteArtist)
 
 		artistProtected.POST("/:id/tracks/:track_id", r.artistAssignController.AssignArtistToTrack)
 		artistProtected.DELETE("/:id/tracks/:track_id", r.artistAssignController.UnassignArtistFromTrack)

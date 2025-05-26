@@ -1,23 +1,45 @@
-package album_ctrl
+package album_router
 
 import (
 	"github.com/gin-gonic/gin"
-	genre_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/genre"
 )
 
+type AlbumController interface {
+	GetAlbum(c *gin.Context)
+	GetAllAlbums(c *gin.Context)
+	CreateAlbum(c *gin.Context)
+	UpdateAlbum(c *gin.Context)
+	DeleteAlbum(c *gin.Context)
+}
+
+type AlbumCoverController interface {
+	GetCover(c *gin.Context)
+	UploadCover(c *gin.Context)
+	DeleteCover(c *gin.Context)
+}
+
+type AlbumTrackController interface {
+	GetAlbumTracks(c *gin.Context)
+}
+
+type GenreAssignController interface {
+	AssignGenreToAlbum(c *gin.Context)
+	UnassignGenreFromAlbum(c *gin.Context)
+}
+
 type AlbumRouter struct {
-	albumController       *AlbumController
-	albumCoverController  *AlbumCoverController
-	albumTrackController  *AlbumTrackController
-	genreAssignController *genre_ctrl.GenreAssignController
+	albumController       AlbumController
+	albumCoverController  AlbumCoverController
+	albumTrackController  AlbumTrackController
+	genreAssignController GenreAssignController
 	authMiddleware        gin.HandlerFunc
 }
 
 func NewAlbumRouter(
-	albumController *AlbumController,
-	albumCoverController *AlbumCoverController,
-	albumTrackController *AlbumTrackController,
-	genreAssignController *genre_ctrl.GenreAssignController,
+	albumController AlbumController,
+	albumCoverController AlbumCoverController,
+	albumTrackController AlbumTrackController,
+	genreAssignController GenreAssignController,
 	authMiddleware gin.HandlerFunc,
 ) *AlbumRouter {
 	return &AlbumRouter{

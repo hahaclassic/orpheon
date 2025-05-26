@@ -21,10 +21,15 @@ import (
 	playlist_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/playlist"
 	search_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/search"
 	track_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/track"
-	me_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/me"
+	stats_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/stat"
 	user_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/user"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/middleware"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/router"
+	album_router "github.com/hahaclassic/orpheon/backend/internal/controller/http/router/router-registrators/album"
+	artist_router "github.com/hahaclassic/orpheon/backend/internal/controller/http/router/router-registrators/artist"
+	playlist_router "github.com/hahaclassic/orpheon/backend/internal/controller/http/router/router-registrators/playlist"
+	track_router "github.com/hahaclassic/orpheon/backend/internal/controller/http/router/router-registrators/track"
+	user_me_router "github.com/hahaclassic/orpheon/backend/internal/controller/http/router/router-registrators/user-me"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/cookie"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/auth"
 	content_aggregator "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/aggregator"
@@ -49,6 +54,7 @@ import (
 	audio_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/audio"
 	track_meta_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/meta"
 	tracksegment "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/segment"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/services/stat/processor"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/user"
 	"github.com/hahaclassic/orpheon/backend/internal/infrastructure/minio"
 	"github.com/hahaclassic/orpheon/backend/internal/infrastructure/postgres"
@@ -187,7 +193,7 @@ func Run(conf *config.Config) {
 	artistAssignService := assign.NewArtistAssignService(artistAssignRepo)
 	artistAvatarService := avatar.NewArtistCoverService(artistAvatarRepo)
 	searchService := search_service.NewSearchService(searchRepo)
-	//listeningStatService := processor.NewListeningStatService(trackRepo, segmentRepo)
+	listeningStatService := processor.NewListeningStatService(trackRepo, segmentRepo)
 
 	contentAggregator := content_aggregator.NewContentAggregator(
 		trackService,
@@ -234,23 +240,23 @@ func Run(conf *config.Config) {
 	playlistTrackController := playlist_ctrl.NewPlaylistTrackController(playlistTrackService, contentAggregator)
 	playlistFavoriteController := playlist_ctrl.NewPlaylistFavoritesController(playlistFavoriteService, playlistAggregator)
 	trackSegmentController := track_ctrl.NewTrackSegmentController(segmentService)
+	statController := stats_ctrl.NewStatController(listeningStatService)
 
-	albumRouter := album_ctrl.NewAlbumRouter(
+	albumRouter := album_router.NewAlbumRouter(
 		albumMetaController, albumCoverController,
 		albumTrackController, genreAssignController, authMiddlewareRequired)
 
-	artistRouter := artist_ctrl.NewArtistRouter(
+	artistRouter := artist_router.NewArtistRouter(
 		artistMetaController, artistAvatarController,
 		artistAssignController, authMiddlewareRequired)
 
-	playlistRouter := playlist_ctrl.NewPlaylistRouter(
-		playlistMetaController, playlistTrackController,
-		playlistFavoriteController, playlistCoverController, authMiddlewareRequired)
+	playlistRouter := playlist_router.NewPlaylistRouter(
+		playlistMetaController, playlistTrackController, playlistCoverController, authMiddlewareRequired)
 
-	trackRouter := track_ctrl.NewTrackRouter(trackMetaController,
-		trackSegmentController, trackAudioController, artistAssignController, authMiddlewareRequired)
+	trackRouter := track_router.NewTrackRouter(trackMetaController,
+		trackSegmentController, trackAudioController, statController, artistAssignController, authMiddlewareRequired)
 
-	meRouter := me_ctrl.NewMeRouter(playlistMetaController, userController,
+	meRouter := user_me_router.NewMeRouter(playlistMetaController, userController,
 		playlistFavoriteController, authMiddlewareRequired)
 
 	// Initialize router

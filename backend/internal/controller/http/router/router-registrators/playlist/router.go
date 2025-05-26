@@ -1,26 +1,46 @@
-package playlist_ctrl
+package playlist_router
 
 import "github.com/gin-gonic/gin"
 
-type PlaylistRouter struct {
-	playlistMetaController      *PlaylistMetaController
-	playlistTrackController     *PlaylistTrackController
-	playlistFavoritesController *PlaylistFavoritesController
-	playlistCoverController     *PlaylistCoverController
-	authMiddleware              gin.HandlerFunc
+type PlaylistMetaController interface {
+	GetPlaylist(c *gin.Context)
+	CreatePlaylist(c *gin.Context)
+	UpdatePlaylist(c *gin.Context)
+	DeletePlaylist(c *gin.Context)
+	UpdatePlaylistPrivacy(c *gin.Context)
 }
 
-func NewPlaylistRouter(playlistMetaController *PlaylistMetaController,
-	playlistTrackController *PlaylistTrackController,
-	playlistFavoritesController *PlaylistFavoritesController,
-	playlistCoverController *PlaylistCoverController,
-	authMiddleware gin.HandlerFunc) *PlaylistRouter {
+type PlaylistCoverController interface {
+	GetCover(c *gin.Context)
+	UploadCover(c *gin.Context)
+	DeleteCover(c *gin.Context)
+}
+
+type PlaylistTrackController interface {
+	GetPlaylistTracks(c *gin.Context)
+	AddTrackToPlaylist(c *gin.Context)
+	DeleteTrackFromPlaylist(c *gin.Context)
+	ChangeTrackPosition(c *gin.Context)
+}
+
+type PlaylistRouter struct {
+	playlistMetaController  PlaylistMetaController
+	playlistTrackController PlaylistTrackController
+	playlistCoverController PlaylistCoverController
+	authMiddleware          gin.HandlerFunc
+}
+
+func NewPlaylistRouter(
+	playlistMetaController PlaylistMetaController,
+	playlistTrackController PlaylistTrackController,
+	playlistCoverController PlaylistCoverController,
+	authMiddleware gin.HandlerFunc,
+) *PlaylistRouter {
 	return &PlaylistRouter{
-		playlistMetaController:      playlistMetaController,
-		playlistTrackController:     playlistTrackController,
-		playlistFavoritesController: playlistFavoritesController,
-		playlistCoverController:     playlistCoverController,
-		authMiddleware:              authMiddleware,
+		playlistMetaController:  playlistMetaController,
+		playlistTrackController: playlistTrackController,
+		playlistCoverController: playlistCoverController,
+		authMiddleware:          authMiddleware,
 	}
 }
 
