@@ -37,11 +37,11 @@ const ContentArea = styled(Box)({
 });
 
 const PlayerBarContainer = styled(Box)({
-  height: 80,
+  height: 140,
   backgroundColor: 'background.paper',
-  borderTop: '1px solid',
+  borderTop: 'none',
   borderColor: 'divider',
-  margin: '0 12px 12px 0',
+  margin: '4px 0 16px 0',
   borderRadius: '12px',
   boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1)',
 });

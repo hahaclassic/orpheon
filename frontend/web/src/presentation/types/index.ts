@@ -34,7 +34,7 @@ export interface Track {
 }
 
 export interface Playlist {
-  id: number;
+  id: string;
   name: string;
   coverImage?: string;
   trackCount: number;
