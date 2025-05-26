@@ -22,6 +22,7 @@ interface TrackItemProps {
   onAddToPlaylist?: (event: React.MouseEvent<HTMLElement>, track: Track) => void;
   showTrackNumber?: boolean;
   showAlbumLink?: boolean;
+  onTrackClick?: (trackId: string) => void;
 }
 
 const formatDuration = (seconds: number) => {
@@ -207,6 +208,7 @@ const TrackItem = ({
   onAddToPlaylist,
   showTrackNumber = true,
   showAlbumLink = true,
+  onTrackClick,
 }: TrackItemProps) => {
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const { state, controls } = usePlayerContext();
@@ -225,7 +227,9 @@ const TrackItem = ({
   };
 
   const handleTrackClick = () => {
-    if (currentTrack?.id === track.id) {
+    if (onTrackClick) {
+      onTrackClick(track.id);
+    } else if (currentTrack?.id === track.id) {
       togglePlay();
     } else {
       startPlayback(track, tracks);

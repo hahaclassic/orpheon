@@ -95,6 +95,8 @@ const PlaylistPage = () => {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const { state, controls } = usePlayerContext();
+  const { currentTrack, isPlaying } = state;
+  const { startPlayback, togglePlay } = controls;
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
@@ -419,7 +421,35 @@ const PlaylistPage = () => {
   const handleTrackClick = (trackId: string) => {
     const track = playlist?.tracks.find(t => t.id === trackId);
     if (track) {
-      controls.startPlayback(track, playlist?.tracks || []);
+      if (currentTrack?.id === trackId) {
+        togglePlay();
+      } else {
+        // Добавляем необходимые поля для трека
+        const trackWithRequiredFields = {
+          ...track,
+          audioUrl: `${api.defaults.baseURL}/tracks/${track.id}/audio`,
+          album_id: track.album?.id || '',
+          album: track.album || {
+            id: '',
+            title: '',
+            label: '',
+            license_id: '',
+            release_date: ''
+          }
+        };
+        startPlayback(trackWithRequiredFields, playlist?.tracks.map(t => ({
+          ...t,
+          audioUrl: `${api.defaults.baseURL}/tracks/${t.id}/audio`,
+          album_id: t.album?.id || '',
+          album: t.album || {
+            id: '',
+            title: '',
+            label: '',
+            license_id: '',
+            release_date: ''
+          }
+        })) || []);
+      }
     }
   };
 
@@ -649,8 +679,9 @@ const PlaylistPage = () => {
         ) : (
           <TrackList
             tracks={playlist.tracks}
-            showTrackNumber={false}
+            onTrackClick={handleTrackClick}
             onAddToPlaylist={isAuthenticated ? handleAddToPlaylist : undefined}
+            showTrackNumber={true}
             showAlbumLink={true}
             onTrackReorder={isOwner ? handleTrackReorder : undefined}
             isDraggable={isOwner}

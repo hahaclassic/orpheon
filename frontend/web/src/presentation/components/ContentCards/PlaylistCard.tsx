@@ -1,22 +1,80 @@
-import { Card, CardContent, CardMedia, Typography, Box, CircularProgress } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { Box, Card, CardContent, CardMedia, IconButton, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import ImageIcon from '@mui/icons-material/Image';
-import { useCoverImage } from "../../hooks/useCoverImage";
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import { apiService } from '../../../presentation/services/api';
 
-interface PlaylistCardProps {
-  id: number;
+interface Owner {
+  id: string;
   name: string;
-  trackCount: number;
-  isFavorite?: boolean;
 }
 
-const PlaylistCard = ({ id, name, trackCount, isFavorite }: PlaylistCardProps) => {
-  const navigate = useNavigate();
-  const { coverUrl, loading, error } = useCoverImage('playlist', id);
+interface PlaylistCardProps {
+  id: string;
+  name: string;
+  coverUrl?: string;
+  isFavorite?: boolean;
+  rating?: number;
+  owner?: Owner;
+  ownerId?: string;
+  ownerName?: string;
+  onFavoriteChange?: (isFavorite: boolean) => void;
+}
 
-  const handlePlaylistClick = () => {
+const PlaylistCard = ({
+  id,
+  name,
+  coverUrl,
+  isFavorite = false,
+  rating = 0,
+  owner,
+  ownerId,
+  ownerName,
+  onFavoriteChange,
+}: PlaylistCardProps) => {
+  const navigate = useNavigate();
+  const [updatingFavorite, setUpdatingFavorite] = useState(false);
+  const [localIsFavorite, setLocalIsFavorite] = useState(isFavorite);
+  const [localRating, setLocalRating] = useState(rating);
+
+  const handleCardClick = () => {
     navigate(`/playlists/${id}`);
   };
+
+  const handleOwnerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const ownerIdToNavigate = owner?.id || ownerId;
+    if (ownerIdToNavigate) {
+      navigate(`/profile/${ownerIdToNavigate}`);
+    }
+  };
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (updatingFavorite) return;
+
+    try {
+      setUpdatingFavorite(true);
+      if (localIsFavorite) {
+        await apiService.delete(`/me/favorites/${id}`);
+        setLocalIsFavorite(false);
+        setLocalRating(prev => prev - 1);
+      } else {
+        await apiService.post(`/me/favorites/${id}`);
+        setLocalIsFavorite(true);
+        setLocalRating(prev => prev + 1);
+      }
+      onFavoriteChange?.(!localIsFavorite);
+    } catch (err) {
+      console.error("Error updating favorite status:", err);
+    } finally {
+      setUpdatingFavorite(false);
+    }
+  };
+
+  const displayOwnerName = owner?.name || ownerName;
 
   return (
     <Card
@@ -25,31 +83,14 @@ const PlaylistCard = ({ id, name, trackCount, isFavorite }: PlaylistCardProps) =
         display: 'flex',
         flexDirection: 'column',
         cursor: 'pointer',
-        border: isFavorite ? '2px solid #a78bfa' : undefined,
-        boxShadow: isFavorite ? '0 0 0 2px #a78bfa' : undefined,
         '&:hover': {
           transform: 'scale(1.02)',
           transition: 'transform 0.2s ease-in-out',
-          boxShadow: isFavorite ? '0 0 0 4px #a78bfa' : undefined,
         },
       }}
-      onClick={handlePlaylistClick}
+      onClick={handleCardClick}
     >
-      {loading ? (
-        <Box
-          sx={{
-            height: 250,
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: 'primary.dark',
-            borderRadius: 2,
-          }}
-        >
-          <CircularProgress color="inherit" />
-        </Box>
-      ) : coverUrl ? (
+      {coverUrl ? (
         <CardMedia
           component="img"
           sx={{
@@ -80,14 +121,41 @@ const PlaylistCard = ({ id, name, trackCount, isFavorite }: PlaylistCardProps) =
         <Typography gutterBottom variant="h6" component="div" noWrap>
           {name}
         </Typography>
-        {isFavorite && (
-          <Typography variant="body2" color="#a78bfa">
-            ★ Избранное
+        {displayOwnerName && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              cursor: 'pointer',
+              '&:hover': {
+                textDecoration: 'underline',
+              },
+            }}
+            onClick={handleOwnerClick}
+          >
+            {displayOwnerName}
           </Typography>
         )}
-        <Typography variant="body2" color="text.secondary">
-          {trackCount} треков
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+          <IconButton 
+            onClick={handleFavoriteClick}
+            size="small"
+            disabled={updatingFavorite}
+            sx={{ 
+              color: 'white',
+              '&:hover': { color: 'white' }
+            }}
+          >
+            {localIsFavorite ? (
+              <FavoriteIcon sx={{ fontSize: 20 }} />
+            ) : (
+              <FavoriteBorderIcon sx={{ fontSize: 20 }} />
+            )}
+          </IconButton>
+          <Typography variant="body2" color="white">
+            {localRating}
+          </Typography>
+        </Box>
       </CardContent>
     </Card>
   );

@@ -26,6 +26,7 @@ interface TrackListProps {
   showAlbumLink?: boolean;
   onTrackReorder?: (sourceIndex: number, destinationIndex: number) => void;
   isDraggable?: boolean;
+  onTrackClick?: (trackId: string) => void;
 }
 
 interface SortableTrackItemProps {
@@ -35,6 +36,7 @@ interface SortableTrackItemProps {
   onAddToPlaylist?: (event: React.MouseEvent<HTMLElement>, track: Track) => void;
   showTrackNumber?: boolean;
   showAlbumLink?: boolean;
+  onTrackClick?: (trackId: string) => void;
 }
 
 const SortableTrackItem = ({
@@ -44,6 +46,7 @@ const SortableTrackItem = ({
   onAddToPlaylist,
   showTrackNumber,
   showAlbumLink,
+  onTrackClick,
 }: SortableTrackItemProps) => {
   const {
     attributes,
@@ -70,6 +73,7 @@ const SortableTrackItem = ({
         onAddToPlaylist={onAddToPlaylist}
         showTrackNumber={showTrackNumber}
         showAlbumLink={showAlbumLink}
+        onTrackClick={onTrackClick}
       />
     </div>
   );
@@ -82,9 +86,15 @@ const TrackList = ({
   showAlbumLink = true,
   onTrackReorder,
   isDraggable = false,
+  onTrackClick,
 }: TrackListProps) => {
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -115,6 +125,7 @@ const TrackList = ({
               onAddToPlaylist={onAddToPlaylist}
               showTrackNumber={showTrackNumber}
               showAlbumLink={showAlbumLink}
+              onTrackClick={onTrackClick}
             />
             {index < tracks.length - 1 && <Divider />}
           </div>
@@ -143,6 +154,7 @@ const TrackList = ({
                 onAddToPlaylist={onAddToPlaylist}
                 showTrackNumber={showTrackNumber}
                 showAlbumLink={showAlbumLink}
+                onTrackClick={onTrackClick}
               />
               {index < tracks.length - 1 && <Divider />}
             </div>

@@ -29,6 +29,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import axios from 'axios';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
+import PlaylistCard from '../../components/ContentCards/PlaylistCard';
 
 interface User {
   id: string;
@@ -44,6 +45,11 @@ interface Playlist {
   coverImage?: string;
   trackCount: number;
   is_favorite: boolean;
+  rating: number;
+  owner: {
+    id: string;
+    name: string;
+  };
 }
 
 export const Profile = () => {
@@ -311,55 +317,26 @@ export const Profile = () => {
                 ) : (
                   myPlaylists.map((playlist) => (
                     <Grid item xs={12} sm={6} md={3} key={playlist.id}>
-                      <Card
-                        sx={{
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            transform: 'scale(1.02)',
-                            transition: 'transform 0.2s ease-in-out',
-                          },
+                      <PlaylistCard
+                        id={playlist.id}
+                        name={playlist.name}
+                        coverUrl={playlist.coverImage}
+                        isFavorite={playlist.is_favorite}
+                        rating={playlist.rating || 0}
+                        owner={playlist.owner}
+                        onFavoriteChange={(isFavorite) => {
+                          // Обновляем локальное состояние плейлиста
+                          setMyPlaylists(prev => prev.map(p => 
+                            p.id === playlist.id 
+                              ? { 
+                                  ...p, 
+                                  is_favorite: isFavorite,
+                                  rating: isFavorite ? (p.rating || 0) + 1 : (p.rating || 0) - 1
+                                }
+                              : p
+                          ));
                         }}
-                        onClick={() => handlePlaylistClick(playlist.id)}
-                      >
-                        {playlist.coverImage ? (
-                          <CardMedia
-                            component="img"
-                            sx={{
-                              height: 250,
-                              width: '100%',
-                              objectFit: 'cover',
-                              aspectRatio: '1/1'
-                            }}
-                            image={playlist.coverImage}
-                            alt={playlist.name}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              height: 250,
-                              width: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              bgcolor: 'primary.dark',
-                              borderRadius: 2,
-                            }}
-                          >
-                            <ImageIcon sx={{ fontSize: 64, color: 'primary.contrastText', opacity: 0.3 }} />
-                          </Box>
-                        )}
-                        <CardContent>
-                          <Typography gutterBottom variant="h6" component="div" noWrap>
-                            {playlist.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {playlist.trackCount} треков
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                      />
                     </Grid>
                   ))
                 )}
@@ -380,55 +357,26 @@ export const Profile = () => {
                 ) : (
                   favoritePlaylists.map((playlist) => (
                     <Grid item xs={12} sm={6} md={3} key={playlist.id}>
-                      <Card
-                        sx={{
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            transform: 'scale(1.02)',
-                            transition: 'transform 0.2s ease-in-out',
-                          },
+                      <PlaylistCard
+                        id={playlist.id}
+                        name={playlist.name}
+                        coverUrl={playlist.coverImage}
+                        isFavorite={playlist.is_favorite}
+                        rating={playlist.rating || 0}
+                        owner={playlist.owner}
+                        onFavoriteChange={(isFavorite) => {
+                          // Обновляем локальное состояние плейлиста
+                          setFavoritePlaylists(prev => prev.map(p => 
+                            p.id === playlist.id 
+                              ? { 
+                                  ...p, 
+                                  is_favorite: isFavorite,
+                                  rating: isFavorite ? (p.rating || 0) + 1 : (p.rating || 0) - 1
+                                }
+                              : p
+                          ));
                         }}
-                        onClick={() => handlePlaylistClick(playlist.id)}
-                      >
-                        {playlist.coverImage ? (
-                          <CardMedia
-                            component="img"
-                            sx={{
-                              height: 250,
-                              width: '100%',
-                              objectFit: 'cover',
-                              aspectRatio: '1/1'
-                            }}
-                            image={playlist.coverImage}
-                            alt={playlist.name}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              height: 250,
-                              width: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              bgcolor: 'primary.dark',
-                              borderRadius: 2,
-                            }}
-                          >
-                            <ImageIcon sx={{ fontSize: 64, color: 'primary.contrastText', opacity: 0.3 }} />
-                          </Box>
-                        )}
-                        <CardContent>
-                          <Typography gutterBottom variant="h6" component="div" noWrap>
-                            {playlist.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {playlist.trackCount} треков
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                      />
                     </Grid>
                   ))
                 )}

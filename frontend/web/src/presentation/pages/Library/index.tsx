@@ -20,6 +20,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { apiService } from '../../../presentation/services/api';
 import { useApi } from '../../../presentation/hooks/useApi';
 import PlaylistDialog from '../../../presentation/components/PlaylistDialog';
+import PlaylistCard from '../../../presentation/components/ContentCards/PlaylistCard';
 import type { Track } from '../../../presentation/types';
 import { useAuthContext } from '../../../presentation/contexts/AuthContext';
 
@@ -31,6 +32,10 @@ interface Playlist {
   tracks: Track[];
   is_favorite: boolean;
   rating: number;
+  owner: {
+    id: string;
+    name: string;
+  };
 }
 
 const Library = () => {
@@ -151,7 +156,17 @@ const Library = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container 
+      maxWidth={false} 
+      disableGutters 
+      sx={{ 
+        py: 4,
+        px: 4,
+        height: 'calc(100vh - 90px)', // Высота экрана минус высота плеера
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       )}
@@ -174,80 +189,38 @@ const Library = () => {
       ) : (
         <>
           <Grid container spacing={3}>
-            {uniquePlaylists.length === 0 ? (
+            {myPlaylists.length === 0 ? (
               <Grid item xs={12}>
                 <Typography variant="h6" textAlign="center" color="text.secondary">
                   У вас пока нет плейлистов
                 </Typography>
               </Grid>
             ) : (
-              uniquePlaylists.map((playlist) => (
+              myPlaylists.map((playlist) => (
                 <Grid item xs={12} sm={6} md={3} key={playlist.id}>
-                  <Card
-                    sx={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      cursor: 'pointer',
-                      '&:hover': {
-                        transform: 'scale(1.02)',
-                        transition: 'transform 0.2s ease-in-out',
-                      },
+                  <PlaylistCard
+                    id={playlist.id.toString()}
+                    name={playlist.name}
+                    coverUrl={playlist.coverImage}
+                    isFavorite={playlist.is_favorite}
+                    rating={playlist.rating || 0}
+                    owner={playlist.owner}
+                    onFavoriteChange={(isFavorite) => {
+                      if (isFavorite) {
+                        // Если плейлист добавлен в избранное, добавляем его в список избранных
+                        setFavoritePlaylists(prev => [...prev, { ...playlist, is_favorite: true }]);
+                      } else {
+                        // Если плейлист удален из избранного, удаляем его из списка избранных
+                        setFavoritePlaylists(prev => prev.filter(p => p.id !== playlist.id));
+                      }
+                      // Обновляем статус в списке моих плейлистов
+                      setMyPlaylists(prev => prev.map(p => 
+                        p.id === playlist.id 
+                          ? { ...p, is_favorite: isFavorite }
+                          : p
+                      ));
                     }}
-                    onClick={() => handlePlaylistClick(playlist.id)}
-                  >
-                    {playlist.coverImage ? (
-                      <CardMedia
-                        component="img"
-                        sx={{
-                          height: 250,
-                          width: '100%',
-                          objectFit: 'cover',
-                          aspectRatio: '1/1'
-                        }}
-                        image={playlist.coverImage}
-                        alt={playlist.name}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          height: 250,
-                          width: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: 'primary.dark',
-                          borderRadius: 2,
-                        }}
-                      >
-                        <ImageIcon sx={{ fontSize: 64, color: 'primary.contrastText', opacity: 0.3 }} />
-                      </Box>
-                    )}
-                    <CardContent>
-                      <Typography gutterBottom variant="h6" component="div" noWrap>
-                        {playlist.name}
-                      </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <IconButton 
-                          onClick={(e) => handleFavoriteClick(e, playlist.id)}
-                          size="small"
-                          sx={{ 
-                            color: 'white',
-                            '&:hover': { color: 'white' }
-                          }}
-                        >
-                          {playlist.is_favorite ? (
-                            <FavoriteIcon sx={{ fontSize: 20 }} />
-                          ) : (
-                            <FavoriteBorderIcon sx={{ fontSize: 20 }} />
-                          )}
-                        </IconButton>
-                        <Typography variant="body2" color="white">
-                          {playlist.rating || 0}
-                        </Typography>
-                      </Box>
-                    </CardContent>
-                  </Card>
+                  />
                 </Grid>
               ))
             )}
@@ -268,71 +241,26 @@ const Library = () => {
               ) : (
                 favoritePlaylists.map((playlist) => (
                   <Grid item xs={12} sm={6} md={3} key={playlist.id}>
-                    <Card
-                      sx={{
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        cursor: 'pointer',
-                        '&:hover': {
-                          transform: 'scale(1.02)',
-                          transition: 'transform 0.2s ease-in-out',
-                        },
+                    <PlaylistCard
+                      id={playlist.id.toString()}
+                      name={playlist.name}
+                      coverUrl={playlist.coverImage}
+                      isFavorite={playlist.is_favorite}
+                      rating={playlist.rating || 0}
+                      owner={playlist.owner}
+                      onFavoriteChange={(isFavorite) => {
+                        if (!isFavorite) {
+                          // Если плейлист удален из избранного, удаляем его из списка избранных
+                          setFavoritePlaylists(prev => prev.filter(p => p.id !== playlist.id));
+                          // Если это мой плейлист, обновляем его статус в списке моих плейлистов
+                          setMyPlaylists(prev => prev.map(p => 
+                            p.id === playlist.id 
+                              ? { ...p, is_favorite: false }
+                              : p
+                          ));
+                        }
                       }}
-                      onClick={() => handlePlaylistClick(playlist.id)}
-                    >
-                      {playlist.coverImage ? (
-                        <CardMedia
-                          component="img"
-                          sx={{
-                            height: 250,
-                            width: '100%',
-                            objectFit: 'cover',
-                            aspectRatio: '1/1'
-                          }}
-                          image={playlist.coverImage}
-                          alt={playlist.name}
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            height: 250,
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: 'primary.dark',
-                            borderRadius: 2,
-                          }}
-                        >
-                          <ImageIcon sx={{ fontSize: 64, color: 'primary.contrastText', opacity: 0.3 }} />
-                        </Box>
-                      )}
-                      <CardContent>
-                        <Typography gutterBottom variant="h6" component="div" noWrap>
-                          {playlist.name}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <IconButton 
-                            onClick={(e) => handleFavoriteClick(e, playlist.id)}
-                            size="small"
-                            sx={{ 
-                              color: 'white',
-                              '&:hover': { color: 'white' }
-                            }}
-                          >
-                            {playlist.is_favorite ? (
-                              <FavoriteIcon sx={{ fontSize: 20 }} />
-                            ) : (
-                              <FavoriteBorderIcon sx={{ fontSize: 20 }} />
-                            )}
-                          </IconButton>
-                          <Typography variant="body2" color="white">
-                            {playlist.rating || 0}
-                          </Typography>
-                        </Box>
-                      </CardContent>
-                    </Card>
+                    />
                   </Grid>
                 ))
               )}

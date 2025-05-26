@@ -82,8 +82,9 @@ interface Track {
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { controls } = usePlayerContext();
-  const { setTrack } = controls;
+  const { state, controls } = usePlayerContext();
+  const { currentTrack, isPlaying } = state;
+  const { startPlayback, togglePlay } = controls;
   const [searchQuery, setSearchQuery] = useState("");
   const [country, setCountry] = useState(searchParams.get('country') || '');
   const [genre, setGenre] = useState<Genre | null>(null);
@@ -104,7 +105,11 @@ const Search = () => {
   const handleTrackClick = (trackId: string) => {
     const track = results.find((t: TrackType) => t.id === trackId);
     if (track) {
-      controls.startPlayback(track, results);
+      if (currentTrack?.id === trackId) {
+        togglePlay();
+      } else {
+        startPlayback(track, results);
+      }
     }
   };
 
@@ -375,6 +380,7 @@ const Search = () => {
         return (
           <TrackList
             tracks={tracksWithCovers}
+            onTrackClick={handleTrackClick}
             onAddToPlaylist={handleAddToPlaylist}
             showTrackNumber={false}
             showAlbumLink={true}
@@ -402,74 +408,26 @@ const Search = () => {
           <Grid container spacing={3}>
             {results.map((playlist: any) => (
               <Grid item xs={12} sm={6} md={3} key={playlist.id}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      transform: 'scale(1.02)',
-                      transition: 'transform 0.2s ease-in-out',
-                    },
+                <PlaylistCard
+                  id={playlist.id}
+                  name={playlist.name}
+                  coverUrl={playlistCovers.get(playlist.id)}
+                  isFavorite={playlist.is_favorite}
+                  rating={playlist.rating || 0}
+                  owner={playlist.owner}
+                  onFavoriteChange={(isFavorite) => {
+                    // Обновляем локальное состояние плейлиста
+                    setResults(prev => prev.map(p => 
+                      p.id === playlist.id 
+                        ? { 
+                            ...p, 
+                            is_favorite: isFavorite,
+                            rating: isFavorite ? (p.rating || 0) + 1 : (p.rating || 0) - 1
+                          }
+                        : p
+                    ));
                   }}
-                  onClick={() => navigate(`/playlists/${playlist.id}`)}
-                >
-                  {playlistCovers.get(playlist.id) ? (
-                    <CardMedia
-                      component="img"
-                      sx={{
-                        height: 250,
-                        width: '100%',
-                        objectFit: 'cover',
-                        aspectRatio: '1/1'
-                      }}
-                      image={playlistCovers.get(playlist.id)}
-                      alt={playlist.name}
-                    />
-                  ) : (
-                    <Box
-                      sx={{
-                        height: 250,
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: 'primary.dark',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <ImageIcon sx={{ fontSize: 64, color: 'primary.contrastText', opacity: 0.3 }} />
-                    </Box>
-                  )}
-                  <CardContent>
-                    <Typography gutterBottom variant="h6" component="div" noWrap>
-                      {playlist.name}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <IconButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // TODO: Implement favorite functionality
-                        }}
-                        size="small"
-                        sx={{ 
-                          color: 'white',
-                          '&:hover': { color: 'white' }
-                        }}
-                      >
-                        {playlist.is_favorite ? (
-                          <FavoriteIcon sx={{ fontSize: 20 }} />
-                        ) : (
-                          <FavoriteBorderIcon sx={{ fontSize: 20 }} />
-                        )}
-                      </IconButton>
-                      <Typography variant="body2" color="white">
-                        {playlist.rating || 0}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
+                />
               </Grid>
             ))}
           </Grid>
