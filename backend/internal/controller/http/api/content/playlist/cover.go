@@ -9,9 +9,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 )
 
 type PlaylistCoverController struct {
@@ -24,24 +25,8 @@ func NewPlaylistCoverController(service playlist.PlaylistCoverService) *Playlist
 	}
 }
 
-func (c *PlaylistCoverController) RegisterRoutes(router *gin.RouterGroup) {
-	// playlists := router.Group("/playlists")
-	// {
-	// 	// Public routes
-	// 	playlists.GET("/:id/cover", c.GetCover)
-
-	// 	// Protected routes
-	// 	protected := playlists.Group("")
-	// 	protected.Use(middleware.Auth())
-	// 	{
-	// 		protected.POST("/:id/cover", c.UploadCover)
-	// 		protected.DELETE("/:id/cover", c.DeleteCover)
-	// 	}
-	// }
-}
-
 func (c *PlaylistCoverController) UploadCover(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -62,11 +47,7 @@ func (c *PlaylistCoverController) UploadCover(ctx *gin.Context) {
 }
 
 func (c *PlaylistCoverController) GetCover(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
-	if claims == nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
+	claims := ctxclaims.GetClaims(ctx)
 
 	playlistID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
@@ -76,7 +57,11 @@ func (c *PlaylistCoverController) GetCover(ctx *gin.Context) {
 
 	cover, err := c.service.GetCover(ctx.Request.Context(), claims, playlistID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to get cover"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 
@@ -88,7 +73,7 @@ func (c *PlaylistCoverController) GetCover(ctx *gin.Context) {
 }
 
 func (c *PlaylistCoverController) DeleteCover(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

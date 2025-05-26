@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
@@ -72,7 +72,7 @@ func (c *ArtistMetaController) GetAllArtists(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/artists [post]
 func (c *ArtistMetaController) CreateArtist(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -112,7 +112,7 @@ func (c *ArtistMetaController) CreateArtist(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/artists/{id} [put]
 func (c *ArtistMetaController) UpdateArtist(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -157,7 +157,7 @@ func (c *ArtistMetaController) UpdateArtist(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/artists/{id} [delete]
 func (c *ArtistMetaController) DeleteArtist(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

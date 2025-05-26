@@ -12,7 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
 )
@@ -90,7 +90,7 @@ func (c *TrackAudioController) parseRangeHeader(ctx *gin.Context) (int64, int64,
 }
 
 func (c *TrackAudioController) UploadAudioFile(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -111,7 +111,7 @@ func (c *TrackAudioController) UploadAudioFile(ctx *gin.Context) {
 }
 
 func (c *TrackAudioController) DeleteAudioFile(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

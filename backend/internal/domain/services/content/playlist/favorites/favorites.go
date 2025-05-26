@@ -2,11 +2,16 @@ package favorites
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
 	"github.com/hahaclassic/orpheon/backend/pkg/errwrap"
+)
+
+var (
+	ErrNoClaims = errors.New("no claims")
 )
 
 type PlaylistFavoriteRepository interface {
@@ -52,6 +57,10 @@ func (s *PlaylistFavoriteService) GetUserFavorites(ctx context.Context, claims *
 		err = errwrap.WrapIfErr(usecase.ErrGetUserFavorites, err)
 	}()
 
+	if claims == nil {
+		return nil, ErrNoClaims
+	}
+
 	return s.favoriteRepo.GetUserFavorites(ctx, claims.UserID)
 }
 
@@ -59,6 +68,10 @@ func (s *PlaylistFavoriteService) DeleteFromUserFavorites(ctx context.Context, c
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrDeleteFromUserFavorites, err)
 	}()
+
+	if claims == nil {
+		return ErrNoClaims
+	}
 
 	return s.favoriteRepo.DeleteFromUserFavorites(ctx, claims.UserID, playlistID)
 }
@@ -68,6 +81,7 @@ func (s *PlaylistFavoriteService) GetUsersWithFavoritePlaylist(ctx context.Conte
 		err = errwrap.WrapIfErr(usecase.ErrGetUsersWithFavoritePlaylist, err)
 	}()
 
+	// mb delete this check
 	if err = s.policyService.CanView(ctx, claims, playlistID); err != nil {
 		return nil, err
 	}
@@ -103,6 +117,10 @@ func (s *PlaylistFavoriteService) IsFavorite(ctx context.Context, claims *entity
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrIsFavorite, err)
 	}()
+
+	if claims == nil {
+		return false, nil
+	}
 
 	err = s.policyService.CanView(ctx, claims, playlistID)
 	if err != nil {

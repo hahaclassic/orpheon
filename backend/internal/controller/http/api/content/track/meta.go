@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/dto"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track"
@@ -72,7 +72,7 @@ func (c *TrackMetaController) GetTrack(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/tracks [post]
 func (c *TrackMetaController) CreateTrack(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -112,7 +112,7 @@ func (c *TrackMetaController) CreateTrack(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/tracks/{id} [put]
 func (c *TrackMetaController) UpdateTrack(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -157,7 +157,7 @@ func (c *TrackMetaController) UpdateTrack(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/tracks/{id} [delete]
 func (c *TrackMetaController) DeleteTrack(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

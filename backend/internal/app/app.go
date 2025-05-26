@@ -23,7 +23,9 @@ import (
 	track_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/track"
 	me_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/me"
 	user_ctrl "github.com/hahaclassic/orpheon/backend/internal/controller/http/api/user"
+	"github.com/hahaclassic/orpheon/backend/internal/controller/http/middleware"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/router"
+	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/cookie"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/auth"
 	content_aggregator "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/aggregator"
 	album_cover_service "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/cover"
@@ -202,9 +204,13 @@ func Run(conf *config.Config) {
 		userService,
 	)
 
-	authController := auth_ctrl.NewAuthController(authService, &conf.Cookie)
-	authMiddlewareRequired := authController.AuthMiddlewareRequired()
-	authMiddlewareOptional := authController.AuthMiddlewareOptional()
+	cookieTokensSetter := cookie.NewCookieTokensSetter(&conf.Cookie)
+
+	authMiddleware := middleware.NewAuthMiddleware(authService, cookieTokensSetter)
+	authMiddlewareRequired := authMiddleware.Optional() //authMiddleware.Required()
+	authMiddlewareOptional := authMiddleware.Optional()
+
+	authController := auth_ctrl.NewAuthController(authService, cookieTokensSetter, authMiddlewareRequired)
 
 	genreController := genre_ctrl.NewGenreController(genreService, authMiddlewareRequired)
 	genreAssignController := genre_ctrl.NewGenreAssignController(genreAssignService)

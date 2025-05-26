@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/dto"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
@@ -70,7 +70,7 @@ func (c *AlbumController) GetAllAlbums(ctx *gin.Context) {
 }
 
 func (c *AlbumController) CreateAlbum(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -96,7 +96,7 @@ func (c *AlbumController) CreateAlbum(ctx *gin.Context) {
 }
 
 func (c *AlbumController) UpdateAlbum(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -130,7 +130,7 @@ func (c *AlbumController) UpdateAlbum(ctx *gin.Context) {
 }
 
 func (c *AlbumController) DeleteAlbum(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

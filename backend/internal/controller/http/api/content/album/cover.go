@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
@@ -24,7 +24,7 @@ func NewAlbumCoverController(service album.AlbumCoverService) *AlbumCoverControl
 }
 
 func (c *AlbumCoverController) UploadCover(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -69,7 +69,7 @@ func (c *AlbumCoverController) GetCover(ctx *gin.Context) {
 }
 
 func (c *AlbumCoverController) DeleteCover(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

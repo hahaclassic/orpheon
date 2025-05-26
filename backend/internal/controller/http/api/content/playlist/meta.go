@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/dto"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
@@ -44,11 +44,7 @@ func NewPlaylistMetaController(playlistService playlist.PlaylistMetaService,
 // @Failure 500 {object} gin.H
 // @Router /api/v1/playlists/{id} [get]
 func (c *PlaylistMetaController) GetPlaylist(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
-	if claims == nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
+	claims := ctxclaims.GetClaims(ctx)
 
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
@@ -58,7 +54,13 @@ func (c *PlaylistMetaController) GetPlaylist(ctx *gin.Context) {
 
 	playlist, err := c.playlistService.GetMeta(ctx.Request.Context(), claims, id)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Playlist not found"})
+		if errors.Is(err, commonerr.ErrNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Playlist not found"})
+		} else if errors.Is(err, commonerr.ErrForbidden) {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to get playlist"})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get playlist"})
+		}
 		return
 	}
 
@@ -84,7 +86,7 @@ func (c *PlaylistMetaController) GetPlaylist(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/playlists [post]
 func (c *PlaylistMetaController) CreatePlaylist(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -98,7 +100,7 @@ func (c *PlaylistMetaController) CreatePlaylist(ctx *gin.Context) {
 
 	err := c.playlistService.CreateMeta(ctx.Request.Context(), claims, &playlist)
 	if err != nil {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "Failed to create playlist"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create playlist"})
 		return
 	}
 
@@ -120,7 +122,7 @@ func (c *PlaylistMetaController) CreatePlaylist(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/playlists/{id} [put]
 func (c *PlaylistMetaController) UpdatePlaylist(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -161,7 +163,7 @@ func (c *PlaylistMetaController) UpdatePlaylist(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/playlists/{id} [delete]
 func (c *PlaylistMetaController) DeletePlaylist(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -183,7 +185,7 @@ func (c *PlaylistMetaController) DeletePlaylist(ctx *gin.Context) {
 }
 
 func (c *PlaylistMetaController) GetMyPlaylists(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -205,11 +207,7 @@ func (c *PlaylistMetaController) GetMyPlaylists(ctx *gin.Context) {
 }
 
 func (c *PlaylistMetaController) GetUserPlaylists(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
-	if claims == nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
+	claims := ctxclaims.GetClaims(ctx)
 
 	userID, err := uuid.Parse(ctx.Param("user_id"))
 	if err != nil {
@@ -233,7 +231,7 @@ func (c *PlaylistMetaController) GetUserPlaylists(ctx *gin.Context) {
 }
 
 func (c *PlaylistMetaController) UpdatePlaylistPrivacy(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

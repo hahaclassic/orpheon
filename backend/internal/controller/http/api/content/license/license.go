@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/license"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
@@ -104,7 +104,7 @@ func (c *LicenseController) GetAllLicenses(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/licenses [post]
 func (c *LicenseController) CreateLicense(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -144,7 +144,7 @@ func (c *LicenseController) CreateLicense(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/licenses/{id} [put]
 func (c *LicenseController) UpdateLicense(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -190,7 +190,7 @@ func (c *LicenseController) UpdateLicense(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/licenses/{id} [delete]
 func (c *LicenseController) DeleteLicense(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
