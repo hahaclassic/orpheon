@@ -107,6 +107,15 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleProfileClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (!user) {
+      navigate('/login', { 
+        state: { 
+          from: location.pathname,
+          message: 'Чтобы получить доступ к профилю, необходимо войти'
+        }
+      });
+      return;
+    }
     setAnchorEl(event.currentTarget);
   };
 
@@ -117,7 +126,7 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -227,61 +236,84 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
         )}
       </List>
 
-      <Box sx={{ flex: 1 }} />
-      <ProfileSection
-        onClick={handleProfileClick}
-        sx={{
-          justifyContent: isCollapsed ? 'center' : 'flex-start',
-          px: isCollapsed ? 1 : 3,
-          py: 1.5,
-        }}
-      >
-        <Avatar
-          sx={{
-            width: 32,
-            height: 32,
-            bgcolor: 'primary.main',
-          }}
-        >
-          {user?.name?.[0]}
-        </Avatar>
-        {!isCollapsed && (
-          <Typography
-            variant="body2"
-            sx={{
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              ml: 1,
-            }}
-          >
-            {user?.name}
-          </Typography>
+      <Box sx={{ flexGrow: 1 }} />
+
+      <ProfileSection onClick={handleProfileClick}>
+        {user ? (
+          <>
+            <Avatar 
+              sx={{ width: 32, height: 32 }}
+            >
+              {user.name ? user.name.charAt(0).toUpperCase() : '?'}
+            </Avatar>
+            {!isCollapsed && (
+              <Box sx={{ overflow: 'hidden' }}>
+                <Typography variant="subtitle2" noWrap>
+                  {user.name}
+                </Typography>
+              </Box>
+            )}
+          </>
+        ) : (
+          <>
+            <Avatar sx={{ width: 32, height: 32 }}>
+              <Person />
+            </Avatar>
+            {!isCollapsed && (
+              <Typography variant="subtitle2">
+                Войти
+              </Typography>
+            )}
+          </>
         )}
       </ProfileSection>
 
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleProfileClose}
-        onClick={handleProfileClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-      >
-        <MenuItem onClick={handleProfileNavigate}>
-          <ListItemIcon>
-            <Person fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Профиль</ListItemText>
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleLogout}>
-          <ListItemIcon>
-            <Logout fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Выйти</ListItemText>
-        </MenuItem>
-      </Menu>
+      {user && (
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleProfileClose}
+          onClick={handleProfileClose}
+          PaperProps={{
+            elevation: 0,
+            sx: {
+              overflow: 'visible',
+              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+              mt: 1.5,
+              '& .MuiAvatar-root': {
+                width: 32,
+                height: 32,
+                ml: -0.5,
+                mr: 1,
+              },
+            },
+          }}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        >
+          <MenuItem onClick={handleProfileNavigate}>
+            <ListItemIcon>
+              <Person fontSize="small" />
+            </ListItemIcon>
+            Профиль
+          </MenuItem>
+          {isAdmin && (
+            <MenuItem onClick={() => navigate('/admin')}>
+              <ListItemIcon>
+                <AdminPanelSettings fontSize="small" />
+              </ListItemIcon>
+              Админ панель
+            </MenuItem>
+          )}
+          <Divider />
+          <MenuItem onClick={handleLogout}>
+            <ListItemIcon>
+              <Logout fontSize="small" />
+            </ListItemIcon>
+            Выйти
+          </MenuItem>
+        </Menu>
+      )}
     </SidebarContainer>
   );
 };

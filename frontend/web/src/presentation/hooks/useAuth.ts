@@ -16,7 +16,10 @@ interface AuthState {
   isLoading: boolean;
 }
 
-export const useAuth = () => {
+// List of public routes that don't require authentication
+const PUBLIC_ROUTES = ['/', '/search', '/login', '/register'];
+
+export const useAuth = (initialPath: string = '/') => {
   const [state, setState] = useState<AuthState>({
     isAuthenticated: false,
     isAdmin: false,
@@ -35,7 +38,7 @@ export const useAuth = () => {
         console.log('[useAuth] Setting authenticated state with user data:', userData);
         setState({
           isAuthenticated: true,
-          isAdmin: userData.access_lvl === 2, // Assuming access_lvl 2 means admin
+          isAdmin: userData.access_lvl === 2,
           user: userData,
           isLoading: false,
         });
@@ -49,7 +52,6 @@ export const useAuth = () => {
         });
       }
     } catch (error) {
-      console.error('[useAuth] Error in checkAuth:', error);
       console.log('[useAuth] Setting unauthenticated state due to error');
       setState({
         isAuthenticated: false,
@@ -60,10 +62,21 @@ export const useAuth = () => {
     }
   };
 
+  // Проверяем авторизацию при монтировании компонента
+  useEffect(() => {
+    checkAuth();
+  }, []); // Пустой массив зависимостей означает, что эффект выполнится только при монтировании
+
+  // Дополнительная проверка при изменении пути
   useEffect(() => {
     console.log('[useAuth] Auth effect triggered');
+    // Skip auth check for public routes
+    if (PUBLIC_ROUTES.includes(initialPath)) {
+      setState(prev => ({ ...prev, isLoading: false }));
+      return;
+    }
     checkAuth();
-  }, []);
+  }, [initialPath]); // Re-run when path changes
 
   const login = async (login: string, password: string) => {
     console.log('[useAuth] Login attempt...');
@@ -114,11 +127,26 @@ export const useAuth = () => {
     }
   };
 
+  const updateUser = async (user: User) => {
+    try {
+      const response = await api.updateUser(user);
+      setState(prev => ({
+        ...prev,
+        user: response,
+      }));
+      return response;
+    } catch (error) {
+      console.error('[useAuth] Update user error:', error);
+      throw error;
+    }
+  };
+
   return {
     ...state,
     login,
     register,
     logout,
     changePassword,
+    updateUser,
   };
 }; 

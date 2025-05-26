@@ -19,12 +19,14 @@ import {
   CardContent,
   IconButton,
   Chip,
+  Menu,
 } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import ImageIcon from "@mui/icons-material/Image";
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import CheckIcon from '@mui/icons-material/Check';
 import { apiService } from "../../../presentation/services/api";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import ErrorBoundary from "../../components/ErrorBoundary";
@@ -33,7 +35,7 @@ import ArtistCard from "../../components/ContentCards/ArtistCard";
 import PlaylistCard from "../../components/ContentCards/PlaylistCard";
 import TrackList from "../../components/TrackList";
 import { usePlayerContext } from "../../contexts/PlayerContext";
-import type { Track } from '../../types';
+import type { Track as TrackType } from '../../types';
 
 type ContentType = "track" | "album" | "playlist" | "artist";
 
@@ -82,10 +84,10 @@ const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { controls } = usePlayerContext();
   const { setTrack } = controls;
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('query') || '');
+  const [searchQuery, setSearchQuery] = useState("");
   const [country, setCountry] = useState(searchParams.get('country') || '');
   const [genre, setGenre] = useState<Genre | null>(null);
-  const [contentType, setContentType] = useState<ContentType>((searchParams.get('type') as ContentType) || 'track');
+  const [contentType, setContentType] = useState<ContentType>("track");
   const [albumCovers, setAlbumCovers] = useState<Map<string, string>>(new Map());
   const [playlistCovers, setPlaylistCovers] = useState<Map<string, string>>(new Map());
   const [artistAvatars, setArtistAvatars] = useState<Map<string, string>>(new Map());
@@ -95,11 +97,14 @@ const Search = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedTrack, setSelectedTrack] = useState<TrackType | null>(null);
 
   const handleTrackClick = (trackId: string) => {
-    const track = results.find(t => t.id === trackId);
+    const track = results.find((t: TrackType) => t.id === trackId);
     if (track) {
-      setTrack(track, results);
+      controls.startPlayback(track, results);
     }
   };
 
@@ -268,40 +273,113 @@ const Search = () => {
     }
   };
 
+  // Добавляем новые функции для работы с плейлистами
+  useEffect(() => {
+    const fetchPlaylists = async () => {
+      try {
+        const response = await apiService.get('/me/playlists');
+        setPlaylists(response);
+      } catch (err) {
+        console.error('Error fetching playlists:', err);
+      }
+    };
+
+    fetchPlaylists();
+  }, []);
+
+  const handleAddToPlaylist = (event: React.MouseEvent<HTMLElement>, track: TrackType) => {
+    event.stopPropagation();
+    setSelectedTrack(track);
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handlePlaylistSelect = async (playlistId: string) => {
+    if (selectedTrack) {
+      try {
+        const playlist = playlists.find(p => p.id === playlistId);
+        const isInPlaylist = playlist && isTrackInPlaylist(playlist, selectedTrack.id);
+
+        if (isInPlaylist) {
+          // Удаляем трек из плейлиста
+          await apiService.delete(`/playlists/${playlistId}/tracks/${selectedTrack.id}`);
+          // Обновляем локальное состояние плейлиста
+          setPlaylists(playlists.map(p => {
+            if (p.id === playlistId) {
+              return {
+                ...p,
+                tracks: (p.tracks || []).filter((t: TrackType) => t.id !== selectedTrack.id)
+              };
+            }
+            return p;
+          }));
+        } else {
+          // Добавляем трек в плейлист
+          await apiService.post(`/playlists/${playlistId}/tracks`, { track_id: selectedTrack.id });
+          // Обновляем локальное состояние плейлиста
+          setPlaylists(playlists.map(p => {
+            if (p.id === playlistId) {
+              return {
+                ...p,
+                tracks: [...(p.tracks || []), selectedTrack]
+              };
+            }
+            return p;
+          }));
+        }
+      } catch (err: any) {
+        console.error('Error managing track in playlist:', {
+          error: err,
+          response: err.response?.data,
+          status: err.response?.status,
+          playlistId,
+          trackId: selectedTrack.id
+        });
+      }
+    }
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedTrack(null);
+  };
+
+  const isTrackInPlaylist = (playlist: any, trackId: string) => {
+    return playlist.tracks?.some((track: TrackType) => track.id === trackId) || false;
+  };
+
   const renderResults = () => {
+    if (loading) {
+      return <LoadingSpinner />;
+    }
+
+    if (error) {
+      return <Alert severity="error">{error}</Alert>;
+    }
+
     if (results.length === 0) {
       return (
-        <Typography variant="h6" textAlign="center" color="text.secondary">
-          {searchQuery ? "Ничего не найдено" : "Введите запрос для поиска"}
-        </Typography>
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="h6" color="text.secondary">
+            Ничего не найдено
+          </Typography>
+        </Box>
       );
     }
 
     switch (contentType) {
-      case "track":
-        // Проверяем, что у нас есть валидные треки перед рендерингом
-        const validTracks = results.filter((track: any) => track && track.id && track.album && track.album.id);
-        if (validTracks.length === 0) {
-          return (
-            <Typography variant="h6" textAlign="center" color="text.secondary">
-              Ничего не найдено
-            </Typography>
-          );
-        }
-        const tracksWithCovers = validTracks.map((track: Track) => ({
+      case 'track':
+        const tracksWithCovers = results.map((track: TrackType) => ({
           ...track,
-          coverUrl: albumCovers.get(track.album.id),
-          album_id: track.album.id
+          coverUrl: albumCovers.get(track.album.id)
         }));
         return (
           <TrackList
             tracks={tracksWithCovers}
-            onTrackClick={handleTrackClick}
+            onAddToPlaylist={handleAddToPlaylist}
             showTrackNumber={false}
             showAlbumLink={true}
           />
         );
-
       case "album":
         return (
           <Grid container spacing={3}>
@@ -319,7 +397,6 @@ const Search = () => {
             ))}
           </Grid>
         );
-
       case "playlist":
         return (
           <Grid container spacing={3}>
@@ -397,7 +474,6 @@ const Search = () => {
             ))}
           </Grid>
         );
-
       case "artist":
         return (
           <Grid container spacing={3}>
@@ -506,19 +582,48 @@ const Search = () => {
         </Grid>
       </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+      {renderResults()}
 
-      {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        renderResults()
-      )}
+      {/* Добавляем меню плейлистов */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: { 
+            maxHeight: '280px',
+            '& .MuiList-root': {
+              padding: 0
+            }
+          }
+        }}
+        MenuListProps={{
+          sx: {
+            padding: 0
+          }
+        }}
+      >
+        {playlists.map((playlist) => (
+          <MenuItem 
+            key={playlist.id} 
+            onClick={() => handlePlaylistSelect(playlist.id)}
+            sx={{ 
+              minHeight: '40px',
+              '&:hover': {
+                backgroundColor: 'action.hover'
+              },
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <span>{playlist.name}</span>
+            {selectedTrack && isTrackInPlaylist(playlist, selectedTrack.id) && (
+              <CheckIcon sx={{ ml: 1, color: 'white' }} />
+            )}
+          </MenuItem>
+        ))}
+      </Menu>
     </Container>
   );
 };

@@ -21,6 +21,7 @@ import { apiService } from '../../../presentation/services/api';
 import { useApi } from '../../../presentation/hooks/useApi';
 import PlaylistDialog from '../../../presentation/components/PlaylistDialog';
 import type { Track } from '../../../presentation/types';
+import { useAuthContext } from '../../../presentation/contexts/AuthContext';
 
 interface Playlist {
   id: number;
@@ -41,6 +42,7 @@ const Library = () => {
   const [updatingFavorite, setUpdatingFavorite] = useState(false);
   const navigate = useNavigate();
   const { createPlaylist } = useApi();
+  const { user } = useAuthContext();
 
   const fetchPlaylistCovers = async (playlists: Playlist[]) => {
     return Promise.all(
@@ -82,8 +84,17 @@ const Library = () => {
   };
 
   useEffect(() => {
+    if (!user) {
+      navigate('/login', { 
+        state: { 
+          from: '/library',
+          message: 'Чтобы получить доступ к своей библиотеке, необходимо войти'
+        }
+      });
+      return;
+    }
     fetchData();
-  }, []);
+  }, [user, navigate]);
 
   const handlePlaylistClick = (playlistId: number) => {
     navigate(`/playlists/${playlistId}`);

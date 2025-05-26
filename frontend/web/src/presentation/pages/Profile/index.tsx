@@ -22,6 +22,7 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import LockIcon from '@mui/icons-material/Lock';
 import EditIcon from '@mui/icons-material/Edit';
 import ImageIcon from '@mui/icons-material/Image';
@@ -45,7 +46,16 @@ interface Playlist {
   is_favorite: boolean;
 }
 
-const Profile = () => {
+export const Profile = () => {
+  const { user, updateUser } = useAuthContext();
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    birth_date: user?.birth_date && user.birth_date !== '0001-01-01T00:00:00Z' 
+      ? new Date(user.birth_date).toISOString().split('T')[0] 
+      : '',
+  });
+  const [error, setError] = useState<string>('');
   const [activeTab, setActiveTab] = useState(0);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -54,20 +64,23 @@ const Profile = () => {
     confirm: '',
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const [user, setUser] = useState<User | null>(null);
+  const [success, setSuccess] = useState<string>('');
   const [myPlaylists, setMyPlaylists] = useState<Playlist[]>([]);
   const [favoritePlaylists, setFavoritePlaylists] = useState<Playlist[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: '',
-    birth_date: '',
-  });
 
   const navigate = useNavigate();
-  const { user: authUser } = useAuthContext();
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        birth_date: user.birth_date && user.birth_date !== '0001-01-01T00:00:00Z'
+          ? new Date(user.birth_date).toISOString().split('T')[0]
+          : '',
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -102,7 +115,6 @@ const Profile = () => {
           loadPlaylistCovers(favoritePlaylistsData)
         ]);
 
-        setUser(userData);
         setMyPlaylists(myPlaylistsWithCovers);
         setFavoritePlaylists(favoritePlaylistsWithCovers);
       } catch (err) {
@@ -123,14 +135,14 @@ const Profile = () => {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    setError('');
+    setSuccess('');
     if (passwordData.new !== passwordData.confirm) {
       setError('Новые пароли не совпадают');
       return;
     }
     try {
-      await apiService.put('/me/password', {
+      await apiService.post('/auth/password/update', {
         old: passwordData.old,
         new: passwordData.new
       });
@@ -142,26 +154,20 @@ const Profile = () => {
     }
   };
 
-  const handleEditClick = () => {
-    if (user) {
-      setEditForm({
-        name: user.name,
-        birth_date: user.birth_date === '0001-01-01T00:00:00Z' ? '' : user.birth_date.split('T')[0],
-      });
-      setEditDialogOpen(true);
-    }
-  };
-
   const handleEditSubmit = async () => {
     try {
-      const updatedUser = await apiService.put('/me', {
-        name: editForm.name,
-        birth_date: editForm.birth_date ? new Date(editForm.birth_date).toISOString() : '0001-01-01T00:00:00Z'
+      if (!user) return;
+      
+      const updatedUser = await updateUser({
+        id: user.id,
+        name: formData.name,
+        registration_date: user.registration_date,
+        birth_date: formData.birth_date ? new Date(formData.birth_date).toISOString() : '0001-01-01T00:00:00Z',
+        access_lvl: user.access_lvl
       });
-      setUser(updatedUser);
       setEditDialogOpen(false);
+      setSuccess('Профиль успешно обновлен');
     } catch (err) {
-      console.error('Error updating profile:', err);
       setError('Ошибка при обновлении профиля');
     }
   };
@@ -208,7 +214,7 @@ const Profile = () => {
             <Button
               variant="outlined"
               startIcon={<EditIcon />}
-              onClick={handleEditClick}
+              onClick={() => setEditDialogOpen(true)}
               sx={{ mr: 2 }}
             >
               Редактировать
@@ -236,11 +242,11 @@ const Profile = () => {
                       mr: 2
                     }}
                   >
-                    {user.name.charAt(0).toUpperCase()}
+                    {user.name ? user.name.charAt(0).toUpperCase() : '?'}
                   </Avatar>
                   <Box>
                     <Typography variant="h5" gutterBottom>
-                      {user.name}
+                      {user.name || 'Без имени'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {user.access_lvl === 1 ? 'Администратор' : 'Пользователь'}
@@ -488,17 +494,25 @@ const Profile = () => {
             <TextField
               fullWidth
               label="Имя пользователя"
-              value={editForm.name}
-              onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               sx={{ mb: 2 }}
             />
-            <TextField
-              fullWidth
+            <DatePicker
               label="Дата рождения"
-              type="date"
-              value={editForm.birth_date}
-              onChange={(e) => setEditForm(prev => ({ ...prev, birth_date: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
+              value={formData.birth_date ? new Date(formData.birth_date) : null}
+              onChange={(date) => {
+                setFormData(prev => ({
+                  ...prev,
+                  birth_date: date ? date.toISOString().split('T')[0] : ''
+                }));
+              }}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  margin: 'dense'
+                }
+              }}
             />
           </Box>
         </DialogContent>

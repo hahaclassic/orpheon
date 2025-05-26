@@ -10,7 +10,7 @@ import Library from './presentation/pages/Library';
 import Search from './presentation/pages/Search';
 import Login from './presentation/pages/Login';
 import Register from './presentation/pages/Register';
-import Profile from './presentation/pages/Profile';
+import { Profile } from './presentation/pages/Profile';
 import UserProfile from './presentation/pages/UserProfile';
 import PlaylistPage from './presentation/pages/Playlist';
 import ArtistPage from './presentation/pages/Artist';

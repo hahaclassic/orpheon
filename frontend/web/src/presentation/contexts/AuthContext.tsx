@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
 // Separate interfaces for better interface segregation
@@ -24,63 +24,43 @@ interface AuthActions {
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
 }
 
-interface AuthContextType extends AuthState, AuthActions {}
+interface AuthContextType {
+  isAuthenticated: boolean;
+  isAdmin: boolean;
+  user: {
+    id: string;
+    name: string;
+    registration_date: string;
+    birth_date: string;
+    access_lvl: number;
+  } | null;
+  isLoading: boolean;
+  login: (login: string, password: string) => Promise<any>;
+  register: (login: string, password: string) => Promise<any>;
+  logout: () => Promise<void>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<any>;
+  updateUser: (user: {
+    id: string;
+    name: string;
+    registration_date: string;
+    birth_date: string;
+    access_lvl: number;
+  }) => Promise<any>;
+}
 
-// Create separate contexts for state and actions
-const AuthStateContext = createContext<AuthState | undefined>(undefined);
-const AuthActionsContext = createContext<AuthActions | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const auth = useAuth();
-
-  // Split auth into state and actions
-  const state: AuthState = {
-    isAuthenticated: auth.isAuthenticated,
-    isAdmin: auth.isAdmin,
-    isLoading: auth.isLoading,
-    user: auth.user,
-  };
-
-  const actions: AuthActions = {
-    login: auth.login,
-    register: auth.register,
-    logout: auth.logout,
-    changePassword: auth.changePassword,
-  };
-
-  return (
-    <AuthStateContext.Provider value={state}>
-      <AuthActionsContext.Provider value={actions}>
-        {children}
-      </AuthActionsContext.Provider>
-    </AuthStateContext.Provider>
-  );
-};
-
-// Custom hooks for accessing specific parts of auth
-export const useAuthState = () => {
-  const context = useContext(AuthStateContext);
-  if (context === undefined) {
-    throw new Error('useAuthState must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export const useAuthActions = () => {
-  const context = useContext(AuthActionsContext);
-  if (context === undefined) {
-    throw new Error('useAuthActions must be used within an AuthProvider');
-  }
-  return context;
-};
-
-// Main hook that combines both state and actions
 export const useAuthContext = () => {
-  const state = useAuthState();
-  const actions = useAuthActions();
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuthContext must be used within an AuthProvider');
+  }
+  return context;
+};
 
-  return {
-    ...state,
-    ...actions,
-  };
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  // Use default path '/' for initial auth check
+  const auth = useAuth('/');
+
+  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 }; 

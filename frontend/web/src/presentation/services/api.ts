@@ -127,9 +127,11 @@ export const api = {
   logout: (): Promise<void> => apiService.post('/auth/logout'),
 
   changePassword: (oldPassword: string, newPassword: string): Promise<void> =>
-    apiService.post('/auth/change-password', { oldPassword, newPassword }),
+    apiService.post('/auth/password/update', { old: oldPassword, new: newPassword }),
 
   getMe: (): Promise<User> => apiService.get('/me'),
+
+  updateUser: (user: User): Promise<User> => apiService.put('/me', user),
 
   // User endpoints
   getUser: (id: string): Promise<User> => apiService.get(`/users/${id}`),
