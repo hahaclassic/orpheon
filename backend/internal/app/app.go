@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	audioconverter "github.com/hahaclassic/orpheon/backend/internal/adapters/audio-converter"
 	bcrypt_hasher "github.com/hahaclassic/orpheon/backend/internal/adapters/password-hasher/bcrypt-hasher"
 	jwttokens "github.com/hahaclassic/orpheon/backend/internal/adapters/tokens/jwt"
@@ -56,7 +58,7 @@ import (
 	tracksegment "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/segment"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/stat/processor"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/user"
-	"github.com/hahaclassic/orpheon/backend/internal/infrastructure/minio"
+	minio_client "github.com/hahaclassic/orpheon/backend/internal/infrastructure/minio"
 	"github.com/hahaclassic/orpheon/backend/internal/infrastructure/postgres"
 	"github.com/hahaclassic/orpheon/backend/internal/infrastructure/redis"
 	auth_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/auth/auth-repo/postgres"
@@ -79,10 +81,12 @@ import (
 	playlist_meta_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/meta/postgres"
 	playlist_tracks_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/tracks/postgres"
 	search_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/search/postgres"
+	audio_fs "github.com/hahaclassic/orpheon/backend/internal/repository/content/track/audio/fs"
 	audio_minio "github.com/hahaclassic/orpheon/backend/internal/repository/content/track/audio/minio"
 	track_meta_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/track/meta/postgres"
 	segment_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/content/track/segment/postgres"
 	user_postgres "github.com/hahaclassic/orpheon/backend/internal/repository/user/postgres"
+	"github.com/minio/minio-go/v7"
 )
 
 func Run(conf *config.Config) {
@@ -98,7 +102,7 @@ func Run(conf *config.Config) {
 	}
 	defer redisClient.Close()
 
-	minioClient, err := minio.NewMinioClient(conf.MinIO)
+	minioClient, err := minio_client.NewMinioClient(conf.MinIO)
 	if err != nil {
 		slog.Error("failed to create minio client", "err", err)
 		return
@@ -134,11 +138,17 @@ func Run(conf *config.Config) {
 		return
 	}
 
-	audioRepo, err := audio_minio.NewAudioFileRepository(ctx, minioClient, conf.MinIO.BucketAudio)
+	audioRepo, err := setupAudioStorage(ctx, conf, minioClient)
 	if err != nil {
 		slog.Error("failed to create audio file repository", "err", err)
 		return
 	}
+
+	// audioRepo, err := audio_minio.NewAudioFileRepository(ctx, minioClient, conf.MinIO.BucketAudio)
+	// if err != nil {
+	// 	slog.Error("failed to create audio file repository", "err", err)
+	// 	return
+	// }
 
 	playlistCoverRepo, err := playlist_cover_minio.NewPlaylistCoverRepository(ctx, minioClient, conf.MinIO.BucketPlaylist)
 	if err != nil {
@@ -259,19 +269,30 @@ func Run(conf *config.Config) {
 	meRouter := user_me_router.NewMeRouter(playlistMetaController, userController,
 		playlistFavoriteController, authMiddlewareRequired)
 
+	loggerMiddleware, err := middleware.SetupLoggerMiddleware(conf.Logger.Path, conf.Logger.Level)
+	if err != nil {
+		slog.Error("failed to create logger middleware", "err", err)
+		return
+	}
+
 	// Initialize router
 	router := router.SetupRouter(
-		authController,
-		genreController,
-		licenseController,
-		searchController,
+		[]router.RoutersRegistrator{
+			authController,
+			genreController,
+			licenseController,
+			searchController,
 
-		albumRouter,
-		artistRouter,
-		playlistRouter,
-		trackRouter,
-		meRouter,
-	)
+			albumRouter,
+			artistRouter,
+			playlistRouter,
+			trackRouter,
+			meRouter,
+		},
+		[]gin.HandlerFunc{
+			loggerMiddleware,
+			middleware.CORSMiddleware(),
+		})
 
 	// addr := net.JoinHostPort(conf.HTTP.Host, conf.HTTP.Port)
 	// if err := router.Run(addr); err != nil {
@@ -304,4 +325,26 @@ func Run(conf *config.Config) {
 	} else {
 		slog.Info("server exited properly")
 	}
+}
+
+func setupAudioStorage(ctx context.Context, conf *config.Config, minioClient *minio.Client) (audio_service.AudioFileRepository, error) {
+	var (
+		err       error
+		audioRepo audio_service.AudioFileRepository
+	)
+
+	switch conf.AudioStorage.Type {
+	case "fs":
+		audioRepo, err = audio_fs.NewAudioFileRepository(conf.AudioStorage.BasePath)
+	case "minio":
+		audioRepo, err = audio_minio.NewAudioFileRepository(ctx, minioClient, conf.MinIO.BucketAudio)
+	default:
+		return nil, fmt.Errorf("audio file repository implementation are not specified")
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create audio file repository: %w", err)
+	}
+
+	return audioRepo, nil
 }
