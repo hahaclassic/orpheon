@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useLocation } from 'react-router-dom';
 
 // Separate interfaces for better interface segregation
 interface User {
@@ -59,8 +60,7 @@ export const useAuthContext = () => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // Use default path '/' for initial auth check
-  const auth = useAuth('/');
-
+  const location = useLocation();
+  const auth = useAuth(location.pathname);
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 }; 

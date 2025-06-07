@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -37,13 +37,18 @@ const ProtectedRoutes = () => {
   );
 };
 
+const AuthProviderWithLocation = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  return <AuthProvider initialPath={location.pathname}>{children}</AuthProvider>;
+};
+
 const App = () => {
   return (
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            <AuthProvider>
+            <AuthProviderWithLocation>
               <PlayerProvider>
                 <Routes>
                   <Route path="/login" element={<Navigate to="/auth/login" replace />} />
@@ -68,7 +73,7 @@ const App = () => {
                   </Route>
                 </Routes>
               </PlayerProvider>
-            </AuthProvider>
+            </AuthProviderWithLocation>
           </BrowserRouter>
         </LocalizationProvider>
       </ThemeProvider>

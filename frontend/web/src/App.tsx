@@ -30,38 +30,45 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <PlayerProvider>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <PlayerProvider>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
               <Routes>
+                {/* Auth routes - без Layout */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+
+                {/* Public routes - с Layout, но без ProtectedRoute */}
                 <Route element={<Layout><Outlet /></Layout>}>
-                  <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/library" element={<Library />} />
-                    <Route path="/search" element={<Search />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/users/:id" element={<UserProfile />} />
-                    <Route path="/playlists/:id" element={<PlaylistPage />} />
-                    <Route path="/artists/:id" element={<ArtistPage />} />
-                    <Route path="/albums/:id" element={<AlbumPage />} />
-                    <Route path="/tracks/:id" element={<TrackPage />} />
-                    <Route path="/admin" element={<AdminRoute><Outlet /></AdminRoute>}>
-                      <Route index element={<AdminPanel />} />
-                      <Route path="genres" element={<GenreList />} />
-                      <Route path="licenses" element={<LicenseList />} />
-                      <Route path="artists" element={<ArtistList />} />
-                      <Route path="albums" element={<AlbumList />} />
-                    </Route>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/artists/:id" element={<ArtistPage />} />
+                  <Route path="/albums/:id" element={<AlbumPage />} />
+                  <Route path="/tracks/:id" element={<TrackPage />} />
+                  <Route path="/playlists/:id" element={<PlaylistPage />} />
+                </Route>
+
+                {/* Protected routes - с Layout и ProtectedRoute */}
+                <Route element={<Layout><ProtectedRoute><Outlet /></ProtectedRoute></Layout>}>
+                  <Route path="/library" element={<Library />} />
+                  <Route path="/me" element={<Profile />} />
+                  <Route path="/users/:id" element={<UserProfile />} />
+                  
+                  {/* Admin routes */}
+                  <Route path="/admin" element={<AdminRoute><Outlet /></AdminRoute>}>
+                    <Route index element={<AdminPanel />} />
+                    <Route path="genres" element={<GenreList />} />
+                    <Route path="licenses" element={<LicenseList />} />
+                    <Route path="artists" element={<ArtistList />} />
+                    <Route path="albums" element={<AlbumList />} />
                   </Route>
                 </Route>
               </Routes>
-            </BrowserRouter>
-          </LocalizationProvider>
-        </PlayerProvider>
-      </AuthProvider>
+            </LocalizationProvider>
+          </PlayerProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </ThemeProvider>
   );
 };

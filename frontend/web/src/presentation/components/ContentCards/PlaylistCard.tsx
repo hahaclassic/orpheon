@@ -47,7 +47,7 @@ const PlaylistCard = ({
     e.stopPropagation();
     const ownerIdToNavigate = owner?.id || ownerId;
     if (ownerIdToNavigate) {
-      navigate(`/profile/${ownerIdToNavigate}`);
+      navigate(`/users/${ownerIdToNavigate}`);
     }
   };
 

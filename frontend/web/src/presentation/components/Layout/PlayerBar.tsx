@@ -232,39 +232,78 @@ const PlayerBar = () => {
   } = controls;
 
   const navigate = useNavigate();
-  const { user } = useAuthContext();
+  const { user, isAuthenticated } = useAuthContext();
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [playlistMenuAnchorEl, setPlaylistMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [addingTrackId, setAddingTrackId] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  // Для сбора статистики прослушивания
   const [listenedRanges, setListenedRanges] = useState<[number, number][]>([]);
   const [currentRange, setCurrentRange] = useState<[number, number] | null>(null);
-  // Для графика сегментов
   const [segments, setSegments] = useState<any[]>(mockSegments);
 
   // Загрузка обложки альбома при изменении трека
   useEffect(() => {
     const loadAlbumCover = async () => {
-      if (currentTrack?.album?.id) {
-        try {
-          const response = await apiService.get(`/albums/${currentTrack.album.id}/cover`, { responseType: 'blob' });
-          const url = URL.createObjectURL(response);
-          setCoverUrl(url);
-          return () => URL.revokeObjectURL(url);
-        } catch (err) {
-          console.error('Failed to load album cover:', err);
-          setCoverUrl(null);
-        }
-      } else {
+      if (!isAuthenticated || !currentTrack?.album?.id) {
+        setCoverUrl(null);
+        return;
+      }
+
+      try {
+        const response = await apiService.get(`/albums/${currentTrack.album.id}/cover`, { responseType: 'blob' });
+        const url = URL.createObjectURL(response);
+        setCoverUrl(url);
+        return () => URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('Failed to load album cover:', err);
         setCoverUrl(null);
       }
     };
 
     loadAlbumCover();
-  }, [currentTrack?.album?.id]);
+  }, [currentTrack?.album?.id, isAuthenticated]);
+
+  // Получение сегментов для графика
+  useEffect(() => {
+    const fetchSegments = async () => {
+      if (!isAuthenticated || !currentTrack?.id) {
+        setSegments(mockSegments);
+        return;
+      }
+
+      try {
+        const data = await apiService.get(`/tracks/${currentTrack.id}/segments`);
+        setSegments(
+          Array.isArray(data) && data.length > 0
+            ? data.map(seg => ({
+                ...seg,
+                totalStreams: seg.totalStreams ?? seg.total_streams,
+              }))
+            : mockSegments
+        );
+      } catch (err) {
+        setSegments(mockSegments);
+      }
+    };
+
+    fetchSegments();
+  }, [currentTrack?.id, isAuthenticated]);
+
+  const fetchPlaylists = async () => {
+    if (!isAuthenticated) {
+      setPlaylists([]);
+      return;
+    }
+
+    try {
+      const data = await apiService.get('/me/playlists');
+      setPlaylists(data);
+    } catch (err) {
+      setPlaylists([]);
+    }
+  };
 
   // Отправка статистики на сервер
   const sendListeningStats = useCallback(async (lastRange: [number, number]) => {
@@ -356,45 +395,12 @@ const PlayerBar = () => {
     };
   }, []);
 
-  // Получение сегментов для графика
-  useEffect(() => {
-    const fetchSegments = async () => {
-      if (currentTrack?.id) {
-        try {
-          const data = await apiService.get(`/tracks/${currentTrack.id}/segments`);
-          setSegments(
-            Array.isArray(data) && data.length > 0
-              ? data.map(seg => ({
-                  ...seg,
-                  totalStreams: seg.totalStreams ?? seg.total_streams,
-                }))
-              : mockSegments
-          );
-        } catch (err) {
-          setSegments(mockSegments);
-        }
-      } else {
-        setSegments(mockSegments);
-      }
-    };
-    fetchSegments();
-  }, [currentTrack?.id]);
-
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
     setMenuAnchorEl(event.currentTarget);
   };
   const handleMenuClose = () => {
     setMenuAnchorEl(null);
-  };
-
-  const fetchPlaylists = async () => {
-    try {
-      const data = await apiService.get('/me/playlists');
-      setPlaylists(data);
-    } catch (err) {
-      setPlaylists([]);
-    }
   };
 
   const handleAddToPlaylistClick = async (e: React.MouseEvent<HTMLElement>) => {
@@ -444,7 +450,12 @@ const PlayerBar = () => {
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.code === 'Space' && !event.repeat) {
+      // Проверяем, не находится ли фокус в текстовом поле или textarea
+      const activeElement = document.activeElement;
+      const isInputElement = activeElement instanceof HTMLInputElement || 
+                           activeElement instanceof HTMLTextAreaElement;
+      
+      if (event.code === 'Space' && !event.repeat && !isInputElement) {
         event.preventDefault();
         togglePlay();
       }

@@ -36,6 +36,8 @@ import PlaylistCard from "../../components/ContentCards/PlaylistCard";
 import TrackList from "../../components/TrackList";
 import { usePlayerContext } from "../../contexts/PlayerContext";
 import type { Track as TrackType } from '../../types';
+import { useAuthContext } from "../../contexts/AuthContext";
+import axios from 'axios';
 
 type ContentType = "track" | "album" | "playlist" | "artist";
 
@@ -80,6 +82,8 @@ interface Track {
   albumCoverUrl?: string;
 }
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { state, controls } = usePlayerContext();
@@ -101,6 +105,7 @@ const Search = () => {
   const [playlists, setPlaylists] = useState<any[]>([]);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTrack, setSelectedTrack] = useState<TrackType | null>(null);
+  const { isAuthenticated } = useAuthContext();
 
   const handleTrackClick = (trackId: string) => {
     const track = results.find((t: TrackType) => t.id === trackId);
@@ -146,20 +151,32 @@ const Search = () => {
   useEffect(() => {
     const fetchGenres = async () => {
       try {
+        console.log('[Search] Fetching genres...');
         setLoadingGenres(true);
-        const response = await apiService.get('/genres');
-        setGenres(response);
+        const response = await axios.get(`${API_URL}/genres`, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log('[Search] Genres received:', response.data);
+        setGenres(response.data);
         
-        // Если в URL есть genre_id, находим соответствующий жанр
         const genreId = searchParams.get('genre_id');
         if (genreId) {
-          const foundGenre = response.find((g: Genre) => g.id === genreId);
+          const foundGenre = response.data.find((g: Genre) => g.id === genreId);
           if (foundGenre) {
             setGenre(foundGenre);
           }
         }
-      } catch (err) {
-        console.error('Error fetching genres:', err);
+      } catch (err: any) {
+        console.error('[Search] Error fetching genres:', {
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data,
+          headers: err.response?.headers,
+          config: err.config
+        });
       } finally {
         setLoadingGenres(false);
       }
@@ -168,132 +185,114 @@ const Search = () => {
     fetchGenres();
   }, [searchParams]);
 
-  const fetchAlbumCovers = async (tracks: Track[]) => {
-    const newAlbumCovers = new Map<string, string>();
-    
-    for (const track of tracks) {
-      if (!albumCovers.has(track.album.id)) {
-        try {
-          const response = await apiService.get(`/albums/${track.album.id}/cover`, {
-            responseType: 'blob'
-          });
-          const url = URL.createObjectURL(response);
-          newAlbumCovers.set(track.album.id, url);
-        } catch (err) {
-          console.error('Error fetching album cover:', err);
-        }
-      }
-    }
-    
-    // Очищаем старые URL-объекты перед установкой новых
-    cleanupUrls(albumCovers);
-    setAlbumCovers(newAlbumCovers);
-  };
-
-  const fetchPlaylistCovers = async (playlists: any[]) => {
-    const newPlaylistCovers = new Map<string, string>();
-    
-    for (const playlist of playlists) {
-      if (!playlistCovers.has(playlist.id)) {
-        try {
-          const response = await apiService.get(`/playlists/${playlist.id}/cover`, {
-            responseType: 'blob'
-          });
-          const url = URL.createObjectURL(response);
-          newPlaylistCovers.set(playlist.id, url);
-        } catch (err) {
-          console.error('Error fetching playlist cover:', err);
-        }
-      }
-    }
-    
-    // Очищаем старые URL-объекты перед установкой новых
-    cleanupUrls(playlistCovers);
-    setPlaylistCovers(newPlaylistCovers);
-  };
-
-  const fetchArtistAvatars = async (artists: any[]) => {
-    const newArtistAvatars = new Map<string, string>();
-    
-    for (const artist of artists) {
-      if (!artistAvatars.has(artist.id)) {
-        try {
-          const response = await apiService.get(`/artists/${artist.id}/avatar`, {
-            responseType: 'blob'
-          });
-          const url = URL.createObjectURL(response);
-          newArtistAvatars.set(artist.id, url);
-        } catch (err) {
-          console.error('Error fetching artist avatar:', err);
-        }
-      }
-    }
-    
-    // Очищаем старые URL-объекты перед установкой новых
-    cleanupUrls(artistAvatars);
-    setArtistAvatars(newArtistAvatars);
-  };
-
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
     }
 
     try {
+      console.log('[Search] Starting search with params:', {
+        query: searchQuery,
+        country,
+        genre: genre?.id,
+        contentType
+      });
+
       setLoading(true);
       setError(null);
 
-      const params = new URLSearchParams({
-        query: searchQuery,
-        type: contentType,
-        ...(country && { country }),
-        ...(genre && { genre_id: genre.id }),
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('query', searchQuery);
+      if (country) params.append('country', country);
+      if (genre?.id) params.append('genre_id', genre.id);
+      if (contentType) params.append('type', contentType);
+
+      console.log('[Search] Making request to:', `${API_URL}/search?${params.toString()}`);
+      const response = await axios.get(`${API_URL}/search`, {
+        params,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
       });
-      
-      setSearchParams(params);
-      
-      const response = await apiService.get(`/search?${params.toString()}`);
-      const searchResults = Array.isArray(response) ? response : [];
-      
+
+      console.log('[Search] Response received:', response.data);
+      setResults(response.data);
+
       if (contentType === 'track') {
-        const validTracks = searchResults.filter((track: any) => track && track.id && track.album && track.album.id);
-        const uniqueTracks = Array.from(new Map(validTracks.map((track: Track) => [track.id, track])).values());
-        await fetchAlbumCovers(uniqueTracks);
-        setResults(uniqueTracks);
+        await fetchAlbumCovers(response.data);
       } else if (contentType === 'playlist') {
-        await fetchPlaylistCovers(searchResults);
-        setResults(searchResults);
+        await fetchPlaylistCovers(response.data);
       } else if (contentType === 'artist') {
-        await fetchArtistAvatars(searchResults);
-        setResults(searchResults);
-      } else {
-        setResults(searchResults);
+        await fetchArtistAvatars(response.data);
       }
-    } catch (err) {
-      console.error("Error fetching search results:", err);
-      setError("Ошибка при поиске. Пожалуйста, попробуйте позже.");
-      setResults([]);
+    } catch (err: any) {
+      console.error('[Search] Error:', err);
+      setError(err.response?.data?.message || 'Произошла ошибка при поиске');
     } finally {
       setLoading(false);
     }
   };
 
-  // Добавляем новые функции для работы с плейлистами
-  useEffect(() => {
-    const fetchPlaylists = async () => {
-      try {
-        const response = await apiService.get('/me/playlists');
-        setPlaylists(response);
-      } catch (err) {
-        console.error('Error fetching playlists:', err);
+  const fetchAlbumCovers = async (tracks: Track[]) => {
+    for (const track of tracks) {
+      if (track.album?.id && !albumCovers.has(track.album.id)) {
+        try {
+          const response = await axios.get(`${API_URL}/albums/${track.album.id}/cover`, {
+            responseType: 'blob'
+          });
+          const url = URL.createObjectURL(response.data);
+          setAlbumCovers(prev => new Map(prev).set(track.album.id, url));
+        } catch (err) {
+          console.error(`Failed to load cover for album ${track.album.id}:`, err);
+        }
       }
-    };
+    }
+  };
 
-    fetchPlaylists();
-  }, []);
+  const fetchPlaylistCovers = async (playlists: any[]) => {
+    for (const playlist of playlists) {
+      if (playlist.id && !playlistCovers.has(playlist.id)) {
+        try {
+          const response = await axios.get(`${API_URL}/playlists/${playlist.id}/cover`, {
+            responseType: 'blob'
+          });
+          const url = URL.createObjectURL(response.data);
+          setPlaylistCovers(prev => new Map(prev).set(playlist.id, url));
+        } catch (err) {
+          console.error(`Failed to load cover for playlist ${playlist.id}:`, err);
+        }
+      }
+    }
+  };
+
+  const fetchArtistAvatars = async (artists: any[]) => {
+    for (const artist of artists) {
+      if (artist.id && !artistAvatars.has(artist.id)) {
+        try {
+          const response = await axios.get(`${API_URL}/artists/${artist.id}/avatar`, {
+            responseType: 'blob'
+          });
+          const url = URL.createObjectURL(response.data);
+          setArtistAvatars(prev => new Map(prev).set(artist.id, url));
+        } catch (err) {
+          console.error(`Failed to load avatar for artist ${artist.id}:`, err);
+        }
+      }
+    }
+  };
 
   const handleAddToPlaylist = (event: React.MouseEvent<HTMLElement>, track: TrackType) => {
     event.stopPropagation();
+    if (!isAuthenticated) {
+      navigate('/login', {
+        state: {
+          from: window.location.pathname,
+          message: 'Чтобы добавить трек в плейлист, необходимо войти',
+        },
+      });
+      return;
+    }
     setSelectedTrack(track);
     setMenuAnchorEl(event.currentTarget);
   };
@@ -452,137 +451,142 @@ const Search = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box component="form" onSubmit={handleSearch} sx={{ mb: 4 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Поиск..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Тип контента</InputLabel>
-              <Select
-                value={contentType}
-                label="Тип контента"
-                onChange={(e) => setContentType(e.target.value as ContentType)}
-              >
-                <MenuItem value="track">Треки</MenuItem>
-                <MenuItem value="album">Альбомы</MenuItem>
-                <MenuItem value="playlist">Плейлисты</MenuItem>
-                <MenuItem value="artist">Артисты</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          
-          <Grid item xs={12} md={2}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Страна"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
-              placeholder="Введите название страны"
-            />
-          </Grid>
-          
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <Autocomplete
-                options={genres}
-                getOptionLabel={(option) => option.title}
-                value={genre}
-                onChange={(_, newValue) => setGenre(newValue)}
-                loading={loadingGenres}
-                renderInput={(params) => (
+    <ErrorBoundary>
+      <Container maxWidth="lg">
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: 3 }}>
+            <form onSubmit={handleSearch}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} md={4}>
                   <TextField
-                    {...params}
-                    label="Жанр"
+                    fullWidth
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search for tracks, albums, artists, or playlists..."
                     InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <>
-                          {loadingGenres ? <CircularProgress color="inherit" size={20} /> : null}
-                          {params.InputProps.endAdornment}
-                        </>
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon />
+                        </InputAdornment>
                       ),
                     }}
                   />
-                )}
-              />
-            </FormControl>
-          </Grid>
+                </Grid>
+                
+                <Grid item xs={12} md={2}>
+                  <FormControl fullWidth>
+                    <InputLabel>Content Type</InputLabel>
+                    <Select
+                      value={contentType}
+                      label="Content Type"
+                      onChange={(e) => setContentType(e.target.value as ContentType)}
+                    >
+                      <MenuItem value="track">Tracks</MenuItem>
+                      <MenuItem value="album">Albums</MenuItem>
+                      <MenuItem value="playlist">Playlists</MenuItem>
+                      <MenuItem value="artist">Artists</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                
+                <Grid item xs={12} md={2}>
+                  <TextField
+                    fullWidth
+                    label="Country"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    placeholder="Enter country name"
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={2}>
+                  <FormControl fullWidth>
+                    <Autocomplete
+                      options={genres}
+                      getOptionLabel={(option) => option.title}
+                      value={genre}
+                      onChange={(_, newValue) => setGenre(newValue)}
+                      loading={loadingGenres}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Genre"
+                          InputProps={{
+                            ...params.InputProps,
+                            endAdornment: (
+                              <>
+                                {loadingGenres ? <CircularProgress color="inherit" size={20} /> : null}
+                                {params.InputProps.endAdornment}
+                              </>
+                            ),
+                          }}
+                        />
+                      )}
+                    />
+                  </FormControl>
+                </Grid>
 
-          <Grid item xs={12} md={2}>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              color="primary"
-              fullWidth
-              disabled={loading}
+                <Grid item xs={12} md={2}>
+                  <Button 
+                    type="submit" 
+                    variant="contained" 
+                    color="primary"
+                    fullWidth
+                    disabled={loading}
+                  >
+                    {loading ? <CircularProgress size={24} /> : "Search"}
+                  </Button>
+                </Grid>
+              </Grid>
+            </form>
+          </Box>
+
+          {renderResults()}
+
+          {isAuthenticated && (
+            <Menu
+              anchorEl={menuAnchorEl}
+              open={Boolean(menuAnchorEl)}
+              onClose={handleMenuClose}
+              PaperProps={{
+                sx: { 
+                  maxHeight: '280px',
+                  '& .MuiList-root': {
+                    padding: 0
+                  }
+                }
+              }}
+              MenuListProps={{
+                sx: {
+                  padding: 0
+                }
+              }}
             >
-              {loading ? <CircularProgress size={24} /> : "Поиск"}
-            </Button>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {renderResults()}
-
-      {/* Добавляем меню плейлистов */}
-      <Menu
-        anchorEl={menuAnchorEl}
-        open={Boolean(menuAnchorEl)}
-        onClose={handleMenuClose}
-        PaperProps={{
-          sx: { 
-            maxHeight: '280px',
-            '& .MuiList-root': {
-              padding: 0
-            }
-          }
-        }}
-        MenuListProps={{
-          sx: {
-            padding: 0
-          }
-        }}
-      >
-        {playlists.map((playlist) => (
-          <MenuItem 
-            key={playlist.id} 
-            onClick={() => handlePlaylistSelect(playlist.id)}
-            sx={{ 
-              minHeight: '40px',
-              '&:hover': {
-                backgroundColor: 'action.hover'
-              },
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <span>{playlist.name}</span>
-            {selectedTrack && isTrackInPlaylist(playlist, selectedTrack.id) && (
-              <CheckIcon sx={{ ml: 1, color: 'white' }} />
-            )}
-          </MenuItem>
-        ))}
-      </Menu>
-    </Container>
+              {playlists.map((playlist) => (
+                <MenuItem 
+                  key={playlist.id} 
+                  onClick={() => handlePlaylistSelect(playlist.id)}
+                  sx={{ 
+                    minHeight: '40px',
+                    '&:hover': {
+                      backgroundColor: 'action.hover'
+                    },
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <span>{playlist.name}</span>
+                  {selectedTrack && isTrackInPlaylist(playlist, selectedTrack.id) && (
+                    <CheckIcon sx={{ ml: 1, color: 'white' }} />
+                  )}
+                </MenuItem>
+              ))}
+            </Menu>
+          )}
+        </Box>
+      </Container>
+    </ErrorBoundary>
   );
 };
 

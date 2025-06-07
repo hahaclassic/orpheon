@@ -2,6 +2,7 @@ import { Box, styled } from '@mui/material';
 import Sidebar from './Sidebar';
 import PlayerBar from './PlayerBar';
 import { useState } from 'react';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 const LayoutContainer = styled(Box)({
   display: 'flex',
@@ -50,6 +51,7 @@ const PlayerBarContainer = styled(Box)({
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { isAuthenticated } = useAuthContext();
 
   return (
     <LayoutContainer>
@@ -61,9 +63,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <ContentArea>
           {children}
         </ContentArea>
-        <PlayerBarContainer>
-          <PlayerBar />
-        </PlayerBarContainer>
+        {isAuthenticated && (
+          <PlayerBarContainer>
+            <PlayerBar />
+          </PlayerBarContainer>
+        )}
       </MainContent>
     </LayoutContainer>
   );

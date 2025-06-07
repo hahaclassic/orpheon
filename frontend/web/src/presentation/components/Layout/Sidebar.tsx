@@ -133,7 +133,7 @@ const Sidebar = ({ isCollapsed, onToggleCollapse }: SidebarProps) => {
   };
 
   const handleProfileNavigate = () => {
-    navigate('/profile');
+    navigate('/me');
     handleProfileClose();
   };
 

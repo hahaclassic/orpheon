@@ -96,23 +96,11 @@ apiService.interceptors.response.use(
       headers: error.response?.headers,
     });
 
-    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/refresh')) {
-      try {
-        const refreshResponse = await axios.post(
-          `${API_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
-        
-        if (refreshResponse.data) {
-          const originalRequest = error.config;
-          return apiService(originalRequest);
-        }
-      } catch (refreshError) {
-        console.error('[API] Token refresh failed:', refreshError);
-        localStorage.removeItem('authState');
-        window.location.href = '/login';
-      }
+    if (error.response?.status === 401) {
+      // Если получили 401, значит бэкенд уже попытался обновить токен и не смог
+      console.error('[API] Authentication failed:', error);
+      localStorage.removeItem('authState');
+      window.location.href = '/login';
     }
 
     return Promise.reject(error);
