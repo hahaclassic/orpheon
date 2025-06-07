@@ -62,7 +62,7 @@ func (c *AlbumController) GetAllAlbums(ctx *gin.Context) {
 
 	aggregated, err := c.aggregator.GetAlbums(ctx.Request.Context(), albums...)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get all albums"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to aggregate all albums"})
 		return
 	}
 

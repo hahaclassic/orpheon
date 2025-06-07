@@ -1,6 +1,8 @@
 #!/bin/bash
 
-go test -covermode=atomic -coverprofile=./coverage/coverage.out ./internal/domain/services/... ./internal/adapters/... > coverage/result.log
+go test -covermode=atomic -coverprofile=./coverage/coverage.out ./internal/... ./cmd/... ./pkg/... > coverage/result.log
+
+# go test -covermode=atomic -coverprofile=./coverage/coverage.out ./internal/domain/services/... ./internal/adapters/... > coverage/result.log
 
 if [ $? -eq 0 ]; then
     if [[ "$1" == "-v" ]]; then 

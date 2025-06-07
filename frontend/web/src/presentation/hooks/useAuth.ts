@@ -48,7 +48,7 @@ export const useAuth = (initialPath: string = '/') => {
       isAuthenticated: savedState.isAuthenticated ?? false,
       isAdmin: savedState.isAdmin ?? false,
       user: savedState.user ?? null,
-      isLoading: true,
+    isLoading: true,
     };
   });
 
@@ -99,11 +99,11 @@ export const useAuth = (initialPath: string = '/') => {
   // Проверяем авторизацию при монтировании компонента
   useEffect(() => {
     const initAuth = async () => {
-      // Skip auth check for public routes
-      if (PUBLIC_ROUTES.includes(initialPath)) {
-        setState(prev => ({ ...prev, isLoading: false }));
-        return;
-      }
+    // Skip auth check for public routes
+    if (PUBLIC_ROUTES.includes(initialPath)) {
+      setState(prev => ({ ...prev, isLoading: false }));
+      return;
+    }
       await checkAuth();
     };
     initAuth();

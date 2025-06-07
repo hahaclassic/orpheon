@@ -85,7 +85,7 @@ func (p *PlaylistMetaService) GetUserAllPlaylistsMeta(ctx context.Context, claim
 	}
 
 	// if user is owner, show all playlists (user can see all his playlists)
-	if claims.UserID == userID {
+	if claims != nil && claims.UserID == userID {
 		return playlists, nil
 	}
 

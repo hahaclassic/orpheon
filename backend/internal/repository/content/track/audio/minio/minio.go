@@ -51,8 +51,6 @@ func (r *AudioFileRepository) UploadAudioFile(ctx context.Context, chunk *entity
 func (r *AudioFileRepository) GetAudioChunk(ctx context.Context, chunk *entity.AudioChunk) (*entity.AudioChunk, error) {
 	objectName := chunk.TrackID.String()
 
-	slog.Info("getting audio chunk from MinIO", "objectName", objectName)
-
 	opts := minio.GetObjectOptions{}
 	if err := opts.SetRange(chunk.Start, chunk.End-1); err != nil {
 		return nil, fmt.Errorf("invalid range: %w", err)

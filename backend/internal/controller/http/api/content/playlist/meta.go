@@ -209,7 +209,7 @@ func (c *PlaylistMetaController) GetMyPlaylists(ctx *gin.Context) {
 func (c *PlaylistMetaController) GetUserPlaylists(ctx *gin.Context) {
 	claims := ctxclaims.GetClaims(ctx)
 
-	userID, err := uuid.Parse(ctx.Param("user_id"))
+	userID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return

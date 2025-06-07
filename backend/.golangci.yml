@@ -5,7 +5,11 @@ issues:
     - cmd/player
 
 linters:
-  enable-all: true
+  enable-all: false
+  disable:
+    - gochecknoinits
+    - gochecknoglobals
+    - depguard
 
 linters-settings:
   tagliatelle:

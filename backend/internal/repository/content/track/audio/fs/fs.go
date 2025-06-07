@@ -53,8 +53,6 @@ func (r *AudioFileRepository) UploadAudioFile(ctx context.Context, chunk *entity
 func (r *AudioFileRepository) GetAudioChunk(ctx context.Context, chunk *entity.AudioChunk) (*entity.AudioChunk, error) {
 	path := r.filePath(chunk.TrackID)
 
-	slog.Info("getting audio chunk from FS", "path", path)
-
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file for reading: %w", err)

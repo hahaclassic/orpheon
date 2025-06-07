@@ -154,7 +154,7 @@ const PlaylistCard = ({
           </IconButton>
           <Typography variant="body2" color="white">
             {localRating}
-          </Typography>
+        </Typography>
         </Box>
       </CardContent>
     </Card>

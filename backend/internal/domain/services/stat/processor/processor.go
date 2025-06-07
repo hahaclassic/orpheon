@@ -50,7 +50,12 @@ func (s *ListeningStatService) UpdateStat(ctx context.Context, event *entity.Lis
 		return err
 	}
 
-	if totalDuration >= MinSeconds || (totalDuration-sumSegments(segments)) < MinDiffForSmallTrack {
+	diffTotal := totalDuration - sumSegments(segments)
+	if diffTotal < 0 {
+		diffTotal *= -1
+	}
+
+	if totalDuration >= MinSeconds || diffTotal < MinDiffForSmallTrack {
 		if err = s.trackRepo.IncrementTrackTotalStreams(ctx, event.TrackID); err != nil {
 			return err
 		}
