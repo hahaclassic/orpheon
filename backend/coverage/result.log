@@ -1,0 +1,113 @@
+	github.com/hahaclassic/orpheon/backend/internal/adapters/audio-converter		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/adapters/event-bus/in-memory		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/adapters/event-bus/kafka		coverage: 0.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/adapters/password-hasher/bcrypt-hasher	0.210s	coverage: 100.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/adapters/tokens/jwt	2.508s	coverage: 66.7% of statements
+	github.com/hahaclassic/orpheon/backend/internal/app		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/cli		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/config		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/auth		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/content/album		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/content/artist		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/content/genre		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/content/license		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/content/playlist		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/content/search		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/content/track		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/player		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/api/user		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/output		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/player		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/cli/session		coverage: 0.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/controller/http/api/auth	0.004s	coverage: 0.0% of statements [no tests to run]
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/album		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/artist		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/genre		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/license		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/playlist		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/search		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/api/content/track		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/api/stat		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/api/user		coverage: 0.0% of statements
+?   	github.com/hahaclassic/orpheon/backend/internal/controller/http/dto	[no test files]
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/middleware		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/router		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/router/router-registrators/album		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/router/router-registrators/artist		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/router/router-registrators/playlist		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/router/router-registrators/track		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/router/router-registrators/user-me		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/cookie		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/domain/entity		coverage: 0.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/auth	0.005s	coverage: 75.4% of statements
+	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/aggregator		coverage: 0.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/cover	0.004s	coverage: 100.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/meta	0.005s	coverage: 85.7% of statements
+	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/tracks		coverage: 0.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/assign	0.005s	coverage: 24.4% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/avatar	0.005s	coverage: 100.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/meta	0.006s	coverage: 83.3% of statements
+	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre/assign		coverage: 0.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre/meta	0.005s	coverage: 79.4% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/license	0.005s	coverage: 87.1% of statements
+	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/aggregator		coverage: 0.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/cover	0.007s	coverage: 100.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/deleter	0.007s	coverage: 90.3% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/favorites	0.007s	coverage: 75.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/meta	0.007s	coverage: 95.5% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/policy	0.011s	coverage: 88.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/privacy	0.008s	coverage: 100.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/tracks	0.007s	coverage: 58.3% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/search	0.006s	coverage: 95.5% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/audio	0.005s	coverage: 95.2% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/meta	0.005s	coverage: 93.5% of statements
+	github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/segment		coverage: 0.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/stat/consumer	0.004s	coverage: 100.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/stat/processor	0.005s	coverage: 97.7% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/stat/publisher	0.004s	coverage: 100.0% of statements
+ok  	github.com/hahaclassic/orpheon/backend/internal/domain/services/user	0.006s	coverage: 96.0% of statements
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/auth	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/genre	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/license	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/search	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/track	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/stat	[no test files]
+?   	github.com/hahaclassic/orpheon/backend/internal/domain/usecases/user	[no test files]
+	github.com/hahaclassic/orpheon/backend/internal/infrastructure/minio		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/infrastructure/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/infrastructure/redis		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/auth/auth-repo/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/auth/refresh-token/redis		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/album/cover/minio		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/album/meta/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/album/tracks/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/artist/assign/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/artist/avatar/minio		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/artist/meta/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/genre/assign/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/genre/meta/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/license/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/access-cache/local		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/access-cache/redis		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/access-meta/default/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/access-meta/with-cache		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/cover/minio		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/favorites/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/meta/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/playlist/tracks/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/search/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/track/audio/minio		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/track/meta/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/content/track/segment/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/internal/repository/user/postgres		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/cmd/cli		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/cmd/orpheon		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/pkg/cmdrouter		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/pkg/errwrap		coverage: 0.0% of statements
+	github.com/hahaclassic/orpheon/backend/pkg/table		coverage: 0.0% of statements
