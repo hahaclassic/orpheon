@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -65,6 +66,24 @@ func TestRegisterUser(t *testing.T) {
 	tokenService.AssertExpectations(t)
 }
 
+func TestAuthServiceRegisterUser_HasherError(t *testing.T) {
+	ctx := context.Background()
+	authRepo := mocks.NewAuthRepository(t)
+	refreshRepo := mocks.NewRefreshTokenRepository(t)
+	userCreator := mocks.NewUserCreatorService(t)
+	hasher := mocks.NewPasswordHasher(t)
+	tokenService := mocks.NewTokenService(t)
+
+	creds := &entity.UserCredentials{Login: "test", Password: "pass"}
+	hasher.On("GenerateFromPassword", creds.Password).Return("", errors.New("hash error"))
+
+	s := NewAuthService(authRepo, refreshRepo, userCreator, hasher, tokenService)
+	tokens, err := s.RegisterUser(ctx, creds)
+
+	assert.Error(t, err)
+	assert.Nil(t, tokens)
+}
+
 func TestAuthService_Login(t *testing.T) {
 	authRepo := mocks.NewAuthRepository(t)
 	refreshRepo := mocks.NewRefreshTokenRepository(t)
@@ -97,6 +116,45 @@ func TestAuthService_Login(t *testing.T) {
 	assert.Equal(t, &entity.AuthTokens{Access: accessToken, Refresh: refreshToken}, tokens)
 }
 
+func TestAuthService_Login_GetPasswordError(t *testing.T) {
+	ctx := context.Background()
+	authRepo := mocks.NewAuthRepository(t)
+	refreshRepo := mocks.NewRefreshTokenRepository(t)
+	userCreator := mocks.NewUserCreatorService(t)
+	hasher := mocks.NewPasswordHasher(t)
+	tokenService := mocks.NewTokenService(t)
+
+	creds := &entity.UserCredentials{Login: "user", Password: "pass"}
+	authRepo.On("GetPasswordByLogin", ctx, creds.Login).Return("", errors.New("db error"))
+
+	s := NewAuthService(authRepo, refreshRepo, userCreator, hasher, tokenService)
+	tokens, err := s.Login(ctx, creds)
+
+	assert.Error(t, err)
+	assert.Nil(t, tokens)
+}
+
+func TestAuthService_Login_InvalidPassword(t *testing.T) {
+	ctx := context.Background()
+	authRepo := mocks.NewAuthRepository(t)
+	refreshRepo := mocks.NewRefreshTokenRepository(t)
+	userCreator := mocks.NewUserCreatorService(t)
+	hasher := mocks.NewPasswordHasher(t)
+	tokenService := mocks.NewTokenService(t)
+
+	creds := &entity.UserCredentials{Login: "user", Password: "wrong"}
+	hashed := "hashed"
+	authRepo.On("GetPasswordByLogin", ctx, creds.Login).Return(hashed, nil)
+	hasher.On("CompareHashAndPassword", hashed, creds.Password).Return(errors.New("mismatch"))
+
+	s := NewAuthService(authRepo, refreshRepo, userCreator, hasher, tokenService)
+	tokens, err := s.Login(ctx, creds)
+
+	assert.Error(t, err)
+	assert.Nil(t, tokens)
+	assert.ErrorIs(t, err, ErrInvalidCredentials)
+}
+
 func TestAuthService_Logout(t *testing.T) {
 	refreshRepo := mocks.NewRefreshTokenRepository(t)
 	authRepo := mocks.NewAuthRepository(t)
@@ -112,6 +170,23 @@ func TestAuthService_Logout(t *testing.T) {
 
 	err := s.Logout(ctx, refreshToken)
 	assert.NoError(t, err)
+}
+
+func TestAuthService_Logout_DeleteError(t *testing.T) {
+	ctx := context.Background()
+	refreshRepo := mocks.NewRefreshTokenRepository(t)
+	authRepo := mocks.NewAuthRepository(t)
+	userCreator := mocks.NewUserCreatorService(t)
+	hasher := mocks.NewPasswordHasher(t)
+	tokenService := mocks.NewTokenService(t)
+
+	refreshToken := "refresh"
+	refreshRepo.On("Delete", ctx, refreshToken).Return(errors.New("delete error"))
+
+	s := NewAuthService(authRepo, refreshRepo, userCreator, hasher, tokenService)
+	err := s.Logout(ctx, refreshToken)
+
+	assert.Error(t, err)
 }
 
 func TestAuthService_RefreshTokens(t *testing.T) {
@@ -140,6 +215,24 @@ func TestAuthService_RefreshTokens(t *testing.T) {
 	assert.Equal(t, &entity.AuthTokens{Access: access, Refresh: newRefresh}, tokens)
 }
 
+func TestAuthService_RefreshTokens_GetError(t *testing.T) {
+	ctx := context.Background()
+	refreshRepo := mocks.NewRefreshTokenRepository(t)
+	authRepo := mocks.NewAuthRepository(t)
+	userCreator := mocks.NewUserCreatorService(t)
+	hasher := mocks.NewPasswordHasher(t)
+	tokenService := mocks.NewTokenService(t)
+
+	oldRefresh := "old"
+	refreshRepo.On("Get", ctx, oldRefresh).Return(nil, errors.New("get error"))
+
+	s := NewAuthService(authRepo, refreshRepo, userCreator, hasher, tokenService)
+	tokens, err := s.RefreshTokens(ctx, oldRefresh)
+
+	assert.Error(t, err)
+	assert.Nil(t, tokens)
+}
+
 func TestAuthService_UpdatePassword(t *testing.T) {
 	refreshRepo := mocks.NewRefreshTokenRepository(t)
 	authRepo := mocks.NewAuthRepository(t)
@@ -164,6 +257,43 @@ func TestAuthService_UpdatePassword(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestAuthService_UpdatePassword_GetPasswordError(t *testing.T) {
+	ctx := context.Background()
+	refreshRepo := mocks.NewRefreshTokenRepository(t)
+	authRepo := mocks.NewAuthRepository(t)
+	userCreator := mocks.NewUserCreatorService(t)
+	hasher := mocks.NewPasswordHasher(t)
+	tokenService := mocks.NewTokenService(t)
+
+	userID := uuid.New()
+	authRepo.On("GetPasswordByID", ctx, userID).Return("", errors.New("db error"))
+
+	s := NewAuthService(authRepo, refreshRepo, userCreator, hasher, tokenService)
+	err := s.UpdatePassword(ctx, userID, &entity.UserPasswords{Old: "old", New: "new"})
+
+	assert.Error(t, err)
+}
+
+func TestAuthService_UpdatePassword_InvalidOldPassword(t *testing.T) {
+	ctx := context.Background()
+	refreshRepo := mocks.NewRefreshTokenRepository(t)
+	authRepo := mocks.NewAuthRepository(t)
+	userCreator := mocks.NewUserCreatorService(t)
+	hasher := mocks.NewPasswordHasher(t)
+	tokenService := mocks.NewTokenService(t)
+
+	userID := uuid.New()
+	hashed := "hashed"
+	authRepo.On("GetPasswordByID", ctx, userID).Return(hashed, nil)
+	hasher.On("CompareHashAndPassword", hashed, "wrong").Return(errors.New("mismatch"))
+
+	s := NewAuthService(authRepo, refreshRepo, userCreator, hasher, tokenService)
+	err := s.UpdatePassword(ctx, userID, &entity.UserPasswords{Old: "wrong", New: "new"})
+
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidCredentials)
+}
+
 func TestAuthService_GetClaims(t *testing.T) {
 	tokenService := mocks.NewTokenService(t)
 	refreshRepo := mocks.NewRefreshTokenRepository(t)
@@ -182,4 +312,22 @@ func TestAuthService_GetClaims(t *testing.T) {
 	parsed, err := s.GetClaims(ctx, token)
 	assert.NoError(t, err)
 	assert.Equal(t, claims, parsed)
+}
+
+func TestAuthService_GetClaims_ParseError(t *testing.T) {
+	ctx := context.Background()
+	tokenService := mocks.NewTokenService(t)
+	refreshRepo := mocks.NewRefreshTokenRepository(t)
+	authRepo := mocks.NewAuthRepository(t)
+	userCreator := mocks.NewUserCreatorService(t)
+	hasher := mocks.NewPasswordHasher(t)
+
+	token := "badtoken"
+	tokenService.On("ParseAccessToken", token).Return(nil, errors.New("parse error"))
+
+	s := NewAuthService(authRepo, refreshRepo, userCreator, hasher, tokenService)
+	claims, err := s.GetClaims(ctx, token)
+
+	assert.Error(t, err)
+	assert.Nil(t, claims)
 }
