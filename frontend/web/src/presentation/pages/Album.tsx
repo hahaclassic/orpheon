@@ -53,7 +53,7 @@ const AlbumPage = () => {
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const { state, controls } = usePlayerContext();
   const { currentTrack, isPlaying } = state;
-  const { setTrack, togglePlay } = controls;
+  const { startPlayback, togglePlay } = controls;
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
@@ -132,7 +132,7 @@ const AlbumPage = () => {
       if (currentTrack?.id === trackId) {
         togglePlay();
       } else {
-        controls.startPlayback(track, tracks);
+        startPlayback(track, tracks);
       }
     }
   };
@@ -342,8 +342,7 @@ const AlbumPage = () => {
             onTrackClick={handleTrackClick}
             onAddToPlaylist={handleAddToPlaylist}
             showTrackNumber={true}
-            showAlbumLink={true}
-            albumId={id}
+            showAlbumLink={false}
           />
         </Grid>
       </Grid>

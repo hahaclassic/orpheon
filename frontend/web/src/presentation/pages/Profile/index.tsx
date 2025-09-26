@@ -22,12 +22,14 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import LockIcon from '@mui/icons-material/Lock';
 import EditIcon from '@mui/icons-material/Edit';
 import ImageIcon from '@mui/icons-material/Image';
 import axios from 'axios';
 import { apiService } from '../../services/api';
 import { useAuthContext } from '../../contexts/AuthContext';
+import PlaylistCard from '../../components/ContentCards/PlaylistCard';
 
 interface User {
   id: string;
@@ -43,9 +45,23 @@ interface Playlist {
   coverImage?: string;
   trackCount: number;
   is_favorite: boolean;
+  rating: number;
+  owner: {
+    id: string;
+    name: string;
+  };
 }
 
-const Profile = () => {
+export const Profile = () => {
+  const { user, updateUser } = useAuthContext();
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    birth_date: user?.birth_date && user.birth_date !== '0001-01-01T00:00:00Z' 
+      ? new Date(user.birth_date).toISOString().split('T')[0] 
+      : '',
+  });
+  const [error, setError] = useState<string>('');
   const [activeTab, setActiveTab] = useState(0);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -54,20 +70,23 @@ const Profile = () => {
     confirm: '',
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-
-  const [user, setUser] = useState<User | null>(null);
+  const [success, setSuccess] = useState<string>('');
   const [myPlaylists, setMyPlaylists] = useState<Playlist[]>([]);
   const [favoritePlaylists, setFavoritePlaylists] = useState<Playlist[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: '',
-    birth_date: '',
-  });
 
   const navigate = useNavigate();
-  const { user: authUser } = useAuthContext();
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        birth_date: user.birth_date && user.birth_date !== '0001-01-01T00:00:00Z'
+          ? new Date(user.birth_date).toISOString().split('T')[0]
+          : '',
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -102,7 +121,6 @@ const Profile = () => {
           loadPlaylistCovers(favoritePlaylistsData)
         ]);
 
-        setUser(userData);
         setMyPlaylists(myPlaylistsWithCovers);
         setFavoritePlaylists(favoritePlaylistsWithCovers);
       } catch (err) {
@@ -123,14 +141,14 @@ const Profile = () => {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    setError('');
+    setSuccess('');
     if (passwordData.new !== passwordData.confirm) {
       setError('Новые пароли не совпадают');
       return;
     }
     try {
-      await apiService.put('/me/password', {
+      await apiService.post('/auth/password/update', {
         old: passwordData.old,
         new: passwordData.new
       });
@@ -142,26 +160,20 @@ const Profile = () => {
     }
   };
 
-  const handleEditClick = () => {
-    if (user) {
-      setEditForm({
-        name: user.name,
-        birth_date: user.birth_date === '0001-01-01T00:00:00Z' ? '' : user.birth_date.split('T')[0],
-      });
-      setEditDialogOpen(true);
-    }
-  };
-
   const handleEditSubmit = async () => {
     try {
-      const updatedUser = await apiService.put('/me', {
-        name: editForm.name,
-        birth_date: editForm.birth_date ? new Date(editForm.birth_date).toISOString() : '0001-01-01T00:00:00Z'
+      if (!user) return;
+      
+      const updatedUser = await updateUser({
+        id: user.id,
+        name: formData.name,
+        registration_date: user.registration_date,
+        birth_date: formData.birth_date ? new Date(formData.birth_date).toISOString() : '0001-01-01T00:00:00Z',
+        access_lvl: user.access_lvl
       });
-      setUser(updatedUser);
       setEditDialogOpen(false);
+      setSuccess('Профиль успешно обновлен');
     } catch (err) {
-      console.error('Error updating profile:', err);
       setError('Ошибка при обновлении профиля');
     }
   };
@@ -208,7 +220,7 @@ const Profile = () => {
             <Button
               variant="outlined"
               startIcon={<EditIcon />}
-              onClick={handleEditClick}
+              onClick={() => setEditDialogOpen(true)}
               sx={{ mr: 2 }}
             >
               Редактировать
@@ -236,11 +248,11 @@ const Profile = () => {
                       mr: 2
                     }}
                   >
-                    {user.name.charAt(0).toUpperCase()}
+                    {user.name ? user.name.charAt(0).toUpperCase() : '?'}
                   </Avatar>
                   <Box>
                     <Typography variant="h5" gutterBottom>
-                      {user.name}
+                      {user.name || 'Без имени'}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {user.access_lvl === 1 ? 'Администратор' : 'Пользователь'}
@@ -305,55 +317,26 @@ const Profile = () => {
                 ) : (
                   myPlaylists.map((playlist) => (
                     <Grid item xs={12} sm={6} md={3} key={playlist.id}>
-                      <Card
-                        sx={{
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            transform: 'scale(1.02)',
-                            transition: 'transform 0.2s ease-in-out',
-                          },
+                      <PlaylistCard
+                        id={playlist.id}
+                        name={playlist.name}
+                        coverUrl={playlist.coverImage}
+                        isFavorite={playlist.is_favorite}
+                        rating={playlist.rating || 0}
+                        owner={playlist.owner}
+                        onFavoriteChange={(isFavorite) => {
+                          // Обновляем локальное состояние плейлиста
+                          setMyPlaylists(prev => prev.map(p => 
+                            p.id === playlist.id 
+                              ? { 
+                                  ...p, 
+                                  is_favorite: isFavorite,
+                                  rating: isFavorite ? (p.rating || 0) + 1 : (p.rating || 0) - 1
+                                }
+                              : p
+                          ));
                         }}
-                        onClick={() => handlePlaylistClick(playlist.id)}
-                      >
-                        {playlist.coverImage ? (
-                          <CardMedia
-                            component="img"
-                            sx={{
-                              height: 250,
-                              width: '100%',
-                              objectFit: 'cover',
-                              aspectRatio: '1/1'
-                            }}
-                            image={playlist.coverImage}
-                            alt={playlist.name}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              height: 250,
-                              width: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              bgcolor: 'primary.dark',
-                              borderRadius: 2,
-                            }}
-                          >
-                            <ImageIcon sx={{ fontSize: 64, color: 'primary.contrastText', opacity: 0.3 }} />
-                          </Box>
-                        )}
-                        <CardContent>
-                          <Typography gutterBottom variant="h6" component="div" noWrap>
-                            {playlist.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {playlist.trackCount} треков
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                      />
                     </Grid>
                   ))
                 )}
@@ -374,55 +357,26 @@ const Profile = () => {
                 ) : (
                   favoritePlaylists.map((playlist) => (
                     <Grid item xs={12} sm={6} md={3} key={playlist.id}>
-                      <Card
-                        sx={{
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            transform: 'scale(1.02)',
-                            transition: 'transform 0.2s ease-in-out',
-                          },
+                      <PlaylistCard
+                        id={playlist.id}
+                        name={playlist.name}
+                        coverUrl={playlist.coverImage}
+                        isFavorite={playlist.is_favorite}
+                        rating={playlist.rating || 0}
+                        owner={playlist.owner}
+                        onFavoriteChange={(isFavorite) => {
+                          // Обновляем локальное состояние плейлиста
+                          setFavoritePlaylists(prev => prev.map(p => 
+                            p.id === playlist.id 
+                              ? { 
+                                  ...p, 
+                                  is_favorite: isFavorite,
+                                  rating: isFavorite ? (p.rating || 0) + 1 : (p.rating || 0) - 1
+                                }
+                              : p
+                          ));
                         }}
-                        onClick={() => handlePlaylistClick(playlist.id)}
-                      >
-                        {playlist.coverImage ? (
-                          <CardMedia
-                            component="img"
-                            sx={{
-                              height: 250,
-                              width: '100%',
-                              objectFit: 'cover',
-                              aspectRatio: '1/1'
-                            }}
-                            image={playlist.coverImage}
-                            alt={playlist.name}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              height: 250,
-                              width: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              bgcolor: 'primary.dark',
-                              borderRadius: 2,
-                            }}
-                          >
-                            <ImageIcon sx={{ fontSize: 64, color: 'primary.contrastText', opacity: 0.3 }} />
-                          </Box>
-                        )}
-                        <CardContent>
-                          <Typography gutterBottom variant="h6" component="div" noWrap>
-                            {playlist.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {playlist.trackCount} треков
-                          </Typography>
-                        </CardContent>
-                      </Card>
+                      />
                     </Grid>
                   ))
                 )}
@@ -488,17 +442,25 @@ const Profile = () => {
             <TextField
               fullWidth
               label="Имя пользователя"
-              value={editForm.name}
-              onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               sx={{ mb: 2 }}
             />
-            <TextField
-              fullWidth
+            <DatePicker
               label="Дата рождения"
-              type="date"
-              value={editForm.birth_date}
-              onChange={(e) => setEditForm(prev => ({ ...prev, birth_date: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
+              value={formData.birth_date ? new Date(formData.birth_date) : null}
+              onChange={(date) => {
+                setFormData(prev => ({
+                  ...prev,
+                  birth_date: date ? date.toISOString().split('T')[0] : ''
+                }));
+              }}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  margin: 'dense'
+                }
+              }}
             />
           </Box>
         </DialogContent>

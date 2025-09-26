@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -9,6 +9,7 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import Home from './pages/Home';
+import Search from './pages/Search';
 import Profile from './pages/Profile';
 import Me from './pages/Me';
 import GenreList from './pages/Admin/GenreList';
@@ -21,7 +22,6 @@ const ProtectedRoutes = () => {
   return (
     <ProtectedRoute>
       <Routes>
-        <Route path="/" element={<Home />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/me" element={<Me />} />
         
@@ -37,25 +37,44 @@ const ProtectedRoutes = () => {
   );
 };
 
+const AuthProviderWithLocation = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  return <AuthProvider initialPath={location.pathname}>{children}</AuthProvider>;
+};
+
 const App = () => {
   return (
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
         <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <AuthProvider>
-            <PlayerProvider>
-              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <AuthProviderWithLocation>
+              <PlayerProvider>
                 <Routes>
                   <Route path="/login" element={<Navigate to="/auth/login" replace />} />
                   <Route path="/register" element={<Navigate to="/auth/register" replace />} />
                   
                   <Route element={<Layout />}>
-                    <Route path="/*" element={<ProtectedRoutes />} />
+                    {/* Public routes */}
+                    <Route path="/" element={<Home />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route path="/artists" element={<ArtistList />} />
+                    <Route path="/artists/:id" element={<ArtistList />} />
+                    <Route path="/albums" element={<AlbumList />} />
+                    <Route path="/albums/:id" element={<AlbumList />} />
+                    <Route path="/playlists" element={<AlbumList />} />
+                    <Route path="/playlists/:id" element={<AlbumList />} />
+                    <Route path="/tracks/:id" element={<AlbumList />} />
+                    
+                    {/* Protected routes */}
+                    <Route path="/profile/*" element={<ProtectedRoutes />} />
+                    <Route path="/me/*" element={<ProtectedRoutes />} />
+                    <Route path="/admin/*" element={<ProtectedRoutes />} />
                   </Route>
                 </Routes>
-              </BrowserRouter>
-            </PlayerProvider>
-          </AuthProvider>
+              </PlayerProvider>
+            </AuthProviderWithLocation>
+          </BrowserRouter>
         </LocalizationProvider>
       </ThemeProvider>
     </ErrorBoundary>

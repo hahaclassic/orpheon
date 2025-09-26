@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Track } from '../types';
+import api from '../../core/infrastructure/services/api';
 
 interface PlayerState {
   currentTrack: Track | null;
@@ -18,6 +19,8 @@ interface QueueManager {
   getQueue: () => Track[];
   setContextTracks: (tracks: Track[]) => void;
   getContextTracks: () => Track[];
+  setCurrentIndex: (index: number) => void;
+  getCurrentIndex: () => number;
 }
 
 interface AudioPlayer {
@@ -36,6 +39,7 @@ class TrackQueue implements QueueManager {
   private queue: Track[] = [];
   private history: Track[] = [];
   private contextTracks: Track[] = [];
+  private currentIndex: number = -1;
 
   addToQueue(tracks: Track[]): void {
     this.queue.push(...tracks);
@@ -44,6 +48,7 @@ class TrackQueue implements QueueManager {
   clearQueue(): void {
     this.queue = [];
     this.history = [];
+    this.currentIndex = -1;
   }
 
   setContextTracks(tracks: Track[]): void {
@@ -54,22 +59,28 @@ class TrackQueue implements QueueManager {
     return [...this.contextTracks];
   }
 
+  setCurrentIndex(index: number): void {
+    this.currentIndex = index;
+  }
+
+  getCurrentIndex(): number {
+    return this.currentIndex;
+  }
+
   getNextTrack(): Track | null {
-    if (this.queue.length === 0) return null;
-    const nextTrack = this.queue.shift();
-    if (nextTrack) {
-      this.history.push(nextTrack);
+    if (this.currentIndex < this.contextTracks.length - 1) {
+      this.currentIndex++;
+      return this.contextTracks[this.currentIndex];
     }
-    return nextTrack || null;
+    return null;
   }
 
   getPreviousTrack(): Track | null {
-    if (this.history.length === 0) return null;
-    const previousTrack = this.history.pop();
-    if (previousTrack) {
-      this.queue.unshift(previousTrack);
+    if (this.currentIndex > 0) {
+      this.currentIndex--;
+      return this.contextTracks[this.currentIndex];
     }
-    return previousTrack || null;
+    return null;
   }
 
   getQueue(): Track[] {
@@ -131,17 +142,72 @@ const initialState: PlayerState = {
   queue: [],
 };
 
+// Функция для сохранения состояния в localStorage
+const saveStateToStorage = (state: PlayerState) => {
+  try {
+    localStorage.setItem('playerState', JSON.stringify({
+      ...state,
+      currentTrack: state.currentTrack ? {
+        id: state.currentTrack.id,
+        name: state.currentTrack.name,
+        duration: state.currentTrack.duration,
+        artists: state.currentTrack.artists,
+        coverUrl: state.currentTrack.coverUrl,
+      } : null,
+      queue: state.queue.map(track => ({
+        id: track.id,
+        name: track.name,
+        duration: track.duration,
+        artists: track.artists,
+        coverUrl: track.coverUrl,
+      })),
+    }));
+  } catch (error) {
+    console.error('Failed to save player state:', error);
+  }
+};
+
+// Функция для загрузки состояния из localStorage
+const loadStateFromStorage = (): PlayerState => {
+  try {
+    const savedState = localStorage.getItem('playerState');
+    if (savedState) {
+      return JSON.parse(savedState);
+    }
+  } catch (error) {
+    console.error('Failed to load player state:', error);
+  }
+  return initialState;
+};
+
 export const usePlayer = () => {
-  const [state, setState] = useState<PlayerState>(initialState);
+  const [state, setState] = useState<PlayerState>(loadStateFromStorage);
   const playerRef = useRef<AudioPlayer>(new HTMLAudioPlayer());
   const queueManagerRef = useRef<QueueManager>(new TrackQueue());
 
   const updateState = useCallback((updates: Partial<PlayerState>) => {
-    setState(prev => ({ ...prev, ...updates }));
+    setState(prev => {
+      const newState = { ...prev, ...updates };
+      saveStateToStorage(newState);
+      return newState;
+    });
+  }, []);
+
+  // Восстанавливаем состояние при инициализации
+  useEffect(() => {
+    if (state.currentTrack) {
+      const audioUrl = `${api.defaults.baseURL}/tracks/${state.currentTrack.id}/audio`;
+      playerRef.current.setSrc(audioUrl);
+      playerRef.current.setVolume(state.volume);
+      playerRef.current.setProgress(state.progress);
+      if (state.isPlaying) {
+        playerRef.current.play();
+      }
+    }
   }, []);
 
   const setTrack = useCallback((track: Track) => {
-    const audioUrl = `http://localhost:8080/api/v1/tracks/${track.id}/audio`;
+    const audioUrl = `${api.defaults.baseURL}/tracks/${track.id}/audio`;
     playerRef.current.setSrc(audioUrl);
     updateState({
       currentTrack: track,
@@ -196,12 +262,8 @@ export const usePlayer = () => {
     const trackIndex = contextTracks.findIndex(t => t.id === track.id);
     if (trackIndex === -1) return;
 
-    // Очищаем текущую очередь
-    queueManagerRef.current.clearQueue();
-    
-    // Добавляем в очередь все треки после выбранного
-    const remainingTracks = contextTracks.slice(trackIndex + 1);
-    queueManagerRef.current.addToQueue(remainingTracks);
+    // Устанавливаем текущий индекс
+    queueManagerRef.current.setCurrentIndex(trackIndex);
     
     // Устанавливаем выбранный трек как текущий
     setTrack(track);

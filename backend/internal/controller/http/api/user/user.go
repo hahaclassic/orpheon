@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/user"
@@ -22,24 +22,8 @@ func NewUserController(userService user.UserService) *UserController {
 	}
 }
 
-func (c *UserController) RegisterRoutes(router *gin.RouterGroup) {
-	// me := router.Group("/me")
-	// {
-	// 	me.GET("", c.GetMe)
-	// 	me.PUT("", c.UpdateMe)
-	// 	me.DELETE("", c.DeleteMe)
-	// }
-
-	// users := router.Group("/users")
-	// {
-	// 	users.GET("/:id", c.GetUser)
-	// 	users.PUT("/me", c.UpdateMe)
-	// 	users.DELETE("/me", c.DeleteMe)
-	// }
-}
-
 func (c *UserController) GetMe(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -76,7 +60,7 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 }
 
 func (c *UserController) UpdateMe(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -87,6 +71,8 @@ func (c *UserController) UpdateMe(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
+
+	userInfo.ID = claims.UserID
 
 	if err := c.userService.UpdateUser(ctx.Request.Context(), claims, &userInfo); err != nil {
 		if errors.Is(err, commonerr.ErrForbidden) {
@@ -101,7 +87,7 @@ func (c *UserController) UpdateMe(ctx *gin.Context) {
 }
 
 func (c *UserController) DeleteUser(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

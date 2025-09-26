@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
@@ -130,7 +130,7 @@ func (c *SearchController) searchArtists(ctx *gin.Context, searchRequest *entity
 }
 
 func (c *SearchController) searchPlaylists(ctx *gin.Context, searchRequest *entity.SearchRequest) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 
 	result, err := c.searchService.SearchPlaylists(ctx.Request.Context(), claims, searchRequest)
 	if err != nil {

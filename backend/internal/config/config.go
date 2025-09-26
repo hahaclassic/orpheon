@@ -8,10 +8,6 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-const (
-	configPath = ".env"
-)
-
 type HTTPConfig struct {
 	Host string `env:"HOST"`
 	Port string `env:"PORT"`
@@ -77,6 +73,16 @@ type CookieConfig struct {
 	AccessTTL  time.Duration `env:"COOKIE_ACCESS_TTL"`
 }
 
+type AudioStorageConfig struct {
+	Type     string `env:"AUDIO_STORAGE_TYPE"`
+	BasePath string `env:"AUDIO_STORAGE_BASE_PATH"`
+}
+
+type LoggerConfig struct {
+	Level string `env:"LOG_LEVEL"`
+	Path  string `env:"LOG_PATH"`
+}
+
 type Config struct {
 	HTTP                 HTTPConfig
 	Postgres             PostgresConfig
@@ -88,6 +94,8 @@ type Config struct {
 	RedisAccessMetaCache RedisAccessMetaConfig
 	LocalAccessMetaCache LocalAccessMetaConfig
 	Cookie               CookieConfig
+	AudioStorage         AudioStorageConfig
+	Logger               LoggerConfig
 }
 
 var (
@@ -95,7 +103,7 @@ var (
 	once sync.Once
 )
 
-func MustLoad() *Config {
+func MustLoad(configPath string) *Config {
 	once.Do(func() {
 		log.Println("Loading config from environment variables...")
 		cfg = &Config{}

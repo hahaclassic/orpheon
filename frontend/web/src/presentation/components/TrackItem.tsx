@@ -11,6 +11,7 @@ import {
 import { PlayArrow, Pause, Add as AddIcon, MoreVert, Headphones } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { usePlayerContext } from '../contexts/PlayerContext';
+import { useAuthContext } from '../contexts/AuthContext';
 import type { Track } from '../types';
 import React from 'react';
 
@@ -21,6 +22,7 @@ interface TrackItemProps {
   onAddToPlaylist?: (event: React.MouseEvent<HTMLElement>, track: Track) => void;
   showTrackNumber?: boolean;
   showAlbumLink?: boolean;
+  onTrackClick?: (trackId: string) => void;
 }
 
 const formatDuration = (seconds: number) => {
@@ -206,12 +208,14 @@ const TrackItem = ({
   onAddToPlaylist,
   showTrackNumber = true,
   showAlbumLink = true,
+  onTrackClick,
 }: TrackItemProps) => {
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const { state, controls } = usePlayerContext();
   const { currentTrack, isPlaying } = state;
   const { startPlayback, togglePlay } = controls;
   const navigate = useNavigate();
+  const { user } = useAuthContext();
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation();
@@ -223,10 +227,28 @@ const TrackItem = ({
   };
 
   const handleTrackClick = () => {
-    if (currentTrack?.id === track.id) {
+    if (onTrackClick) {
+      onTrackClick(track.id);
+    } else if (currentTrack?.id === track.id) {
       togglePlay();
     } else {
       startPlayback(track, tracks);
+    }
+  };
+
+  const handleAddToPlaylistClick = (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    if (!user) {
+      navigate('/login', { 
+        state: { 
+          from: window.location.pathname,
+          message: 'Чтобы добавить трек в плейлист, необходимо войти'
+        }
+      });
+      return;
+    }
+    if (onAddToPlaylist) {
+      onAddToPlaylist(e, track);
     }
   };
 
@@ -255,10 +277,7 @@ const TrackItem = ({
       {onAddToPlaylist && (
         <IconButton
           size="small"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToPlaylist(e, track);
-          }}
+          onClick={handleAddToPlaylistClick}
         >
           <AddIcon />
         </IconButton>

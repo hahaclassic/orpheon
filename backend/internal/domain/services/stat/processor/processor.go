@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	MinSeconds = 30 // the minimum number of listening seconds to count
+	MinSeconds           = 30 // the minimum number of listening seconds to count
+	MinDiffForSmallTrack = 2  // the minimum difference between the total duration of the segments and the total duration of the listening event to count as a small track
 )
 
 type ListeningStatService struct {
@@ -49,7 +50,12 @@ func (s *ListeningStatService) UpdateStat(ctx context.Context, event *entity.Lis
 		return err
 	}
 
-	if totalDuration > MinSeconds {
+	diffTotal := totalDuration - sumSegments(segments)
+	if diffTotal < 0 {
+		diffTotal *= -1
+	}
+
+	if totalDuration >= MinSeconds || diffTotal < MinDiffForSmallTrack {
 		if err = s.trackRepo.IncrementTrackTotalStreams(ctx, event.TrackID); err != nil {
 			return err
 		}
@@ -76,7 +82,7 @@ func (ListeningStatService) proccessListeningEvent(segments []*entity.Segment, e
 	}
 
 	for _, listenedRange := range event.Ranges {
-		totalDuration += listenedRange.End - listenedRange.Start
+		totalDuration += listenedRange.Len()
 		segStartIdx, segEndIdx := listenedRange.Start/segLength, listenedRange.End/segLength
 
 		incrementStreamCount(segStartIdx, listenedRange)
@@ -100,3 +106,25 @@ func intersection(r1 *entity.Range, r2 *entity.Range) *entity.Range {
 		End:   min(r1.End, r2.End),
 	}
 }
+
+func sumSegments(segments []*entity.Segment) int {
+	sum := 0
+	for _, segment := range segments {
+		sum += segment.Range.Len()
+	}
+	return sum
+}
+
+// func joinRanges(ranges []*entity.Range) []*entity.Range {
+// 	newRanges := make([]*entity.Range, 0, len(ranges))
+
+// 	for i := 1; i < len(ranges); i++ {
+// 		if ranges[i-1].End == ranges[i].Start {
+// 			ranges[i-1].End = ranges[i].End
+// 		} else {
+// 			newRanges = append(newRanges, ranges[i-1])
+// 		}
+// 	}
+
+// 	return newRanges
+// }

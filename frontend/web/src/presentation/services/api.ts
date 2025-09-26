@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { AxiosResponse, AxiosInstance, AxiosRequestConfig } from 'axios';
 
-const API_URL = 'http://localhost:8080/api/v1';
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface User {
   id: string;
@@ -97,19 +97,10 @@ apiService.interceptors.response.use(
     });
 
     if (error.response?.status === 401) {
-      try {
-        const refreshResponse = await axios.post(
-          `${API_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }
-        );
-        if (refreshResponse.data) {
-          const originalRequest = error.config;
-          return apiService(originalRequest);
-        }
-      } catch (refreshError) {
-        console.error('[API] Token refresh failed:', refreshError);
-      }
+      // Если получили 401, значит бэкенд уже попытался обновить токен и не смог
+      console.error('[API] Authentication failed:', error);
+      localStorage.removeItem('authState');
+      window.location.href = '/login';
     }
 
     return Promise.reject(error);
@@ -127,9 +118,11 @@ export const api = {
   logout: (): Promise<void> => apiService.post('/auth/logout'),
 
   changePassword: (oldPassword: string, newPassword: string): Promise<void> =>
-    apiService.post('/auth/change-password', { oldPassword, newPassword }),
+    apiService.post('/auth/password/update', { old: oldPassword, new: newPassword }),
 
   getMe: (): Promise<User> => apiService.get('/me'),
+
+  updateUser: (user: User): Promise<User> => apiService.put('/me', user),
 
   // User endpoints
   getUser: (id: string): Promise<User> => apiService.get(`/users/${id}`),

@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/controller/http/dto"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
@@ -28,7 +28,7 @@ func NewPlaylistTrackController(tracksService playlist.PlaylistTrackService,
 }
 
 func (c *PlaylistTrackController) GetPlaylistTracks(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -64,7 +64,7 @@ func (c *PlaylistTrackController) GetPlaylistTracks(ctx *gin.Context) {
 }
 
 func (c *PlaylistTrackController) AddTrackToPlaylist(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -99,7 +99,7 @@ func (c *PlaylistTrackController) AddTrackToPlaylist(ctx *gin.Context) {
 }
 
 func (c *PlaylistTrackController) DeleteTrackFromPlaylist(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -134,7 +134,7 @@ func (c *PlaylistTrackController) DeleteTrackFromPlaylist(ctx *gin.Context) {
 }
 
 func (c *PlaylistTrackController) ChangeTrackPosition(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

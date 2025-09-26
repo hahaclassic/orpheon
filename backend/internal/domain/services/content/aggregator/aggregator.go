@@ -2,6 +2,7 @@ package content_aggregator
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
@@ -138,17 +139,17 @@ func (a *ContentAggregator) GetAlbums(ctx context.Context, albums ...*entity.Alb
 	for i, album := range albums {
 		artists, err := a.artistService.GetArtistByAlbum(ctx, album.ID)
 		if err != nil {
-			return nil, err
+			slog.Error("aggregator.GetAlbums: artists not found for album")
 		}
 
 		genres, err := a.genreService.GetGenreByAlbum(ctx, album.ID)
 		if err != nil {
-			return nil, err
+			slog.Error("aggregator.GetAlbums: genres not found for album")
 		}
 
 		license, err := a.licenseService.GetLicenseByID(ctx, album.LicenseID)
 		if err != nil {
-			return nil, err
+			slog.Error("aggregator.GetAlbums: licenses not found for album")
 		}
 
 		aggregated[i] = &entity.AlbumMetaAggregated{

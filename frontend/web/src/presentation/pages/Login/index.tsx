@@ -41,6 +41,8 @@ const Login = () => {
   });
   const [error, setError] = useState('');
 
+  const message = (location.state as any)?.message;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -51,7 +53,7 @@ const Login = () => {
     setError('');
     try {
       await login(formData.login, formData.password);
-      const from = (location.state as any)?.from?.pathname || '/';
+      const from = (location.state as any)?.from || '/';
       navigate(from, { replace: true });
     } catch (err) {
       setError('Invalid login or password');
@@ -65,9 +67,15 @@ const Login = () => {
           <Typography variant="h4" align="center" gutterBottom>
             Welcome Back
           </Typography>
-          <Typography variant="body1" align="center" color="text.secondary" paragraph>
-            Sign in to continue to Orpheon
-          </Typography>
+          {message ? (
+            <Typography variant="body1" align="center" color="text.secondary" paragraph>
+              {message}
+            </Typography>
+          ) : (
+            <Typography variant="body1" align="center" color="text.secondary" paragraph>
+              Sign in to continue to Orpheon
+            </Typography>
+          )}
 
           <form onSubmit={handleSubmit}>
             <TextField

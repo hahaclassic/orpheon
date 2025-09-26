@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/genre"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
@@ -98,7 +98,7 @@ func (c *GenreController) GetAllGenres(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/genres [post]
 func (c *GenreController) CreateGenre(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -139,7 +139,7 @@ func (c *GenreController) CreateGenre(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/genres/{id} [put]
 func (c *GenreController) UpdateGenre(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -185,7 +185,7 @@ func (c *GenreController) UpdateGenre(ctx *gin.Context) {
 // @Failure 500 {object} gin.H
 // @Router /api/v1/genres/{id} [delete]
 func (c *GenreController) DeleteGenre(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/aggregator"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/artist"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
@@ -23,7 +23,7 @@ func NewArtistAssignController(artistService artist.ArtistAssignService,
 }
 
 func (c *ArtistAssignController) AssignArtistToTrack(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -55,7 +55,7 @@ func (c *ArtistAssignController) AssignArtistToTrack(ctx *gin.Context) {
 }
 
 func (c *ArtistAssignController) AssignArtistToAlbum(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -131,7 +131,7 @@ func (c *ArtistAssignController) GetTracksByArtist(ctx *gin.Context) {
 }
 
 func (c *ArtistAssignController) UnassignArtistFromTrack(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -163,7 +163,7 @@ func (c *ArtistAssignController) UnassignArtistFromTrack(ctx *gin.Context) {
 }
 
 func (c *ArtistAssignController) UnassignArtistFromAlbum(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

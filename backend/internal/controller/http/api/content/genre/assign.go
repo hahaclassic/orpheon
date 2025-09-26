@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils"
+	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/genre"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 )
@@ -20,7 +20,7 @@ func NewGenreAssignController(genreAssignService genre.GenreAssignService) *Genr
 }
 
 func (c *GenreAssignController) AssignGenreToAlbum(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -52,7 +52,7 @@ func (c *GenreAssignController) AssignGenreToAlbum(ctx *gin.Context) {
 }
 
 func (c *GenreAssignController) UnassignGenreFromAlbum(ctx *gin.Context) {
-	claims := utils.GetClaims(ctx)
+	claims := ctxclaims.GetClaims(ctx)
 	if claims == nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return

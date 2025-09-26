@@ -16,21 +16,21 @@ CREATE TABLE users (
     id UUID PRIMARY KEY,
     name TEXT UNIQUE NOT NULL CHECK (length(name) > 2), -- Имя должно быть хотя бы 3 символа
     registration_date TIMESTAMP NOT NULL DEFAULT NOW(), -- Дата регистрации по умолчанию
-    birth_date DATE CHECK (birth_date < NOW()), -- Дата рождения не может быть в будущем
+    birth_date DATE CHECK (birth_date < registration_date), -- Дата рождения не может быть в будущем
     access_level INT NOT NULL CHECK (access_level IN (1, 2)) -- Ограничиваем возможные роли
 );
 
 CREATE TABLE credentials (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    login TEXT NOT NULL UNIQUE CHECK (length(login) > 3), -- Логин должен быть длиннее 3 символов
+    login TEXT NOT NULL UNIQUE CHECK (length(login) > 2), -- Логин должен быть длиннее 3 символов
     password TEXT NOT NULL--- хешированный пароль
 );
 
 CREATE TABLE artists (
     id UUID PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE CHECK (length(name) > 2), -- Название артиста должно быть хотя бы 3 символа
+    name TEXT NOT NULL UNIQUE CHECK (length(name) > 0), -- Название артиста должно быть хотя бы 3 символа
     description TEXT,
-    country TEXT CHECK (length(country) > 2) -- Название страны (например, "US", "RU")
+    country TEXT 
 );
 
 CREATE TABLE albums (
@@ -45,7 +45,7 @@ CREATE TABLE tracks (
     id UUID PRIMARY KEY,
     genre_id UUID NOT NULL REFERENCES genres(id) ON DELETE CASCADE,
     duration INT NOT NULL CHECK (duration > 0), -- Длительность трека должна быть положительной
-    name TEXT NOT NULL CHECK (length(name) > 1),
+    name TEXT NOT NULL CHECK (length(name) > 0),
     explicit BOOLEAN NOT NULL DEFAULT FALSE, -- Явное указание значения по умолчанию
     license_id UUID REFERENCES licenses(id) ON DELETE SET NULL, -- Лицензия может быть удалена
     total_streams INT NOT NULL CHECK (total_streams >= 0),
@@ -95,7 +95,7 @@ CREATE TABLE artist_albums (
 CREATE TABLE playlist_tracks (
     playlist_id UUID NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
     track_id UUID NOT NULL REFERENCES tracks(id) ON DELETE CASCADE,
-    position INT NOT NULL CHECK (position >= 0), -- Позиция трека в плейлисте начинается с 0
+    position INT NOT NULL CHECK (position >= 1), -- Позиция трека в плейлисте начинается с 0
     PRIMARY KEY (playlist_id, track_id),
     UNIQUE (playlist_id, position)
 );

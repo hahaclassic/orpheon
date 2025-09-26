@@ -60,8 +60,9 @@ interface Playlist {
 const ArtistPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { controls } = usePlayerContext();
-  const { setTrack } = controls;
+  const { state, controls } = usePlayerContext();
+  const { currentTrack, isPlaying } = state;
+  const { startPlayback, togglePlay } = controls;
   const [artist, setArtist] = useState<Artist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
@@ -174,7 +175,11 @@ const ArtistPage = () => {
   const handleTrackClick = (trackId: string) => {
     const track = tracks.find(t => t.id === trackId);
     if (track) {
-      setTrack(track, tracks);
+      if (currentTrack?.id === trackId) {
+        togglePlay();
+      } else {
+        startPlayback(track, tracks);
+      }
     }
   };
 
@@ -266,7 +271,7 @@ const ArtistPage = () => {
               <CardMedia
                 component="img"
                 sx={{ width: 200, height: 200, borderRadius: 2 }}
-                image={avatarUrl || `/api/v1/artists/${artist.id}/avatar`}
+                image={avatarUrl || `/artists/${artist.id}/avatar`}
                 alt={artist.name}
                 onError={() => setAvatarError(true)}
               />
