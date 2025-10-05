@@ -1,5 +1,5 @@
 # Orpheon
 
-> Music service
+> Music streaming service
 
 Docs is [here](./docs/).
