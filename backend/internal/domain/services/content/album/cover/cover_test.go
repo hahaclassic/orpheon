@@ -7,30 +7,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/cover"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/album"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
+	"github.com/hahaclassic/orpheon/backend/mocks"
 )
-
-type mockRepo struct {
-	mock.Mock
-}
-
-func (m *mockRepo) GetCover(ctx context.Context, albumID uuid.UUID) (*entity.Cover, error) {
-	args := m.Called(ctx, albumID)
-	return args.Get(0).(*entity.Cover), args.Error(1)
-}
-
-func (m *mockRepo) SaveCover(ctx context.Context, cover *entity.Cover) error {
-	return m.Called(ctx, cover).Error(0)
-}
-
-func (m *mockRepo) DeleteCover(ctx context.Context, albumID uuid.UUID) error {
-	return m.Called(ctx, albumID).Error(0)
-}
 
 func TestGetCover(t *testing.T) {
 	ctx := context.Background()
@@ -49,7 +32,7 @@ func TestGetCover(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := new(mockRepo)
+			repo := mocks.NewAlbumCoverRepository(t)
 			repo.On("GetCover", ctx, albumID).Return(tt.repoRes, tt.repoErr)
 			svc := cover.New(repo)
 
@@ -80,7 +63,7 @@ func TestUploadCover(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := new(mockRepo)
+			repo := mocks.NewAlbumCoverRepository(t)
 			if tt.claims.AccessLvl == entity.Admin {
 				repo.On("SaveCover", ctx, coverData).Return(tt.repoErr)
 			}
@@ -110,7 +93,7 @@ func TestDeleteCover(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := new(mockRepo)
+			repo := mocks.NewAlbumCoverRepository(t)
 			if tt.claims.AccessLvl == entity.Admin {
 				repo.On("DeleteCover", ctx, albumID).Return(tt.repoErr)
 			}
