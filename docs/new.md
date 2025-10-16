@@ -76,7 +76,7 @@
 ## Технологический стек
 - **Backend**: Golang, Gin  
 - **Frontend**: Typescript, React, Vite
-- **СУБД**: PostgreSQL, MinIO, Redis 
+- **СУБД**: PostgreSQL, MinIO/Yandex Cloud, Redis 
 - **Доставка приложения**: Github actions + beget
 
 ---
