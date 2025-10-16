@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/meta"
@@ -16,131 +16,202 @@ import (
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
-func TestGetArtistMeta(t *testing.T) {
-	ctx := context.Background()
-	artistID := uuid.New()
-	expected := &entity.ArtistMeta{ID: artistID}
+// --- Object Mother ---
 
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewArtistMetaRepository(t)
-		repo.On("GetByID", ctx, artistID).Return(expected, nil)
+type ArtistMetaObjectMother struct{}
 
-		svc := meta.New(repo)
-		got, err := svc.GetArtistMeta(ctx, artistID)
-
-		assert.NoError(t, err)
-		assert.Equal(t, expected, got)
-	})
-
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewArtistMetaRepository(t)
-		repo.On("GetByID", ctx, artistID).Return(nil, errors.New("not found"))
-
-		svc := meta.New(repo)
-		got, err := svc.GetArtistMeta(ctx, artistID)
-
-		assert.Nil(t, got)
-		assert.Error(t, err)
-	})
+func (ArtistMetaObjectMother) AdminClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.Admin}
 }
 
-func TestCreateArtistMeta(t *testing.T) {
-	ctx := context.Background()
-	artist := &entity.ArtistMeta{}
-	user := &entity.Claims{AccessLvl: entity.User}
-	admin := &entity.Claims{AccessLvl: entity.Admin}
-
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewArtistMetaRepository(t)
-		repo.On("Create", ctx, mock.MatchedBy(func(a *entity.ArtistMeta) bool {
-			return a.ID != uuid.Nil
-		})).Return(nil)
-
-		svc := meta.New(repo)
-		err := svc.CreateArtistMeta(ctx, admin, artist)
-
-		assert.NoError(t, err)
-		assert.NotEqual(t, uuid.Nil, artist.ID)
-	})
-
-	t.Run("forbidden for user", func(t *testing.T) {
-		repo := mocks.NewArtistMetaRepository(t)
-
-		svc := meta.New(repo)
-		err := svc.CreateArtistMeta(ctx, user, artist)
-
-		assert.ErrorIs(t, err, commonerr.ErrForbidden)
-	})
+func (ArtistMetaObjectMother) UserClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.User}
 }
 
-func TestUpdateArtistMeta(t *testing.T) {
-	ctx := context.Background()
-	artist := &entity.ArtistMeta{}
-	user := &entity.Claims{AccessLvl: entity.User}
-	admin := &entity.Claims{AccessLvl: entity.Admin}
-
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewArtistMetaRepository(t)
-		repo.On("Update", ctx, artist).Return(nil)
-
-		svc := meta.New(repo)
-		err := svc.UpdateArtistMeta(ctx, admin, artist)
-
-		assert.NoError(t, err)
-	})
-
-	t.Run("forbidden for user", func(t *testing.T) {
-		repo := mocks.NewArtistMetaRepository(t)
-
-		svc := meta.New(repo)
-		err := svc.UpdateArtistMeta(ctx, user, artist)
-
-		assert.ErrorIs(t, err, commonerr.ErrForbidden)
-	})
-
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewArtistMetaRepository(t)
-		repo.On("Update", ctx, artist).Return(errors.New("update failed"))
-
-		svc := meta.New(repo)
-		err := svc.UpdateArtistMeta(ctx, admin, artist)
-
-		assert.ErrorIs(t, err, usecase.ErrUpdateArtistMeta)
-	})
+func (ArtistMetaObjectMother) DefaultArtistMeta() *entity.ArtistMeta {
+	return &entity.ArtistMeta{
+		ID:          uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+		Name:        "Test Artist",
+		Description: "Test Bio",
+	}
 }
 
-func TestDeleteArtistMeta(t *testing.T) {
-	ctx := context.Background()
-	artistID := uuid.New()
-	admin := &entity.Claims{AccessLvl: entity.Admin}
-	user := &entity.Claims{AccessLvl: entity.User}
+// --- Suite ---
 
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewArtistMetaRepository(t)
-		repo.On("Delete", ctx, artistID).Return(nil)
+type ArtistMetaServiceSuite struct {
+	suite.Suite
 
-		svc := meta.New(repo)
-		err := svc.DeleteArtistMeta(ctx, admin, artistID)
+	ctx       context.Context
+	repo      *mocks.ArtistMetaRepository
+	service   *meta.ArtistMetaService
+	objMother *ArtistMetaObjectMother
+}
 
-		assert.NoError(t, err)
-	})
+func TestArtistMetaServiceSuite(t *testing.T) {
+	suite.Run(t, new(ArtistMetaServiceSuite))
+}
 
-	t.Run("forbidden for user", func(t *testing.T) {
-		repo := mocks.NewArtistMetaRepository(t)
+func (s *ArtistMetaServiceSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.repo = mocks.NewArtistMetaRepository(s.T())
+	s.service = meta.New(s.repo)
+	s.objMother = &ArtistMetaObjectMother{}
+}
 
-		svc := meta.New(repo)
-		err := svc.DeleteArtistMeta(ctx, user, artistID)
+// --- GetArtistMeta ---
 
-		assert.ErrorIs(t, err, commonerr.ErrForbidden)
-	})
+func (s *ArtistMetaServiceSuite) TestGetArtistMeta_Success() {
+	artist := s.objMother.DefaultArtistMeta()
+	s.repo.On("GetByID", s.ctx, artist.ID).Return(artist, nil)
 
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewArtistMetaRepository(t)
-		repo.On("Delete", ctx, artistID).Return(errors.New("delete error"))
+	got, err := s.service.GetArtistMeta(s.ctx, artist.ID)
 
-		svc := meta.New(repo)
-		err := svc.DeleteArtistMeta(ctx, admin, artistID)
+	s.NoError(err)
+	s.Equal(artist, got)
+	s.repo.AssertExpectations(s.T())
+}
 
-		assert.ErrorIs(t, err, usecase.ErrDeleteArtistMeta)
-	})
+func (s *ArtistMetaServiceSuite) TestGetArtistMeta_RepoError() {
+	artist := s.objMother.DefaultArtistMeta()
+	s.repo.On("GetByID", s.ctx, artist.ID).Return(nil, errors.New("not found"))
+
+	got, err := s.service.GetArtistMeta(s.ctx, artist.ID)
+
+	s.Nil(got)
+	s.ErrorIs(err, usecase.ErrGetArtistMeta)
+	s.repo.AssertExpectations(s.T())
+}
+
+// --- GetAllArtistMeta ---
+
+func (s *ArtistMetaServiceSuite) TestGetAllArtistMeta_Success() {
+	expected := []*entity.ArtistMeta{s.objMother.DefaultArtistMeta()}
+	s.repo.On("GetAll", s.ctx).Return(expected, nil)
+
+	got, err := s.service.GetAllArtistMeta(s.ctx)
+
+	s.NoError(err)
+	s.Equal(expected, got)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *ArtistMetaServiceSuite) TestGetAllArtistMeta_RepoError() {
+	s.repo.On("GetAll", s.ctx).Return(nil, errors.New("db error"))
+
+	got, err := s.service.GetAllArtistMeta(s.ctx)
+
+	s.Nil(got)
+	s.ErrorIs(err, usecase.ErrGetAllArtistMeta)
+	s.repo.AssertExpectations(s.T())
+}
+
+// --- CreateArtistMeta ---
+
+func (s *ArtistMetaServiceSuite) TestCreateArtistMeta_Success() {
+	admin := s.objMother.AdminClaims()
+	artist := &entity.ArtistMeta{Name: "New Artist"}
+
+	s.repo.On("Create", s.ctx, mock.MatchedBy(func(a *entity.ArtistMeta) bool {
+		return a.ID != uuid.Nil && a.Name == "New Artist"
+	})).Return(nil)
+
+	err := s.service.CreateArtistMeta(s.ctx, admin, artist)
+
+	s.NoError(err)
+	s.NotEqual(uuid.Nil, artist.ID)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *ArtistMetaServiceSuite) TestCreateArtistMeta_Forbidden() {
+	user := s.objMother.UserClaims()
+	artist := s.objMother.DefaultArtistMeta()
+
+	err := s.service.CreateArtistMeta(s.ctx, user, artist)
+
+	s.ErrorIs(err, commonerr.ErrForbidden)
+	s.repo.AssertNotCalled(s.T(), "Create", mock.Anything, mock.Anything)
+}
+
+func (s *ArtistMetaServiceSuite) TestCreateArtistMeta_RepoError() {
+	admin := s.objMother.AdminClaims()
+	artist := s.objMother.DefaultArtistMeta()
+
+	s.repo.On("Create", s.ctx, mock.Anything).Return(errors.New("db fail"))
+
+	err := s.service.CreateArtistMeta(s.ctx, admin, artist)
+
+	s.ErrorIs(err, usecase.ErrCreateArtistMeta)
+	s.repo.AssertExpectations(s.T())
+}
+
+// --- UpdateArtistMeta ---
+
+func (s *ArtistMetaServiceSuite) TestUpdateArtistMeta_Success() {
+	admin := s.objMother.AdminClaims()
+	artist := s.objMother.DefaultArtistMeta()
+
+	s.repo.On("Update", s.ctx, artist).Return(nil)
+
+	err := s.service.UpdateArtistMeta(s.ctx, admin, artist)
+
+	s.NoError(err)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *ArtistMetaServiceSuite) TestUpdateArtistMeta_Forbidden() {
+	user := s.objMother.UserClaims()
+	artist := s.objMother.DefaultArtistMeta()
+
+	err := s.service.UpdateArtistMeta(s.ctx, user, artist)
+
+	s.ErrorIs(err, commonerr.ErrForbidden)
+	s.repo.AssertNotCalled(s.T(), "Update", mock.Anything, mock.Anything)
+}
+
+func (s *ArtistMetaServiceSuite) TestUpdateArtistMeta_RepoError() {
+	admin := s.objMother.AdminClaims()
+	artist := s.objMother.DefaultArtistMeta()
+
+	s.repo.On("Update", s.ctx, artist).Return(errors.New("update failed"))
+
+	err := s.service.UpdateArtistMeta(s.ctx, admin, artist)
+
+	s.ErrorIs(err, usecase.ErrUpdateArtistMeta)
+	s.repo.AssertExpectations(s.T())
+}
+
+// --- DeleteArtistMeta ---
+
+func (s *ArtistMetaServiceSuite) TestDeleteArtistMeta_Success() {
+	admin := s.objMother.AdminClaims()
+	artist := s.objMother.DefaultArtistMeta()
+
+	s.repo.On("Delete", s.ctx, artist.ID).Return(nil)
+
+	err := s.service.DeleteArtistMeta(s.ctx, admin, artist.ID)
+
+	s.NoError(err)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *ArtistMetaServiceSuite) TestDeleteArtistMeta_Forbidden() {
+	user := s.objMother.UserClaims()
+	artist := s.objMother.DefaultArtistMeta()
+
+	err := s.service.DeleteArtistMeta(s.ctx, user, artist.ID)
+
+	s.ErrorIs(err, commonerr.ErrForbidden)
+	s.repo.AssertNotCalled(s.T(), "Delete", mock.Anything, mock.Anything)
+}
+
+func (s *ArtistMetaServiceSuite) TestDeleteArtistMeta_RepoError() {
+	admin := s.objMother.AdminClaims()
+	artist := s.objMother.DefaultArtistMeta()
+
+	s.repo.On("Delete", s.ctx, artist.ID).Return(errors.New("delete error"))
+
+	err := s.service.DeleteArtistMeta(s.ctx, admin, artist.ID)
+
+	s.ErrorIs(err, usecase.ErrDeleteArtistMeta)
+	s.repo.AssertExpectations(s.T())
 }

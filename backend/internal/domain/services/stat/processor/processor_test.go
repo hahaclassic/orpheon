@@ -1,4 +1,4 @@
-package processor
+package processor_test
 
 import (
 	"context"
@@ -6,135 +6,140 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/services/stat/processor"
 	"github.com/hahaclassic/orpheon/backend/mocks"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestListeningStatService_UpdateStat(t *testing.T) {
-	tests := []struct {
-		name          string
-		event         *entity.ListeningEvent
-		setupMock     func(trackRepo *mocks.TrackStatRepository, segmentRepo *mocks.SegmentStatRepository, event *entity.ListeningEvent)
-		expectedError bool
-	}{
-		{
-			name: "successfully update stat with track increment",
-			event: &entity.ListeningEvent{
-				TrackID: uuid.New(),
-				UserID:  uuid.New(),
-				Ranges: []*entity.Range{
-					{Start: 0, End: 35}, // > 30 sec
-				},
-			},
-			setupMock: func(trackRepo *mocks.TrackStatRepository, segmentRepo *mocks.SegmentStatRepository, event *entity.ListeningEvent) {
-				segments := []*entity.Segment{
-					{Range: &entity.Range{Start: 0, End: 10}},
-					{Range: &entity.Range{Start: 10, End: 20}},
-					{Range: &entity.Range{Start: 20, End: 30}},
-					{Range: &entity.Range{Start: 30, End: 40}},
-				}
-				segmentRepo.On("GetSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
-				segmentRepo.On("IncrementTotalStreams", mock.Anything, event.TrackID, mock.Anything).Return(nil).Once()
-				trackRepo.On("IncrementTrackTotalStreams", mock.Anything, event.TrackID).Return(nil).Once()
-			},
-			expectedError: false,
-		},
-		{
-			name: "successfully update stat without track increment",
-			event: &entity.ListeningEvent{
-				TrackID: uuid.New(),
-				UserID:  uuid.New(),
-				Ranges: []*entity.Range{
-					{Start: 0, End: 20}, // < 30 sec
-				},
-			},
-			setupMock: func(trackRepo *mocks.TrackStatRepository, segmentRepo *mocks.SegmentStatRepository, event *entity.ListeningEvent) {
-				segments := []*entity.Segment{
-					{Range: &entity.Range{Start: 0, End: 10}},
-					{Range: &entity.Range{Start: 10, End: 20}},
-					{Range: &entity.Range{Start: 20, End: 30}},
-				}
-				segmentRepo.On("GetSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
-				segmentRepo.On("IncrementTotalStreams", mock.Anything, event.TrackID, mock.Anything).Return(nil).Once()
-			},
-			expectedError: false,
-		},
-		{
-			name: "error on getting segments",
-			event: &entity.ListeningEvent{
-				TrackID: uuid.New(),
-				UserID:  uuid.New(),
-			},
-			setupMock: func(trackRepo *mocks.TrackStatRepository, segmentRepo *mocks.SegmentStatRepository, event *entity.ListeningEvent) {
-				segmentRepo.On("GetSegments", mock.Anything, event.TrackID).Return(nil, errors.New("db error")).Once()
-			},
-			expectedError: true,
-		},
-		{
-			name: "error on incrementing segments",
-			event: &entity.ListeningEvent{
-				TrackID: uuid.New(),
-				UserID:  uuid.New(),
-				Ranges: []*entity.Range{
-					{Start: 0, End: 35},
-				},
-			},
-			setupMock: func(trackRepo *mocks.TrackStatRepository, segmentRepo *mocks.SegmentStatRepository, event *entity.ListeningEvent) {
-				segments := []*entity.Segment{
-					{Range: &entity.Range{Start: 0, End: 10}},
-					{Range: &entity.Range{Start: 10, End: 20}},
-					{Range: &entity.Range{Start: 20, End: 30}},
-					{Range: &entity.Range{Start: 30, End: 40}},
-				}
-				segmentRepo.On("GetSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
-				segmentRepo.On("IncrementTotalStreams", mock.Anything, event.TrackID, mock.Anything).Return(errors.New("increment error")).Once()
-			},
-			expectedError: true,
-		},
-		{
-			name: "error on incrementing track plays",
-			event: &entity.ListeningEvent{
-				TrackID: uuid.New(),
-				UserID:  uuid.New(),
-				Ranges: []*entity.Range{
-					{Start: 0, End: 40},
-				},
-			},
-			setupMock: func(trackRepo *mocks.TrackStatRepository, segmentRepo *mocks.SegmentStatRepository, event *entity.ListeningEvent) {
-				segments := []*entity.Segment{
-					{Range: &entity.Range{Start: 0, End: 10}},
-					{Range: &entity.Range{Start: 10, End: 20}},
-					{Range: &entity.Range{Start: 20, End: 30}},
-					{Range: &entity.Range{Start: 30, End: 40}},
-				}
-				segmentRepo.On("GetSegments", mock.Anything, event.TrackID).Return(segments, nil).Once()
-				segmentRepo.On("IncrementTotalStreams", mock.Anything, event.TrackID, mock.Anything).Return(nil).Once()
-				trackRepo.On("IncrementTrackTotalStreams", mock.Anything, event.TrackID).Return(errors.New("increment track plays error")).Once()
-			},
-			expectedError: true,
-		},
+func TestListeningStatServiceSuite(t *testing.T) {
+	suite.Run(t, &ListeningStatServiceSuite{})
+}
+
+type ListeningStatObjectMother struct{}
+
+func (ListeningStatObjectMother) DefaultTrackID() uuid.UUID {
+	return uuid.New()
+}
+
+func (ListeningStatObjectMother) DefaultUserID() uuid.UUID {
+	return uuid.New()
+}
+
+func (ListeningStatObjectMother) DefaultSegments(trackID uuid.UUID) []*entity.Segment {
+	return []*entity.Segment{
+		{Range: &entity.Range{Start: 0, End: 10}},
+		{Range: &entity.Range{Start: 10, End: 20}},
+		{Range: &entity.Range{Start: 20, End: 30}},
+		{Range: &entity.Range{Start: 30, End: 40}},
+	}
+}
+
+func (ListeningStatObjectMother) DefaultListeningEvent(trackID, userID uuid.UUID, start, end int) *entity.ListeningEvent {
+	return &entity.ListeningEvent{
+		TrackID: trackID,
+		UserID:  userID,
+		Ranges:  []*entity.Range{{Start: start, End: end}},
+	}
+}
+
+type ListeningStatServiceSuite struct {
+	suite.Suite
+
+	ctx         context.Context
+	service     *processor.ListeningStatService
+	trackRepo   *mocks.TrackStatRepository
+	segmentRepo *mocks.SegmentStatRepository
+
+	objMother *ListeningStatObjectMother
+}
+
+func (s *ListeningStatServiceSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.trackRepo = mocks.NewTrackStatRepository(s.T())
+	s.segmentRepo = mocks.NewSegmentStatRepository(s.T())
+	s.service = processor.NewListeningStatService(s.trackRepo, s.segmentRepo)
+	s.objMother = &ListeningStatObjectMother{}
+}
+
+func (s *ListeningStatServiceSuite) TestUpdateStat_SuccessWithTrackIncrement() {
+	trackID := s.objMother.DefaultTrackID()
+	userID := s.objMother.DefaultUserID()
+	event := s.objMother.DefaultListeningEvent(trackID, userID, 0, 35)
+	segments := s.objMother.DefaultSegments(trackID)
+
+	s.segmentRepo.On("GetSegments", s.ctx, trackID).Return(segments, nil)
+	s.segmentRepo.On("IncrementTotalStreams", s.ctx, trackID, mock.Anything).Return(nil)
+	s.trackRepo.On("IncrementTrackTotalStreams", s.ctx, trackID).Return(nil)
+
+	err := s.service.UpdateStat(s.ctx, event)
+
+	s.NoError(err)
+	s.segmentRepo.AssertExpectations(s.T())
+	s.trackRepo.AssertExpectations(s.T())
+}
+
+func (s *ListeningStatServiceSuite) TestUpdateStat_SuccessWithoutTrackIncrement() {
+	trackID := s.objMother.DefaultTrackID()
+	userID := s.objMother.DefaultUserID()
+	event := s.objMother.DefaultListeningEvent(trackID, userID, 0, 20)
+	segments := []*entity.Segment{
+		{Range: &entity.Range{Start: 0, End: 10}},
+		{Range: &entity.Range{Start: 10, End: 20}},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			trackRepo := mocks.NewTrackStatRepository(t)
-			segmentRepo := mocks.NewSegmentStatRepository(t)
+	s.segmentRepo.On("GetSegments", s.ctx, trackID).Return(segments, nil)
+	s.segmentRepo.On("IncrementTotalStreams", s.ctx, trackID, mock.Anything).Return(nil)
+	s.trackRepo.On("IncrementTrackTotalStreams", s.ctx, trackID).Return(nil) // добавить этот мок
 
-			if tt.setupMock != nil {
-				tt.setupMock(trackRepo, segmentRepo, tt.event)
-			}
+	err := s.service.UpdateStat(s.ctx, event)
 
-			service := NewListeningStatService(trackRepo, segmentRepo)
-			err := service.UpdateStat(context.Background(), tt.event)
+	s.NoError(err)
+	s.segmentRepo.AssertExpectations(s.T())
+	s.trackRepo.AssertExpectations(s.T())
+}
+func (s *ListeningStatServiceSuite) TestUpdateStat_GetSegmentsError() {
+	trackID := s.objMother.DefaultTrackID()
+	userID := s.objMother.DefaultUserID()
+	event := s.objMother.DefaultListeningEvent(trackID, userID, 0, 20)
 
-			if tt.expectedError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+	s.segmentRepo.On("GetSegments", s.ctx, trackID).Return(nil, errors.New("db error"))
+
+	err := s.service.UpdateStat(s.ctx, event)
+
+	s.Error(err)
+	s.segmentRepo.AssertExpectations(s.T())
+}
+
+func (s *ListeningStatServiceSuite) TestUpdateStat_IncrementSegmentsError() {
+	trackID := s.objMother.DefaultTrackID()
+	userID := s.objMother.DefaultUserID()
+	event := s.objMother.DefaultListeningEvent(trackID, userID, 0, 35)
+	segments := s.objMother.DefaultSegments(trackID)
+
+	s.segmentRepo.On("GetSegments", s.ctx, trackID).Return(segments, nil)
+	s.segmentRepo.On("IncrementTotalStreams", s.ctx, trackID, mock.Anything).Return(errors.New("increment error"))
+
+	err := s.service.UpdateStat(s.ctx, event)
+
+	s.Error(err)
+	s.segmentRepo.AssertExpectations(s.T())
+}
+
+func (s *ListeningStatServiceSuite) TestUpdateStat_IncrementTrackError() {
+	trackID := s.objMother.DefaultTrackID()
+	userID := s.objMother.DefaultUserID()
+	event := s.objMother.DefaultListeningEvent(trackID, userID, 0, 40)
+	segments := s.objMother.DefaultSegments(trackID)
+
+	s.segmentRepo.On("GetSegments", s.ctx, trackID).Return(segments, nil)
+	s.segmentRepo.On("IncrementTotalStreams", s.ctx, trackID, mock.Anything).Return(nil)
+	s.trackRepo.On("IncrementTrackTotalStreams", s.ctx, trackID).Return(errors.New("increment track error"))
+
+	err := s.service.UpdateStat(s.ctx, event)
+
+	s.Error(err)
+	s.segmentRepo.AssertExpectations(s.T())
+	s.trackRepo.AssertExpectations(s.T())
 }

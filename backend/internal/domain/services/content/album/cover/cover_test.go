@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/album/cover"
@@ -15,91 +15,168 @@ import (
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
-func TestGetCover(t *testing.T) {
-	ctx := context.Background()
-	albumID := uuid.New()
-	mockCover := &entity.Cover{ObjectID: albumID}
-
-	tests := []struct {
-		name    string
-		repoRes *entity.Cover
-		repoErr error
-		wantErr error
-	}{
-		{"success", mockCover, nil, nil},
-		{"repo error", nil, errors.New("db error"), usecase.ErrGetCover},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewAlbumCoverRepository(t)
-			repo.On("GetCover", ctx, albumID).Return(tt.repoRes, tt.repoErr)
-			svc := cover.New(repo)
-
-			res, err := svc.GetCover(ctx, albumID)
-			assert.Equal(t, tt.repoRes, res)
-			assert.ErrorIs(t, err, tt.wantErr)
-		})
-	}
+func TestCoverServiceSuite(t *testing.T) {
+	suite.Run(t, new(CoverServiceSuite))
 }
 
-func TestUploadCover(t *testing.T) {
-	ctx := context.Background()
-	admin := &entity.Claims{AccessLvl: entity.Admin}
-	nonAdmin := &entity.Claims{AccessLvl: entity.User}
-	albumID := uuid.New()
-	coverData := &entity.Cover{ObjectID: albumID}
+// --- Object Mother ---
 
-	tests := []struct {
-		name    string
-		claims  *entity.Claims
-		repoErr error
-		wantErr error
-	}{
-		{"admin success", admin, nil, nil},
-		{"admin repo error", admin, errors.New("db error"), usecase.ErrUploadCover},
-		{"non-admin forbidden", nonAdmin, nil, commonerr.ErrForbidden},
-	}
+type CoverObjectMother struct{}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewAlbumCoverRepository(t)
-			if tt.claims.AccessLvl == entity.Admin {
-				repo.On("SaveCover", ctx, coverData).Return(tt.repoErr)
-			}
-			svc := cover.New(repo)
-			err := svc.UploadCover(ctx, tt.claims, coverData)
-			assert.ErrorIs(t, err, tt.wantErr)
-		})
-	}
+func (CoverObjectMother) DefaultAlbumID() uuid.UUID {
+	return uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
 }
 
-func TestDeleteCover(t *testing.T) {
-	ctx := context.Background()
-	admin := &entity.Claims{AccessLvl: entity.Admin}
-	nonAdmin := &entity.Claims{AccessLvl: entity.User}
-	albumID := uuid.New()
+func (m CoverObjectMother) DefaultCover() *entity.Cover {
+	return &entity.Cover{ObjectID: m.DefaultAlbumID()}
+}
 
-	tests := []struct {
-		name    string
-		claims  *entity.Claims
-		repoErr error
-		wantErr error
-	}{
-		{"admin success", admin, nil, nil},
-		{"admin repo error", admin, errors.New("db error"), usecase.ErrDeleteCover},
-		{"non-admin forbidden", nonAdmin, nil, commonerr.ErrForbidden},
-	}
+func (CoverObjectMother) AdminClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.Admin}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewAlbumCoverRepository(t)
-			if tt.claims.AccessLvl == entity.Admin {
-				repo.On("DeleteCover", ctx, albumID).Return(tt.repoErr)
-			}
-			svc := cover.New(repo)
-			err := svc.DeleteCover(ctx, tt.claims, albumID)
-			assert.ErrorIs(t, err, tt.wantErr)
-		})
-	}
+func (CoverObjectMother) UserClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.User}
+}
+
+// --- Suite ---
+
+type CoverServiceSuite struct {
+	suite.Suite
+
+	ctx       context.Context
+	service   *cover.AlbumCoverService
+	repo      *mocks.AlbumCoverRepository
+	objMother *CoverObjectMother
+}
+
+func (s *CoverServiceSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.repo = mocks.NewAlbumCoverRepository(s.T())
+	s.service = cover.New(s.repo)
+	s.objMother = &CoverObjectMother{}
+}
+
+// --- GetCover ---
+
+func (s *CoverServiceSuite) TestGetCover_Success() {
+	albumID := s.objMother.DefaultAlbumID()
+	expected := s.objMother.DefaultCover()
+
+	s.repo.On("GetCover", s.ctx, albumID).Return(expected, nil)
+
+	result, err := s.service.GetCover(s.ctx, albumID)
+
+	s.NoError(err)
+	s.Equal(expected, result)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *CoverServiceSuite) TestGetCover_RepoError() {
+	albumID := s.objMother.DefaultAlbumID()
+
+	s.repo.On("GetCover", s.ctx, albumID).Return(nil, errors.New("db error"))
+
+	result, err := s.service.GetCover(s.ctx, albumID)
+
+	s.Error(err)
+	s.Nil(result)
+	s.ErrorIs(err, usecase.ErrGetCover)
+	s.repo.AssertExpectations(s.T())
+}
+
+// --- UploadCover ---
+
+func (s *CoverServiceSuite) TestUploadCover_AdminSuccess() {
+	claims := s.objMother.AdminClaims()
+	cov := s.objMother.DefaultCover()
+
+	s.repo.On("SaveCover", s.ctx, cov).Return(nil)
+
+	err := s.service.UploadCover(s.ctx, claims, cov)
+
+	s.NoError(err)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *CoverServiceSuite) TestUploadCover_AdminRepoError() {
+	claims := s.objMother.AdminClaims()
+	cov := s.objMother.DefaultCover()
+
+	s.repo.On("SaveCover", s.ctx, cov).Return(errors.New("db error"))
+
+	err := s.service.UploadCover(s.ctx, claims, cov)
+
+	s.Error(err)
+	s.ErrorIs(err, usecase.ErrUploadCover)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *CoverServiceSuite) TestUploadCover_NonAdminForbidden() {
+	claims := s.objMother.UserClaims()
+	cov := s.objMother.DefaultCover()
+
+	err := s.service.UploadCover(s.ctx, claims, cov)
+
+	s.Error(err)
+	s.ErrorIs(err, commonerr.ErrForbidden)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *CoverServiceSuite) TestUploadCover_NilClaimsForbidden() {
+	cov := s.objMother.DefaultCover()
+
+	err := s.service.UploadCover(s.ctx, nil, cov)
+
+	s.Error(err)
+	s.ErrorIs(err, commonerr.ErrForbidden)
+	s.repo.AssertExpectations(s.T())
+}
+
+// --- DeleteCover ---
+
+func (s *CoverServiceSuite) TestDeleteCover_AdminSuccess() {
+	claims := s.objMother.AdminClaims()
+	albumID := s.objMother.DefaultAlbumID()
+
+	s.repo.On("DeleteCover", s.ctx, albumID).Return(nil)
+
+	err := s.service.DeleteCover(s.ctx, claims, albumID)
+
+	s.NoError(err)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *CoverServiceSuite) TestDeleteCover_AdminRepoError() {
+	claims := s.objMother.AdminClaims()
+	albumID := s.objMother.DefaultAlbumID()
+
+	s.repo.On("DeleteCover", s.ctx, albumID).Return(errors.New("db error"))
+
+	err := s.service.DeleteCover(s.ctx, claims, albumID)
+
+	s.Error(err)
+	s.ErrorIs(err, usecase.ErrDeleteCover)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *CoverServiceSuite) TestDeleteCover_NonAdminForbidden() {
+	claims := s.objMother.UserClaims()
+	albumID := s.objMother.DefaultAlbumID()
+
+	err := s.service.DeleteCover(s.ctx, claims, albumID)
+
+	s.Error(err)
+	s.ErrorIs(err, commonerr.ErrForbidden)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *CoverServiceSuite) TestDeleteCover_NilClaimsForbidden() {
+	albumID := s.objMother.DefaultAlbumID()
+
+	err := s.service.DeleteCover(s.ctx, nil, albumID)
+
+	s.Error(err)
+	s.ErrorIs(err, commonerr.ErrForbidden)
+	s.repo.AssertExpectations(s.T())
 }

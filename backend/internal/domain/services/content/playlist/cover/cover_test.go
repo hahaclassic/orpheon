@@ -7,168 +7,145 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
+
+	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestGetCover(t *testing.T) {
-	ctx := context.Background()
-	playlistID := uuid.New()
-	claims := &entity.Claims{UserID: uuid.New()}
-	cover := &entity.Cover{ObjectID: playlistID, Data: []byte("some image")}
+type PlaylistCoverObjectMother struct{}
 
-	tests := []struct {
-		name      string
-		policyErr error
-		repoCover *entity.Cover
-		repoErr   error
-		wantErr   error
-	}{
-		{
-			name:      "success",
-			policyErr: nil,
-			repoCover: cover,
-			wantErr:   nil,
-		},
-		{
-			name:      "policy denied",
-			policyErr: commonerr.ErrForbidden,
-			wantErr:   playlist.ErrGetCover,
-		},
-		{
-			name:      "repo error",
-			policyErr: nil,
-			repoErr:   errors.New("repo fail"),
-			wantErr:   playlist.ErrGetCover,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			policy := mocks.NewPlaylistPolicyService(t)
-			repo := mocks.NewPlaylistCoverRepository(t)
-
-			policy.On("CanView", ctx, claims, playlistID).Return(tt.policyErr)
-
-			if tt.policyErr == nil {
-				repo.On("GetCover", ctx, playlistID).Return(tt.repoCover, tt.repoErr)
-			}
-
-			svc := New(repo, policy)
-
-			got, err := svc.GetCover(ctx, claims, playlistID)
-			if tt.wantErr != nil {
-				assert.Error(t, err)
-				assert.ErrorIs(t, err, tt.wantErr)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.repoCover, got)
-			}
-		})
-	}
+func (PlaylistCoverObjectMother) Claims() *entity.Claims {
+	return &entity.Claims{UserID: uuid.New()}
 }
 
-func TestUploadCover(t *testing.T) {
-	ctx := context.Background()
-	playlistID := uuid.New()
-	claims := &entity.Claims{UserID: uuid.New()}
-	cover := &entity.Cover{ObjectID: playlistID, Data: []byte("img")}
-
-	tests := []struct {
-		name      string
-		policyErr error
-		repoErr   error
-		wantErr   error
-	}{
-		{
-			name:    "success",
-			wantErr: nil,
-		},
-		{
-			name:      "policy denied",
-			policyErr: commonerr.ErrForbidden,
-			wantErr:   playlist.ErrUploadCover,
-		},
-		{
-			name:    "repo error",
-			repoErr: errors.New("save fail"),
-			wantErr: playlist.ErrUploadCover,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			policy := mocks.NewPlaylistPolicyService(t)
-			repo := mocks.NewPlaylistCoverRepository(t)
-
-			policy.On("CanEdit", ctx, claims, playlistID).Return(tt.policyErr)
-
-			if tt.policyErr == nil {
-				repo.On("SaveCover", ctx, cover).Return(tt.repoErr)
-			}
-
-			svc := New(repo, policy)
-
-			err := svc.UploadCover(ctx, claims, cover)
-			if tt.wantErr != nil {
-				assert.Error(t, err)
-				assert.ErrorIs(t, err, tt.wantErr)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+func (PlaylistCoverObjectMother) Cover(playlistID uuid.UUID) *entity.Cover {
+	return &entity.Cover{ObjectID: playlistID, Data: []byte("image")}
 }
 
-func TestDeleteCover(t *testing.T) {
-	ctx := context.Background()
+type PlaylistCoverServiceSuite struct {
+	suite.Suite
+
+	ctx    context.Context
+	policy *mocks.PlaylistPolicyService
+	repo   *mocks.PlaylistCoverRepository
+	svc    *PlaylistCoverService
+	mother PlaylistCoverObjectMother
+}
+
+func TestPlaylistCoverServiceSuite(t *testing.T) {
+	suite.Run(t, new(PlaylistCoverServiceSuite))
+}
+
+func (s *PlaylistCoverServiceSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.policy = mocks.NewPlaylistPolicyService(s.T())
+	s.repo = mocks.NewPlaylistCoverRepository(s.T())
+	s.svc = New(s.repo, s.policy)
+	s.mother = PlaylistCoverObjectMother{}
+}
+
+// --- GetCover ---
+
+func (s *PlaylistCoverServiceSuite) TestGetCover() {
+	claims := s.mother.Claims()
 	playlistID := uuid.New()
-	claims := &entity.Claims{UserID: uuid.New()}
+	cov := s.mother.Cover(playlistID)
 
-	tests := []struct {
-		name      string
-		policyErr error
-		repoErr   error
-		wantErr   error
-	}{
-		{
-			name:    "success",
-			wantErr: nil,
-		},
-		{
-			name:      "policy denied",
-			policyErr: commonerr.ErrForbidden,
-			wantErr:   playlist.ErrDeleteCover,
-		},
-		{
-			name:    "repo error",
-			repoErr: errors.New("delete fail"),
-			wantErr: playlist.ErrDeleteCover,
-		},
-	}
+	s.Run("success", func() {
+		s.SetupTest()
+		s.policy.On("CanView", s.ctx, claims, playlistID).Return(nil)
+		s.repo.On("GetCover", s.ctx, playlistID).Return(cov, nil)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			policy := mocks.NewPlaylistPolicyService(t)
-			repo := mocks.NewPlaylistCoverRepository(t)
+		result, err := s.svc.GetCover(s.ctx, claims, playlistID)
+		s.NoError(err)
+		s.Equal(cov, result)
+	})
 
-			policy.On("CanDelete", ctx, claims, playlistID).Return(tt.policyErr)
+	s.Run("policy denied", func() {
+		s.SetupTest()
+		s.policy.On("CanView", s.ctx, claims, playlistID).Return(commonerr.ErrForbidden)
 
-			if tt.policyErr == nil {
-				repo.On("DeleteCover", ctx, playlistID).Return(tt.repoErr)
-			}
+		result, err := s.svc.GetCover(s.ctx, claims, playlistID)
+		s.Nil(result)
+		s.ErrorIs(err, usecase.ErrGetCover)
+	})
 
-			svc := New(repo, policy)
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.policy.On("CanView", s.ctx, claims, playlistID).Return(nil)
+		s.repo.On("GetCover", s.ctx, playlistID).Return(nil, errors.New("repo fail"))
 
-			err := svc.DeleteCover(ctx, claims, playlistID)
-			if tt.wantErr != nil {
-				assert.Error(t, err)
-				assert.ErrorIs(t, err, tt.wantErr)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+		result, err := s.svc.GetCover(s.ctx, claims, playlistID)
+		s.Nil(result)
+		s.ErrorIs(err, usecase.ErrGetCover)
+	})
+}
+
+// --- UploadCover ---
+
+func (s *PlaylistCoverServiceSuite) TestUploadCover() {
+	claims := s.mother.Claims()
+	playlistID := uuid.New()
+	cov := s.mother.Cover(playlistID)
+
+	s.Run("success", func() {
+		s.SetupTest()
+		s.policy.On("CanEdit", s.ctx, claims, playlistID).Return(nil)
+		s.repo.On("SaveCover", s.ctx, cov).Return(nil)
+
+		err := s.svc.UploadCover(s.ctx, claims, cov)
+		s.NoError(err)
+	})
+
+	s.Run("policy denied", func() {
+		s.SetupTest()
+		s.policy.On("CanEdit", s.ctx, claims, playlistID).Return(commonerr.ErrForbidden)
+
+		err := s.svc.UploadCover(s.ctx, claims, cov)
+		s.ErrorIs(err, usecase.ErrUploadCover)
+	})
+
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.policy.On("CanEdit", s.ctx, claims, playlistID).Return(nil)
+		s.repo.On("SaveCover", s.ctx, cov).Return(errors.New("save fail"))
+
+		err := s.svc.UploadCover(s.ctx, claims, cov)
+		s.ErrorIs(err, usecase.ErrUploadCover)
+	})
+}
+
+// --- DeleteCover ---
+
+func (s *PlaylistCoverServiceSuite) TestDeleteCover() {
+	claims := s.mother.Claims()
+	playlistID := uuid.New()
+
+	s.Run("success", func() {
+		s.SetupTest()
+		s.policy.On("CanDelete", s.ctx, claims, playlistID).Return(nil)
+		s.repo.On("DeleteCover", s.ctx, playlistID).Return(nil)
+
+		err := s.svc.DeleteCover(s.ctx, claims, playlistID)
+		s.NoError(err)
+	})
+
+	s.Run("policy denied", func() {
+		s.SetupTest()
+		s.policy.On("CanDelete", s.ctx, claims, playlistID).Return(commonerr.ErrForbidden)
+
+		err := s.svc.DeleteCover(s.ctx, claims, playlistID)
+		s.ErrorIs(err, usecase.ErrDeleteCover)
+	})
+
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.policy.On("CanDelete", s.ctx, claims, playlistID).Return(nil)
+		s.repo.On("DeleteCover", s.ctx, playlistID).Return(errors.New("delete fail"))
+
+		err := s.svc.DeleteCover(s.ctx, claims, playlistID)
+		s.ErrorIs(err, usecase.ErrDeleteCover)
+	})
 }

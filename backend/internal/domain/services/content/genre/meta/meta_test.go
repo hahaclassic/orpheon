@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	genre "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/genre/meta"
@@ -15,211 +16,180 @@ import (
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
-func TestCreateGenre(t *testing.T) {
-	ctx := context.Background()
-	adminClaims := &entity.Claims{AccessLvl: entity.Admin}
-	userClaims := &entity.Claims{AccessLvl: entity.User}
-	validGenre := &entity.Genre{ID: uuid.New()}
+type GenreObjectMother struct{}
 
-	tests := []struct {
-		name      string
-		claims    *entity.Claims
-		genre     *entity.Genre
-		mockFn    func(r *mocks.GenreRepository)
-		wantError error
-	}{
-		{
-			name:   "success",
-			claims: adminClaims,
-			genre:  validGenre,
-			mockFn: func(r *mocks.GenreRepository) {
-				r.On("Create", ctx, validGenre).Return(nil)
-			},
-		},
-		{
-			name:      "forbidden",
-			claims:    userClaims,
-			genre:     validGenre,
-			mockFn:    func(r *mocks.GenreRepository) {},
-			wantError: commonerr.ErrForbidden,
-		},
-		{
-			name:   "repo error",
-			claims: adminClaims,
-			genre:  validGenre,
-			mockFn: func(r *mocks.GenreRepository) {
-				r.On("Create", ctx, validGenre).Return(errors.New("db error"))
-			},
-			wantError: usecase.ErrCreateGenre,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewGenreRepository(t)
-			tt.mockFn(repo)
-			svc := genre.NewGenreService(repo)
-			err := svc.CreateGenre(ctx, tt.claims, tt.genre)
-			if tt.wantError != nil {
-				assert.ErrorIs(t, err, tt.wantError)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+func (GenreObjectMother) AdminClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.Admin}
 }
 
-func TestGetGenre(t *testing.T) {
-	ctx := context.Background()
-	genreID := uuid.New()
-	genreEntity := &entity.Genre{ID: genreID}
+func (GenreObjectMother) UserClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.User}
+}
 
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewGenreRepository(t)
-		repo.On("GetByID", ctx, genreID).Return(genreEntity, nil)
-		svc := genre.NewGenreService(repo)
+func (GenreObjectMother) ValidGenre() *entity.Genre {
+	return &entity.Genre{ID: uuid.New(), Title: "Rock"}
+}
 
-		res, err := svc.GetGenreByID(ctx, genreID)
-		assert.NoError(t, err)
-		assert.Equal(t, genreEntity, res)
+type GenreServiceSuite struct {
+	suite.Suite
+	ctx    context.Context
+	repo   *mocks.GenreRepository
+	svc    *genre.GenreService
+	mother GenreObjectMother
+}
+
+func TestGenreServiceSuite(t *testing.T) {
+	suite.Run(t, new(GenreServiceSuite))
+}
+
+func (s *GenreServiceSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.repo = mocks.NewGenreRepository(s.T())
+	s.svc = genre.NewGenreService(s.repo)
+	s.mother = GenreObjectMother{}
+}
+
+func (s *GenreServiceSuite) TearDownTest() {
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *GenreServiceSuite) TestCreateGenre() {
+	admin := s.mother.AdminClaims()
+	user := s.mother.UserClaims()
+	valid := s.mother.ValidGenre()
+
+	s.Run("success", func() {
+		s.repo.On("Create", s.ctx, valid).Return(nil)
+		err := s.svc.CreateGenre(s.ctx, admin, valid)
+		s.NoError(err)
 	})
 
-	t.Run("invalid ID", func(t *testing.T) {
-		repo := mocks.NewGenreRepository(t)
-		svc := genre.NewGenreService(repo)
-
-		_, err := svc.GetGenreByID(ctx, uuid.Nil)
-		assert.ErrorIs(t, err, genre.ErrInvalidGenreID)
+	s.Run("forbidden", func() {
+		err := s.svc.CreateGenre(s.ctx, user, valid)
+		s.ErrorIs(err, commonerr.ErrForbidden)
 	})
 
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewGenreRepository(t)
-		repo.On("GetByID", ctx, genreID).Return(nil, errors.New("repo error"))
-		svc := genre.NewGenreService(repo)
-
-		_, err := svc.GetGenreByID(ctx, genreID)
-		assert.ErrorIs(t, err, usecase.ErrGetGenre)
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.repo.On("Create", s.ctx, valid).Return(errors.New("db error"))
+		err := s.svc.CreateGenre(s.ctx, admin, valid)
+		s.ErrorIs(err, usecase.ErrCreateGenre)
 	})
 }
 
-func TestUpdateGenre(t *testing.T) {
-	ctx := context.Background()
-	adminClaims := &entity.Claims{AccessLvl: entity.Admin}
-	userClaims := &entity.Claims{AccessLvl: entity.User}
-	validGenre := &entity.Genre{ID: uuid.New()}
+func (s *GenreServiceSuite) TestGetGenreByID() {
+	valid := s.mother.ValidGenre()
 
-	tests := []struct {
-		name      string
-		claims    *entity.Claims
-		genre     *entity.Genre
-		mockFn    func(r *mocks.GenreRepository)
-		wantError error
-	}{
-		{
-			name:   "success",
-			claims: adminClaims,
-			genre:  validGenre,
-			mockFn: func(r *mocks.GenreRepository) {
-				r.On("Update", ctx, validGenre).Return(nil)
-			},
-		},
-		{
-			name:      "forbidden",
-			claims:    userClaims,
-			genre:     validGenre,
-			mockFn:    func(r *mocks.GenreRepository) {},
-			wantError: commonerr.ErrForbidden,
-		},
-		{
-			name:      "invalid ID",
-			claims:    adminClaims,
-			genre:     &entity.Genre{ID: uuid.Nil},
-			mockFn:    func(r *mocks.GenreRepository) {},
-			wantError: genre.ErrInvalidGenreID,
-		},
-		{
-			name:   "repo error",
-			claims: adminClaims,
-			genre:  validGenre,
-			mockFn: func(r *mocks.GenreRepository) {
-				r.On("Update", ctx, validGenre).Return(errors.New("db error"))
-			},
-			wantError: usecase.ErrUpdateGenre,
-		},
-	}
+	s.Run("success", func() {
+		s.SetupTest()
+		s.repo.On("GetByID", s.ctx, valid.ID).Return(valid, nil)
+		res, err := s.svc.GetGenreByID(s.ctx, valid.ID)
+		s.NoError(err)
+		s.Equal(valid, res)
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewGenreRepository(t)
-			tt.mockFn(repo)
-			svc := genre.NewGenreService(repo)
-			err := svc.UpdateGenre(ctx, tt.claims, tt.genre)
-			if tt.wantError != nil {
-				assert.ErrorIs(t, err, tt.wantError)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+	s.Run("invalid ID", func() {
+		s.SetupTest()
+		_, err := s.svc.GetGenreByID(s.ctx, uuid.Nil)
+		s.ErrorIs(err, genre.ErrInvalidGenreID)
+	})
+
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.repo.On("GetByID", s.ctx, valid.ID).Return(nil, errors.New("repo error"))
+		_, err := s.svc.GetGenreByID(s.ctx, valid.ID)
+		s.ErrorIs(err, usecase.ErrGetGenre)
+	})
 }
 
-func TestDeleteGenre(t *testing.T) {
-	ctx := context.Background()
-	genreID := uuid.New()
-	adminClaims := &entity.Claims{AccessLvl: entity.Admin}
-	userClaims := &entity.Claims{AccessLvl: entity.User}
+func (s *GenreServiceSuite) TestUpdateGenre() {
+	admin := s.mother.AdminClaims()
+	user := s.mother.UserClaims()
+	valid := s.mother.ValidGenre()
 
-	tests := []struct {
-		name      string
-		claims    *entity.Claims
-		genreID   uuid.UUID
-		mockFn    func(r *mocks.GenreRepository)
-		wantError error
-	}{
-		{
-			name:    "success",
-			claims:  adminClaims,
-			genreID: genreID,
-			mockFn: func(r *mocks.GenreRepository) {
-				r.On("Delete", ctx, genreID).Return(nil)
-			},
-		},
-		{
-			name:      "forbidden",
-			claims:    userClaims,
-			genreID:   genreID,
-			mockFn:    func(r *mocks.GenreRepository) {},
-			wantError: commonerr.ErrForbidden,
-		},
-		{
-			name:      "invalid ID",
-			claims:    adminClaims,
-			genreID:   uuid.Nil,
-			mockFn:    func(r *mocks.GenreRepository) {},
-			wantError: genre.ErrInvalidGenreID,
-		},
-		{
-			name:    "repo error",
-			claims:  adminClaims,
-			genreID: genreID,
-			mockFn: func(r *mocks.GenreRepository) {
-				r.On("Delete", ctx, genreID).Return(errors.New("repo error"))
-			},
-			wantError: usecase.ErrDeleteGenre,
-		},
-	}
+	s.Run("success", func() {
+		s.SetupTest()
+		s.repo.On("Update", s.ctx, valid).Return(nil)
+		err := s.svc.UpdateGenre(s.ctx, admin, valid)
+		s.NoError(err)
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewGenreRepository(t)
-			tt.mockFn(repo)
-			svc := genre.NewGenreService(repo)
-			err := svc.DeleteGenre(ctx, tt.claims, tt.genreID)
-			if tt.wantError != nil {
-				assert.ErrorIs(t, err, tt.wantError)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+	s.Run("forbidden", func() {
+		s.SetupTest()
+		err := s.svc.UpdateGenre(s.ctx, user, valid)
+		s.ErrorIs(err, commonerr.ErrForbidden)
+	})
+
+	s.Run("invalid ID", func() {
+		s.SetupTest()
+		err := s.svc.UpdateGenre(s.ctx, admin, &entity.Genre{ID: uuid.Nil})
+		s.ErrorIs(err, genre.ErrInvalidGenreID)
+	})
+
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.repo.On("Update", s.ctx, valid).Return(errors.New("db error"))
+		err := s.svc.UpdateGenre(s.ctx, admin, valid)
+		s.ErrorIs(err, usecase.ErrUpdateGenre)
+	})
+}
+
+func (s *GenreServiceSuite) TestDeleteGenre() {
+	admin := s.mother.AdminClaims()
+	user := s.mother.UserClaims()
+	id := uuid.New()
+
+	s.Run("success", func() {
+		s.SetupTest()
+		s.repo.On("Delete", s.ctx, id).Return(nil)
+		err := s.svc.DeleteGenre(s.ctx, admin, id)
+		s.NoError(err)
+	})
+
+	s.Run("forbidden", func() {
+		s.SetupTest()
+		err := s.svc.DeleteGenre(s.ctx, user, id)
+		s.ErrorIs(err, commonerr.ErrForbidden)
+	})
+
+	s.Run("invalid ID", func() {
+		s.SetupTest()
+		err := s.svc.DeleteGenre(s.ctx, admin, uuid.Nil)
+		s.ErrorIs(err, genre.ErrInvalidGenreID)
+	})
+
+	s.Run("repo error", func() {
+		s.SetupTest()
+		genreID := uuid.New()
+		repo := mocks.NewGenreRepository(s.T())
+		repo.On("Delete", s.ctx, genreID).Return(errors.New("db error"))
+
+		svc := genre.NewGenreService(repo)
+		err := svc.DeleteGenre(s.ctx, admin, genreID)
+
+		assert.Error(s.T(), err)
+		assert.True(s.T(), errors.Is(err, usecase.ErrDeleteGenre))
+	})
+}
+
+func (s *GenreServiceSuite) TestGetGenreByAlbum() {
+	albumID := uuid.New()
+	genres := []*entity.Genre{s.mother.ValidGenre()}
+
+	s.Run("success", func() {
+		s.SetupTest()
+		s.repo.On("GetByAlbum", s.ctx, albumID).Return(genres, nil)
+		res, err := s.svc.GetGenreByAlbum(s.ctx, albumID)
+		s.NoError(err)
+		s.Equal(genres, res)
+	})
+
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.repo.On("GetByAlbum", s.ctx, albumID).Return(nil, errors.New("db error"))
+		res, err := s.svc.GetGenreByAlbum(s.ctx, albumID)
+		s.Nil(res)
+		s.Error(err)
+		s.True(errors.Is(err, usecase.ErrGetGenreByAlbum))
+	})
 }
