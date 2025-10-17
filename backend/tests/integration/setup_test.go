@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	migrationsDir = "../db/migrations"
+	migrationsDir = "../../db/migrations"
 )
 
 var (

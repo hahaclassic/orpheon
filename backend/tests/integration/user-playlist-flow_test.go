@@ -100,9 +100,11 @@ func TestUserPlaylistFlow(t *testing.T) {
 	require.NoError(t, trackRepo.Create(ctx, track)) // 4. create track
 
 	user := &entity.UserInfo{
-		ID:        uuid.New(),
-		Name:      "test_user",
-		AccessLvl: entity.User,
+		ID:               uuid.New(),
+		Name:             "test_user",
+		AccessLvl:        entity.User,
+		BirthDate:        time.Date(2000, 10, 10, 0, 0, 0, 0, time.Local),
+		RegistrationDate: time.Now(),
 	}
 	require.NoError(t, userRepo.CreateUser(ctx, user)) // 5. create user
 

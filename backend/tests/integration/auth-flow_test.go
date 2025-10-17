@@ -50,9 +50,11 @@ func TestAuthFlow(t *testing.T) {
 
 	// 1.
 	userInfo := &entity.UserInfo{
-		ID:        uuid.New(),
-		Name:      "test_user",
-		AccessLvl: entity.User,
+		ID:               uuid.New(),
+		Name:             "test_user",
+		AccessLvl:        entity.User,
+		BirthDate:        time.Date(2000, 10, 10, 0, 0, 0, 0, time.Local),
+		RegistrationDate: time.Now(),
 	}
 
 	require.NoError(t, userCreator.CreateUser(ctx, userInfo))

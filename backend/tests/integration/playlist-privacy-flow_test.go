@@ -66,9 +66,11 @@ func TestPlaylistAccessFlow(t *testing.T) {
 
 	// 1.
 	user1 := &entity.UserInfo{
-		ID:        uuid.New(),
-		Name:      "user1",
-		AccessLvl: entity.User,
+		ID:               uuid.New(),
+		Name:             "user1",
+		AccessLvl:        entity.User,
+		BirthDate:        time.Date(2000, 10, 10, 0, 0, 0, 0, time.Local),
+		RegistrationDate: time.Now(),
 	}
 	require.NoError(t, userRepo.CreateUser(ctx, user1))
 
