@@ -23,12 +23,11 @@ jobs:
           cache-dependency-path: backend/go.sum
 
       - name: Install golurectl
-        working-directory: backend
-        run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
+        run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
-      - name: Run unit tests
-        working-directory: backend
+      - name: Run Unit Tests
         run: |
+          cd backend
           go test -json ./internal/domain/... -tags=unit | golurectl -l -e -o allure-results
 
       - name: Upload Unit Test Results
@@ -53,8 +52,7 @@ jobs:
           cache-dependency-path: backend/go.sum
 
       - name: Install golurectl
-        working-directory: backend
-        run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
+        run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
       - name: Restore Unit Results
         uses: actions/download-artifact@v4
@@ -62,19 +60,15 @@ jobs:
           name: unit-allure-results
           path: backend/unit-results
 
-      - name: Merge History
+      - name: Merge Unit History
         run: |
           mkdir -p backend/allure-results/history
           cp -r backend/unit-results/allure-results/history/* backend/allure-results/history/ || true
 
-      - name: Run integration tests
-        working-directory: backend
+      - name: Run Integration Tests
         run: |
+          cd backend
           go test -json ./tests/integrations/... -tags=integration | golurectl -l -e -o allure-results
-        
-      - name: Show files
-        working-directory: backend
-        run: ls ./allure-results
 
       - name: Upload Integration Results
         uses: actions/upload-artifact@v4
@@ -98,8 +92,7 @@ jobs:
           cache-dependency-path: backend/go.sum
 
       - name: Install golurectl
-        working-directory: backend
-        run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
+        run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
       - name: Restore Previous Results
         uses: actions/download-artifact@v4
@@ -117,14 +110,14 @@ jobs:
           cp -r backend/unit-results/allure-results/history/* backend/allure-results/history/ || true
           cp -r backend/integration-results/allure-results/history/* backend/allure-results/history/ || true
 
-      - name: Run E2E tests
-        working-directory: backend
+      - name: Run E2E Tests
         run: |
+          cd backend
           go test -json ./tests/e2e/... -tags=e2e | golurectl -l -e -o allure-results
 
       - name: Generate Allure Report
-        working-directory: backend
         run: |
+          cd backend
           allure generate allure-results --clean -o allure-report
 
       - name: Deploy to GitHub Pages
