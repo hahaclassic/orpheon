@@ -25,14 +25,6 @@ jobs:
       - name: Install golurectl
         run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
-      - name: Install GitHub CLI
-        uses: cli/gh-action@v3
-
-      - name: Restore previous Allure history (if exists)
-        run: |
-          mkdir -p backend/allure-results/history
-          gh run download --name allure-history --dir backend/allure-results/history || echo "No previous history found"
-
       - name: Run Unit Tests
         run: |
           cd backend
@@ -69,14 +61,6 @@ jobs:
       - name: Install golurectl
         run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
-      - name: Install GitHub CLI
-        uses: cli/gh-action@v3
-
-      - name: Restore previous Allure history (if exists)
-        run: |
-          mkdir -p backend/allure-results/history
-          gh run download --name allure-history --dir backend/allure-results/history || echo "No previous history found"
-
       - name: Run Integration Tests
         run: |
           cd backend
@@ -112,14 +96,6 @@ jobs:
 
       - name: Install golurectl
         run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
-
-      - name: Install GitHub CLI
-        uses: cli/gh-action@v3
-
-      - name: Restore previous Allure history (if exists)
-        run: |
-          mkdir -p backend/allure-results/history
-          gh run download --name allure-history --dir backend/allure-results/history || echo "No previous history found"
 
       - name: Run E2E Tests
         run: |
