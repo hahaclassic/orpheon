@@ -30,6 +30,7 @@ jobs:
         with:
           name: allure-history
           path: backend/allure-results/history
+          if-no-files-found: ignore
 
       - name: Run Unit Tests
         run: |
