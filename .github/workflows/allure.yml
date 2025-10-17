@@ -71,6 +71,10 @@ jobs:
         working-directory: backend
         run: |
           go test -json ./tests/integrations/... -tags=integration | golurectl -l -e -o allure-results
+        
+      - name: Show files
+        working-directory: backend
+        run: ls ./allure-results
 
       - name: Upload Integration Results
         uses: actions/upload-artifact@v4
