@@ -1,0 +1,124 @@
+name: Run Go Tests with Allure
+
+on:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - 'backend/**'
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: backend
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.25
+
+      - name: Install golurectl
+        run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
+
+      - name: Run unit tests
+        working-directory: backend
+        run: |
+          go test -json ./internal/domain/... -tags=unit | golurectl -l -e -o allure-results
+
+      - name: Upload Unit Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: unit-allure-results
+          path: backend/allure-results
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: backend
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.25
+
+      - name: Install golurectl
+        run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
+
+      - name: Restore Unit Results
+        uses: actions/download-artifact@v3
+        with:
+          name: unit-allure-results
+          path: backend/unit-results
+
+      - name: Merge History
+        run: |
+          mkdir -p backend/allure-results/history
+          cp -r backend/unit-results/allure-results/history/* backend/allure-results/history/ || true
+
+      - name: Run integration tests
+        working-directory: backend
+        run: |
+          go test -json ./tests/integrations/... -tags=integration | golurectl -l -e -o allure-results
+
+      - name: Upload Integration Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-allure-results
+          path: backend/allure-results
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: backend
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.25
+
+      - name: Install golurectl
+        run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
+
+      - name: Restore Previous Results
+        uses: actions/download-artifact@v3
+        with:
+          name: unit-allure-results
+          path: backend/unit-results
+      - uses: actions/download-artifact@v3
+        with:
+          name: integration-allure-results
+          path: backend/integration-results
+
+      - name: Merge History
+        run: |
+          mkdir -p backend/allure-results/history
+          cp -r backend/unit-results/allure-results/history/* backend/allure-results/history/ || true
+          cp -r backend/integration-results/allure-results/history/* backend/allure-results/history/ || true
+
+      - name: Run E2E tests
+        working-directory: backend
+        run: |
+          go test -json ./tests/e2e/... -tags=e2e | golurectl -l -e -o allure-results
+
+      - name: Generate Allure Report
+        working-directory: backend
+        run: |
+          allure generate allure-results --clean -o allure-report
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: backend/allure-report
