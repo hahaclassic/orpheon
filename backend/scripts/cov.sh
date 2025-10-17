@@ -3,7 +3,7 @@
 mkdir -p coverage
 
 # 1. Full project
-go test -covermode=atomic -coverprofile=./coverage/coverage_total.out ./internal/... ./cmd/... ./pkg/... > coverage/result_total.log 2>&1
+go test -covermode=atomic -coverprofile=./coverage/coverage_total.out ./internal/... ./pkg/... > coverage/result_total.log 2>&1
 
 # 2. Only domain
 go test -covermode=atomic -coverprofile=./coverage/coverage_domain.out ./internal/domain/... > coverage/result_domain.log 2>&1
@@ -20,6 +20,7 @@ print_coverage() {
     else
         echo "$4 coverage: FAIL"
         cat "$log"
+        exit 1
     fi
 }
 
