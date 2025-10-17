@@ -30,7 +30,7 @@ jobs:
           go test -json ./internal/domain/... -tags=unit | golurectl -l -e -o allure-results
 
       - name: Upload Unit Test Results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: unit-allure-results
           path: backend/allure-results
@@ -53,7 +53,7 @@ jobs:
         run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
       - name: Restore Unit Results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: unit-allure-results
           path: backend/unit-results
@@ -69,7 +69,7 @@ jobs:
           go test -json ./tests/integrations/... -tags=integration | golurectl -l -e -o allure-results
 
       - name: Upload Integration Results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: integration-allure-results
           path: backend/allure-results
@@ -92,11 +92,11 @@ jobs:
         run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
       - name: Restore Previous Results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: unit-allure-results
           path: backend/unit-results
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: integration-allure-results
           path: backend/integration-results
