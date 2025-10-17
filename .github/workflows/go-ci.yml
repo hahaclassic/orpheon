@@ -60,6 +60,7 @@ jobs:
       - name: Install golurectl
         run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
       - name: Run Unit Tests
+        working-directory: backend
         run: |
           mkdir -p report/allure-results/unit
           if ! go test -json ./internal/domain/... ./internal/repository/... | golurectl -s -o report/allure-results/unit --allure-suite UNIT; then
@@ -92,6 +93,7 @@ jobs:
       - name: Install golurectl
         run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
       - name: Run Integration Tests
+        working-directory: backend
         run: |
           mkdir -p report/allure-results/integration
           if [ ! -f report/unit_failed ]; then
@@ -128,6 +130,7 @@ jobs:
       - name: Install golurectl
         run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
       - name: Run E2E Tests
+        working-directory: backend
         run: |
           mkdir -p report/allure-results/e2e
           if [ ! -f report/integration_failed ]; then
