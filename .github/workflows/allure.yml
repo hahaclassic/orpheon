@@ -134,6 +134,12 @@ jobs:
           cd backend
           allure generate report/allure-results --clean -o report/allure-report
 
+      - name: Upload Allure History
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-history
+          path: backend/report/allure-report/history
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
