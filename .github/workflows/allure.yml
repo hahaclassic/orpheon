@@ -28,20 +28,14 @@ jobs:
       - name: Run Unit Tests
         run: |
           cd backend
-          mkdir -p allure-results/history
-          go test -json ./internal/domain/... | golurectl -l -e -o allure-results --allure-suite Unit --allure-tags UNIT
+          mkdir -p report/allure-results
+          go test -json ./internal/domain/... | golurectl -l -e -o report/allure-results --allure-suite Unit --allure-tags UNIT
 
-      - name: Upload Unit Test Results
+      - name: Upload Allure Results
         uses: actions/upload-artifact@v4
         with:
-          name: unit-allure-results
-          path: backend/allure-results
-
-      - name: Save Allure history
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-history
-          path: backend/allure-results/history
+          name: allure-results
+          path: backend/report/allure-results
 
   integration-tests:
     name: Integration Tests
@@ -61,23 +55,22 @@ jobs:
       - name: Install golurectl
         run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
+      - name: Download previous Allure results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          path: backend/report/allure-results
+
       - name: Run Integration Tests
         run: |
           cd backend
-          mkdir -p allure-results/history
-          go test -json ./tests/integrations/... | golurectl -l -e -o allure-results --allure-suite Integration --allure-tags INTEGRATION
+          go test -json ./tests/integrations/... | golurectl -l -e -o report/allure-results --allure-suite Integration --allure-tags INTEGRATION
 
-      - name: Upload Integration Results
+      - name: Upload Allure Results
         uses: actions/upload-artifact@v4
         with:
-          name: integration-allure-results
-          path: backend/allure-results
-
-      - name: Save Allure history
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-history
-          path: backend/allure-results/history
+          name: allure-results
+          path: backend/report/allure-results
 
   e2e-tests:
     name: E2E Tests
@@ -97,25 +90,52 @@ jobs:
       - name: Install golurectl
         run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
+      - name: Download previous Allure results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          path: backend/report/allure-results
+
       - name: Run E2E Tests
         run: |
           cd backend
-          mkdir -p allure-results/history
-          go test -json ./tests/e2e/... | golurectl -l -e -o allure-results --allure-suite E2E --allure-tags E2E
+          go test -json ./tests/e2e/... | golurectl -l -e -o report/allure-results --allure-suite E2E --allure-tags E2E
+
+      - name: Upload Allure Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: backend/report/allure-results
+
+  generate-report:
+    name: Generate and Publish Allure Report
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Download combined Allure results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          path: backend/report/allure-results
+
+      - name: Install Java & Allure CLI
+        run: |
+          sudo apt update
+          sudo apt install -y openjdk-17-jdk unzip curl
+          curl -o allure.zip -L "https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.zip"
+          unzip allure.zip -d /tmp/
+          sudo ln -s /tmp/allure-2.27.0/bin/allure /usr/local/bin/allure
 
       - name: Generate Allure Report
         run: |
           cd backend
-          allure generate allure-results --clean -o allure-report
+          allure generate report/allure-results --clean -o report/allure-report
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: backend/allure-report
-
-      - name: Save Allure history
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-history
-          path: backend/allure-results/history
+          publish_dir: backend/report/allure-report
