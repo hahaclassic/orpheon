@@ -121,4 +121,4 @@ jobs:
 
       - name: Build
         working-directory: backend
-        run: go build -v ./...
+        run: go build -v ./cmd/orpheon/main.go
