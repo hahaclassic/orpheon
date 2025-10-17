@@ -20,6 +20,7 @@ jobs:
         with:
           go-version: '1.24.0'
           cache: true
+          cache-dependency-path: backend/go.sum
 
       - name: Create mod cache directory
         run: mkdir -p /home/runner/go/pkg/mod
@@ -48,6 +49,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.0'
+          cache-dependency-path: backend/go.sum
 
       - name: Install golangci-lint
         run: |
@@ -69,6 +71,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.0'
+          cache-dependency-path: backend/go.sum
 
       - name: Run unit tests via make
         working-directory: backend
@@ -86,6 +89,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.0'
+          cache-dependency-path: backend/go.sum
 
       - name: Run integration tests via make
         working-directory: backend
@@ -103,6 +107,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.0'
+          cache-dependency-path: backend/go.sum
 
       - name: Run e2e tests via make
         working-directory: backend
@@ -123,6 +128,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.24.0'
+          cache-dependency-path: backend/go.sum
 
       - name: Build
         working-directory: backend
