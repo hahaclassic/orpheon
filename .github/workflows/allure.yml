@@ -25,6 +25,12 @@ jobs:
       - name: Install golurectl
         run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
+      - name: Download Allure history
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-history
+          path: backend/report/allure-results/allure-history
+
       - name: Run Unit Tests
         run: |
           cd backend
