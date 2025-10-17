@@ -51,56 +51,128 @@ jobs:
   unit-test:
     name: Unit Tests
     runs-on: ubuntu-latest
+    container:
+      image: golang:1.24
     needs: lint
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          apt-get update && apt-get install -y openjdk-17-jdk pkg-config libasound2-dev unzip
+          go install github.com/hahaclassic/golurectl@latest
+      - name: Run Unit Tests
+        run: |
+          mkdir -p report/allure-results/unit
+          if ! go test -json ./internal/domain/... ./internal/repository/... | golurectl -s -o report/allure-results/unit --allure-suite UNIT; then
+            echo "unit_failed" > report/unit_failed
+          fi
+      - name: Upload Unit Report
+        uses: actions/upload-artifact@v3
         with:
-          go-version: '1.24.0'
-          cache-dependency-path: backend/go.sum
-
-      - name: Run unit tests via make
-        working-directory: backend
-        run: make cov-v
+          name: unit-report
+          path: report
 
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
+    container:
+      image: golang:1.24
     needs: unit-test
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v4
+      - name: Download Unit Report
+        uses: actions/download-artifact@v3
         with:
-          go-version: '1.24.0'
-          cache-dependency-path: backend/go.sum
-
-      - name: Run integration tests via make
-        working-directory: backend
-        run: make integration
+          name: unit-report
+          path: report
+      - name: Install dependencies
+        run: |
+          apt-get update && apt-get install -y openjdk-17-jdk pkg-config libasound2-dev unzip
+          go install github.com/hahaclassic/golurectl@latest
+      - name: Run Integration Tests
+        run: |
+          mkdir -p report/allure-results/integration
+          if [ ! -f report/unit_failed ]; then
+            if ! go test -json ./internal/repository/... | golurectl -s -o report/allure-results/integration --allure-suite INTEGRATION; then
+              echo "integration_failed" > report/integration_failed
+            fi
+          else
+            echo "Skipped Integration because unit tests failed"
+          fi
+      - name: Upload Integration Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-report
+          path: report
 
   e2e-test:
     name: E2E Tests
     runs-on: ubuntu-latest
+    container:
+      image: golang:1.24
     needs: integration-test
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v4
+      - name: Download Integration Report
+        uses: actions/download-artifact@v3
         with:
-          go-version: '1.24.0'
-          cache-dependency-path: backend/go.sum
+          name: integration-report
+          path: report
+      - name: Install dependencies
+        run: |
+          apt-get update && apt-get install -y openjdk-17-jdk pkg-config libasound2-dev unzip
+          go install github.com/hahaclassic/golurectl@latest
+      - name: Run E2E Tests
+        run: |
+          mkdir -p report/allure-results/e2e
+          if [ ! -f report/integration_failed ]; then
+            go test -json ./cmd/... | golurectl -s -o report/allure-results/e2e --allure-suite E2E
+          else
+            echo "Skipped E2E because integration tests failed"
+          fi
+      - name: Upload E2E Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e-report
+          path: report
 
-      - name: Run e2e tests via make
-        working-directory: backend
-        run: make e2e
+  generate-report:
+    name: Generate Allure Report
+    runs-on: ubuntu-latest
+    needs: [unit-test, integration-test, e2e-test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download All Reports
+        uses: actions/download-artifact@v3
+        with:
+          name: unit-report
+          path: report
+      - uses: actions/download-artifact@v3
+        with:
+          name: integration-report
+          path: report
+      - uses: actions/download-artifact@v3
+        with:
+          name: e2e-report
+          path: report
+      - name: Install Allure
+        run: |
+          apt-get update && apt-get install -y openjdk-17-jdk unzip
+          curl -sSL https://repo.maven.apache.org/maven2/io/qameta/allure/allure-commandline/2.27.2/allure-2.27.2.zip -o /tmp/allure.zip
+          unzip /tmp/allure.zip -d /opt
+          ln -s /opt/allure-2.27.2/bin/allure /usr/local/bin/allure
+      - name: Generate Allure Report
+        run: |
+          mkdir -p report/allure-report
+          allure generate report/allure-results -o report/allure-report --clean
+      - name: Deploy to GitHub Pages
+        uses: actions/configure-pages@v3
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: report/allure-report
+      - name: Deploy Pages
+        uses: actions/deploy-pages@v1
 
   build:
     name: Build
