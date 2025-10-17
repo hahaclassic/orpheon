@@ -25,11 +25,13 @@ jobs:
       - name: Install golurectl
         run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
-      - name: Download Allure history
-        uses: actions/download-artifact@v4
+      - name: Download Allure history from previous runs
+        uses: dawidd6/action-download-artifact@v2.27.0
         with:
+          workflow: ${{ github.workflow }}.yml
           name: allure-history
-          path: backend/report/allure-results/allure-history
+          path: backend/report/allure-results
+          if_no_artifact_found: warn
 
       - name: Run Unit Tests
         run: |
@@ -61,7 +63,7 @@ jobs:
       - name: Install golurectl
         run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
-      - name: Download previous Allure results
+      - name: Download previous Allure results with history
         uses: actions/download-artifact@v4
         with:
           name: allure-results-unit
@@ -96,7 +98,7 @@ jobs:
       - name: Install golurectl
         run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
-      - name: Download previous Allure results
+      - name: Download previous Allure results with history
         uses: actions/download-artifact@v4
         with:
           name: allure-results-integration
@@ -140,11 +142,12 @@ jobs:
           cd backend
           allure generate report/allure-results --clean -o report/allure-report
 
-      - name: Upload Allure History
+      - name: Upload Allure History for future runs
         uses: actions/upload-artifact@v4
         with:
           name: allure-history
           path: backend/report/allure-report/history
+          retention-days: 30
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
