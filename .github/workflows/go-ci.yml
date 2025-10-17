@@ -67,7 +67,7 @@ jobs:
             echo "unit_failed" > report/unit_failed
           fi
       - name: Upload Unit Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: unit-report
           path: report
@@ -81,7 +81,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Download Unit Report
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: unit-report
           path: report
@@ -100,7 +100,7 @@ jobs:
             echo "Skipped Integration because unit tests failed"
           fi
       - name: Upload Integration Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: integration-report
           path: report
@@ -114,7 +114,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Download Integration Report
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: integration-report
           path: report
@@ -131,7 +131,7 @@ jobs:
             echo "Skipped E2E because integration tests failed"
           fi
       - name: Upload E2E Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: e2e-report
           path: report
@@ -143,15 +143,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Download All Reports
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: unit-report
           path: report
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: integration-report
           path: report
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: e2e-report
           path: report
