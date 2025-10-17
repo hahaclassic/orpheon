@@ -58,7 +58,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       - name: Install golurectl
-        run: go install github.com/hahaclassic/golurectl@latest
+        run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
       - name: Run Unit Tests
         run: |
           mkdir -p report/allure-results/unit
@@ -90,7 +90,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       - name: Install golurectl
-        run: go install github.com/hahaclassic/golurectl@latest
+        run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
       - name: Run Integration Tests
         run: |
           mkdir -p report/allure-results/integration
@@ -126,7 +126,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       - name: Install golurectl
-        run: go install github.com/hahaclassic/golurectl@latest
+        run: go install github.com/robotomize/go-allure/cmd/golurectl@latest
       - name: Run E2E Tests
         run: |
           mkdir -p report/allure-results/e2e
