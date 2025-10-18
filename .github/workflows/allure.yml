@@ -59,7 +59,7 @@ jobs:
         run: |
           cd backend
           mkdir -p report/integration-allure-results
-          go test -json ./tests/integrations/... | golurectl -l -e -o report/integration-allure-results --allure-suite Integration --allure-tags INTEGRATION
+          go test -json ./tests/integration/... | golurectl -l -e -o report/integration-allure-results --allure-suite Integration --allure-tags INTEGRATION
 
       - name: Upload Integration Allure Results
         uses: actions/upload-artifact@v4
