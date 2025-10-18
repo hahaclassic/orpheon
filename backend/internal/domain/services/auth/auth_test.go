@@ -161,7 +161,7 @@ func (s *AuthServiceSuite) TestLogin_GetPasswordError() {
 	tokens, err := s.service.Login(s.ctx, creds)
 
 	s.Error(err)
-	s.NotNil(tokens)
+	s.Nil(tokens)
 	s.authRepo.AssertExpectations(s.T())
 }
 
