@@ -33,6 +33,7 @@ jobs:
 
       - name: Upload Unit Allure Results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: allure-results-unit
           path: backend/report/unit-allure-results
@@ -63,6 +64,7 @@ jobs:
 
       - name: Upload Integration Allure Results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: allure-results-integration
           path: backend/report/integration-allure-results
@@ -93,6 +95,7 @@ jobs:
 
       - name: Upload E2E Allure Results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: allure-results-e2e
           path: backend/report/e2e-allure-results
@@ -110,9 +113,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: backend/tmp-allure
-        
-      - name: Show dir
-        run: ls backend/tmp-allure
 
       - name: Merge Allure results
         run: |
@@ -121,6 +121,7 @@ jobs:
           cp -r backend/tmp-allure/allure-results-integration/* backend/report/allure-results/
           cp -r backend/tmp-allure/allure-results-e2e/* backend/report/allure-results/
           ls backend/report/allure-results/
+        continue-on-error: true
 
       - name: Checkout gh-pages for history
         uses: actions/checkout@v4
