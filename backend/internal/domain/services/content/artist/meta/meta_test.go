@@ -123,6 +123,16 @@ func (s *ArtistMetaServiceSuite) TestCreateArtistMeta_Forbidden() {
 	s.repo.AssertNotCalled(s.T(), "Create", mock.Anything, mock.Anything)
 }
 
+func (s *ArtistMetaServiceSuite) TestCreateArtistMeta_NilArtistPanic() {
+	claims := s.mother.AdminClaims()
+
+	s.Panics(func() {
+		_ = s.service.CreateArtistMeta(s.ctx, claims, nil)
+	})
+
+	s.repo.AssertNotCalled(s.T(), "Create", mock.Anything, mock.Anything)
+}
+
 func (s *ArtistMetaServiceSuite) TestCreateArtistMeta_RepoError() {
 	admin := s.mother.AdminClaims()
 	artist := s.builder.Build()
