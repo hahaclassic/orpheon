@@ -13,14 +13,13 @@ unit-random:
 	go test -shuffle=on -v ./internal/domain/services/...
 
 report-unit-gen:
-	rm -rf ./report
 	go clean -testcache
 	go test -json ./internal/domain/... ./internal/repository/... | golurectl -l -e -s -a -o report/allure-results
 	allure generate ./report/allure-results -o ./report/allure-report --clean          
 	allure open ./report/allure-report
 
-report-unit:
-	allure open ./report/allure-report
+report-all-gen:
+	./scripts/allure-report.sh
 
 # Old approach
 # go test -covermode=atomic -coverprofile=./coverage/coverage.out ./internal/... >> /dev/null
