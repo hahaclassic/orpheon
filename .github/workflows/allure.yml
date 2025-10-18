@@ -120,6 +120,7 @@ jobs:
           cp -r backend/tmp-allure/allure-results-unit/* backend/report/allure-results/
           cp -r backend/tmp-allure/allure-results-integration/* backend/report/allure-results/
           cp -r backend/tmp-allure/allure-results-e2e/* backend/report/allure-results/
+          ls backend/report/allure-results/
 
       - name: Checkout gh-pages for history
         uses: actions/checkout@v4
