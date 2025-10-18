@@ -117,7 +117,9 @@ jobs:
       - name: Merge Allure results
         run: |
           mkdir -p backend/report/allure-results
-          cp -r backend/tmp-allure/**/ backend/report/allure-results/
+          cp -r backend/tmp-allure/allure-results-unit/* backend/report/allure-results/
+          cp -r backend/tmp-allure/allure-results-integration/* backend/report/allure-results/
+          cp -r backend/tmp-allure/allure-results-e2e/* backend/report/allure-results/
 
       - name: Checkout gh-pages for history
         uses: actions/checkout@v4
