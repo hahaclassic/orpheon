@@ -110,6 +110,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: backend/tmp-allure
+        
+      - name: Show dir
+        run: ls backend/tmp-allure
 
       - name: Merge Allure results
         run: |
