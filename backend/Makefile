@@ -58,3 +58,5 @@ migrate-down:
 containers-up:
 	docker compose -f docker-compose.dev.backend.yml up
 	
+build-image:
+	docker build -t orpheon-e2e:latest -f ./Dockerfile .
