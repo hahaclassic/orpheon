@@ -1,10 +1,11 @@
-package integration_test
+package e2e
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -13,12 +14,20 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/pressly/goose/v3"
 	"github.com/redis/go-redis/v9"
 )
 
 const (
-	migrationsDir = "../db/migrations"
+	migrationsDir = "../../db/migrations"
+)
+
+var (
+	postgresConnStr string
+	redisURL        string
+	minIOURL        string
+	appURL          string
 )
 
 var (
@@ -38,6 +47,7 @@ func TestMain(m *testing.M) {
 		dockerPostgres *dockertest.Resource
 		dockerMinIO    *dockertest.Resource
 		dockerRedis    *dockertest.Resource
+		dockerApp      *dockertest.Resource
 	)
 
 	defer func() {
@@ -74,6 +84,11 @@ func TestMain(m *testing.M) {
 	dockerRedis, err = setupRedis(dockerPool)
 	if err != nil {
 		panic(fmt.Sprintf("failed to start redis: %v", err))
+	}
+
+	dockerApp, err = setupApp(dockerPool)
+	if err != nil {
+		panic(fmt.Sprintf("failed to start app: %v", err))
 	}
 
 	code = m.Run()
@@ -117,6 +132,7 @@ func setupPostgres(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 
 	port := resource.GetPort("5432/tcp")
 	connString := fmt.Sprintf("postgres://testuser:password@localhost:%s/testdb?sslmode=disable", port)
+	postgresConnStr = connString
 
 	if err := dockerPool.Retry(func() error {
 		var err error
@@ -181,6 +197,7 @@ func setupRedis(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 
 	port := resource.GetPort("6379/tcp")
 	addr := fmt.Sprintf("localhost:%s", port)
+	redisURL = addr
 
 	if err := dockerPool.Retry(func() error {
 		redisClient = redis.NewClient(&redis.Options{
@@ -216,6 +233,7 @@ func setupMinIO(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
 
 	port := resource.GetPort("9000/tcp")
 	endpoint := fmt.Sprintf("localhost:%s", port)
+	minIOURL = endpoint
 
 	if err := dockerPool.Retry(func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -259,4 +277,52 @@ func clearMinioBucket(ctx context.Context, client *minio.Client, bucketName stri
 		}
 	}
 	return nil
+}
+
+func setupApp(dockerPool *dockertest.Pool) (*dockertest.Resource, error) {
+	appRes, err := dockerPool.RunWithOptions(&dockertest.RunOptions{
+		Name:       "orpheon-app",
+		Repository: "orpheon-e2e",
+		Tag:        "latest",
+		Env: []string{
+			"DB_URL=" + postgresConnStr,
+			"REDIS_URL=" + redisURL,
+			"MINIO_URL=" + minIOURL,
+			"APP_PORT=8080",
+		},
+		ExposedPorts: []string{"8080/tcp"},
+		PortBindings: map[docker.Port][]docker.PortBinding{
+			"8080/tcp": {{HostIP: "0.0.0.0", HostPort: "8080"}},
+		},
+	}, func(cfg *docker.HostConfig) {
+		cfg.AutoRemove = true
+		cfg.RestartPolicy = docker.RestartPolicy{Name: "no"}
+	})
+	if err != nil {
+		panic(fmt.Sprintf("failed to start app container: %v", err))
+	}
+
+	time.Sleep(5 * time.Second)
+
+	appPort := appRes.GetPort("8080/tcp")
+	appURL = fmt.Sprintf("http://localhost:%s/api/v1", appPort)
+
+	err = dockerPool.Retry(func() error {
+		resp, err := http.Get(appURL + "/albums")
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("app not ready yet, status: %d", resp.StatusCode)
+		}
+		return nil
+	})
+	if err != nil {
+		panic(fmt.Sprintf("app failed to become ready: %v", err))
+	}
+
+	fmt.Printf("Application is ready at %s\n", appURL)
+	return appRes, nil
 }

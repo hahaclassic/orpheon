@@ -7,181 +7,128 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/audio"
+	audio "github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/audio"
+	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestAudioFileService_GetAudioChunk(t *testing.T) {
-	tests := []struct {
-		name    string
-		chunk   *entity.AudioChunk
-		mock    func(repo *mocks.AudioFileRepository)
-		wantErr bool
-	}{
-		{
-			name:  "valid chunk",
-			chunk: &entity.AudioChunk{TrackID: uuid.New(), Start: 0, End: 10},
-			mock: func(repo *mocks.AudioFileRepository) {
-				repo.On("GetAudioChunk", mock.Anything, mock.Anything).Return(&entity.AudioChunk{Data: []byte("data")}, nil)
-			},
-		},
-		{
-			name:    "invalid chunk params",
-			chunk:   &entity.AudioChunk{Start: 10, End: 5},
-			mock:    func(repo *mocks.AudioFileRepository) {},
-			wantErr: true,
-		},
-		{
-			name:  "repo error",
-			chunk: &entity.AudioChunk{Start: 0, End: 10},
-			mock: func(repo *mocks.AudioFileRepository) {
-				repo.On("GetAudioChunk", mock.Anything, mock.Anything).Return(nil, errors.New("repo error"))
-			},
-			wantErr: true,
-		},
+type AudioFileServiceSuite struct {
+	suite.Suite
+	service   *audio.AudioFileService
+	repo      *mocks.AudioFileRepository
+	converter *mocks.AudioConverter
+	ctx       context.Context
+	trackID   uuid.UUID
+}
+
+func TestAudioFileServiceSuite(t *testing.T) {
+	suite.Run(t, new(AudioFileServiceSuite))
+}
+
+func (s *AudioFileServiceSuite) SetupTest() {
+	s.repo = mocks.NewAudioFileRepository(s.T())
+	s.converter = mocks.NewAudioConverter(s.T())
+	s.service = audio.New(s.repo, s.converter)
+	s.ctx = context.Background()
+	s.trackID = uuid.New()
+}
+
+// Object Mother
+func ValidAudioChunk(trackID uuid.UUID, size int64) *entity.AudioChunk {
+	data := make([]byte, size)
+	for i := range data {
+		data[i] = byte(i)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewAudioFileRepository(t)
-			converter := mocks.NewAudioConverter(t)
-			tt.mock(repo)
-
-			service := audio.New(repo, converter)
-
-			_, err := service.GetAudioChunk(context.Background(), tt.chunk)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
+	return &entity.AudioChunk{
+		TrackID: trackID,
+		Start:   0,
+		End:     size,
+		Data:    data,
 	}
 }
 
-func TestAudioFileService_UploadAudioFile(t *testing.T) {
-	admin := &entity.Claims{AccessLvl: entity.Admin}
-	user := &entity.Claims{AccessLvl: entity.User}
-
-	tests := []struct {
-		name    string
-		claims  *entity.Claims
-		chunk   *entity.AudioChunk
-		mock    func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter)
-		wantErr bool
-	}{
-		{
-			name:   "valid upload",
-			claims: admin,
-			chunk:  &entity.AudioChunk{TrackID: uuid.New(), Data: []byte("testdata"), Start: 0, End: 8},
-			mock: func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter) {
-				conv.On("ChangeBitrate", mock.Anything, mock.Anything).Return(&entity.AudioChunk{Data: []byte("converted")}, nil)
-				repo.On("UploadAudioFile", mock.Anything, mock.Anything).Return(nil)
-			},
-		},
-		{
-			name:    "not admin",
-			claims:  user,
-			chunk:   &entity.AudioChunk{TrackID: uuid.New(), Start: 0, End: 5},
-			mock:    func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter) {},
-			wantErr: true,
-		},
-		{
-			name:    "invalid chunk params",
-			claims:  admin,
-			chunk:   &entity.AudioChunk{TrackID: uuid.New(), Start: 1, End: 5},
-			mock:    func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter) {},
-			wantErr: true,
-		},
-		{
-			name:   "converter error",
-			claims: admin,
-			chunk:  &entity.AudioChunk{TrackID: uuid.New(), Data: []byte("testdata"), Start: 0, End: 8},
-			mock: func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter) {
-				conv.On("ChangeBitrate", mock.Anything, mock.Anything).Return(nil, errors.New("convert error"))
-			},
-			wantErr: true,
-		},
-		{
-			name:   "repo upload error",
-			claims: admin,
-			chunk:  &entity.AudioChunk{TrackID: uuid.New(), Data: []byte("testdata"), Start: 0, End: 8},
-			mock: func(repo *mocks.AudioFileRepository, conv *mocks.AudioConverter) {
-				conv.On("ChangeBitrate", mock.Anything, mock.Anything).Return(&entity.AudioChunk{}, nil)
-				repo.On("UploadAudioFile", mock.Anything, mock.Anything).Return(errors.New("upload error"))
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewAudioFileRepository(t)
-			converter := mocks.NewAudioConverter(t)
-			tt.mock(repo, converter)
-
-			service := audio.New(repo, converter)
-
-			err := service.UploadAudioFile(context.Background(), tt.claims, tt.chunk)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
+func InvalidAudioChunk() *entity.AudioChunk {
+	return &entity.AudioChunk{
+		TrackID: uuid.New(),
+		Start:   10,
+		End:     5,
+		Data:    []byte{},
 	}
 }
 
-func TestAudioFileService_DeleteAudioFile(t *testing.T) {
-	admin := &entity.Claims{AccessLvl: entity.Admin}
-	user := &entity.Claims{AccessLvl: entity.User}
-	trackID := uuid.New()
+func AdminClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.Admin}
+}
 
-	tests := []struct {
-		name    string
-		claims  *entity.Claims
-		mock    func(repo *mocks.AudioFileRepository)
-		wantErr bool
-	}{
-		{
-			name:   "valid delete",
-			claims: admin,
-			mock: func(repo *mocks.AudioFileRepository) {
-				repo.On("DeleteFile", mock.Anything, trackID).Return(nil)
-			},
-		},
-		{
-			name:    "not admin",
-			claims:  user,
-			mock:    func(repo *mocks.AudioFileRepository) {},
-			wantErr: true,
-		},
-		{
-			name:   "repo error",
-			claims: admin,
-			mock: func(repo *mocks.AudioFileRepository) {
-				repo.On("DeleteFile", mock.Anything, trackID).Return(errors.New("repo error"))
-			},
-			wantErr: true,
-		},
-	}
+func UserClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.User}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewAudioFileRepository(t)
-			converter := mocks.NewAudioConverter(t)
-			tt.mock(repo)
+// GetAudioChunk
+func (s *AudioFileServiceSuite) TestGetAudioChunkValid() {
+	chunk := ValidAudioChunk(s.trackID, 10)
+	s.repo.On("GetAudioChunk", mock.Anything, chunk).Return(chunk, nil)
 
-			service := audio.New(repo, converter)
+	res, err := s.service.GetAudioChunk(s.ctx, chunk)
+	assert.NoError(s.T(), err)
+	assert.Equal(s.T(), chunk, res)
+}
 
-			err := service.DeleteAudioFile(context.Background(), tt.claims, trackID)
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+func (s *AudioFileServiceSuite) TestGetAudioChunkInvalidParams() {
+	chunk := InvalidAudioChunk()
+	res, err := s.service.GetAudioChunk(s.ctx, chunk)
+	assert.ErrorIs(s.T(), err, audio.ErrInvalidChunkParams)
+	assert.Nil(s.T(), res)
+}
+
+func (s *AudioFileServiceSuite) TestGetAudioChunkRepoError() {
+	chunk := ValidAudioChunk(s.trackID, 10)
+	s.repo.On("GetAudioChunk", mock.Anything, chunk).Return(nil, errors.New("repo error"))
+
+	res, err := s.service.GetAudioChunk(s.ctx, chunk)
+	assert.Error(s.T(), err)
+	assert.Nil(s.T(), res)
+}
+
+// UploadAudioFile
+func (s *AudioFileServiceSuite) TestUploadAudioFileValid() {
+	chunk := ValidAudioChunk(s.trackID, 10)
+	s.converter.On("ChangeBitrate", mock.Anything, chunk).Return(chunk, nil)
+	s.repo.On("UploadAudioFile", mock.Anything, chunk).Return(nil)
+
+	err := s.service.UploadAudioFile(s.ctx, AdminClaims(), chunk)
+	assert.NoError(s.T(), err)
+}
+
+func (s *AudioFileServiceSuite) TestUploadAudioFileNotAdmin() {
+	chunk := ValidAudioChunk(s.trackID, 10)
+	err := s.service.UploadAudioFile(s.ctx, UserClaims(), chunk)
+	assert.ErrorIs(s.T(), err, commonerr.ErrForbidden)
+}
+
+func (s *AudioFileServiceSuite) TestUploadAudioFileInvalidChunk() {
+	chunk := InvalidAudioChunk()
+	err := s.service.UploadAudioFile(s.ctx, AdminClaims(), chunk)
+	assert.ErrorIs(s.T(), err, audio.ErrInvalidChunkParams)
+}
+
+// DeleteAudioFile
+func (s *AudioFileServiceSuite) TestDeleteAudioFileValid() {
+	s.repo.On("DeleteFile", mock.Anything, s.trackID).Return(nil)
+	err := s.service.DeleteAudioFile(s.ctx, AdminClaims(), s.trackID)
+	assert.NoError(s.T(), err)
+}
+
+func (s *AudioFileServiceSuite) TestDeleteAudioFileNotAdmin() {
+	err := s.service.DeleteAudioFile(s.ctx, UserClaims(), s.trackID)
+	assert.ErrorIs(s.T(), err, commonerr.ErrForbidden)
+}
+
+func (s *AudioFileServiceSuite) TestDeleteAudioFileRepoError() {
+	s.repo.On("DeleteFile", mock.Anything, s.trackID).Return(errors.New("delete error"))
+	err := s.service.DeleteAudioFile(s.ctx, AdminClaims(), s.trackID)
+	assert.Error(s.T(), err)
 }

@@ -11,236 +11,162 @@ import (
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestPlaylistTrackService_AddTrack(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	playlistID := uuid.New()
-	trackID := uuid.New()
-	claims := &entity.Claims{UserID: userID}
-	playlistTrack := &entity.PlaylistTrack{
-		PlaylistID: playlistID,
-		TrackID:    trackID,
-	}
-
-	cases := []struct {
-		name      string
-		setup     func(*mocks.PlaylistTracksRepository, *mocks.PlaylistPolicyService)
-		expectErr error
-	}{
-		{
-			name: "success",
-			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("AddTrackToPlaylist", ctx, playlistTrack).Return(nil)
-			},
-			expectErr: nil,
-		},
-		{
-			name: "forbidden",
-			setup: func(_ *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(commonerr.ErrForbidden)
-			},
-			expectErr: commonerr.ErrForbidden,
-		},
-		{
-			name: "repo error",
-			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("AddTrackToPlaylist", ctx, playlistTrack).Return(errors.New("db error"))
-			},
-			expectErr: errors.New("db error"),
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			repo := mocks.NewPlaylistTracksRepository(t)
-			policy := mocks.NewPlaylistPolicyService(t)
-			tc.setup(repo, policy)
-
-			svc := tracks.NewPlaylistTrackService(repo, policy)
-			err := svc.AddTrack(ctx, claims, playlistTrack)
-
-			if tc.expectErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.ErrorContains(t, err, tc.expectErr.Error())
-			}
-		})
-	}
+func TestPlaylistTrackServiceSuite(t *testing.T) {
+	suite.Run(t, &PlaylistTrackServiceSuite{})
 }
 
-func TestPlaylistTrackService_GetAllTracks(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	playlistID := uuid.New()
-	claims := &entity.Claims{UserID: userID}
+type PlaylistTrackServiceSuite struct {
+	suite.Suite
+	ctx           context.Context
+	service       *tracks.PlaylistTrackService
+	repo          *mocks.PlaylistTracksRepository
+	policy        *mocks.PlaylistPolicyService
+	userID        uuid.UUID
+	playlistID    uuid.UUID
+	trackID       uuid.UUID
+	claims        *entity.Claims
+	playlistTrack *entity.PlaylistTrack
+}
+
+func (s *PlaylistTrackServiceSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.repo = mocks.NewPlaylistTracksRepository(s.T())
+	s.policy = mocks.NewPlaylistPolicyService(s.T())
+	s.service = tracks.NewPlaylistTrackService(s.repo, s.policy)
+	s.userID = uuid.New()
+	s.playlistID = uuid.New()
+	s.trackID = uuid.New()
+	s.claims = &entity.Claims{UserID: s.userID}
+	s.playlistTrack = &entity.PlaylistTrack{PlaylistID: s.playlistID, TrackID: s.trackID}
+}
+
+func (s *PlaylistTrackServiceSuite) TestAddTrackSuccess() {
+	s.SetupTest()
+	s.policy.On("CanEdit", s.ctx, s.claims, s.playlistID).Return(nil)
+	s.repo.On("AddTrackToPlaylist", s.ctx, s.playlistTrack).Return(nil)
+
+	err := s.service.AddTrack(s.ctx, s.claims, s.playlistTrack)
+	assert.NoError(s.T(), err)
+	s.policy.AssertExpectations(s.T())
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *PlaylistTrackServiceSuite) TestAddTrackForbidden() {
+	s.SetupTest()
+	s.policy.On("CanEdit", s.ctx, s.claims, s.playlistID).Return(commonerr.ErrForbidden)
+
+	err := s.service.AddTrack(s.ctx, s.claims, s.playlistTrack)
+	assert.ErrorIs(s.T(), err, commonerr.ErrForbidden)
+	s.policy.AssertExpectations(s.T())
+}
+
+func (s *PlaylistTrackServiceSuite) TestAddTrackRepoError() {
+	s.SetupTest()
+	s.policy.On("CanEdit", s.ctx, s.claims, s.playlistID).Return(nil)
+	s.repo.On("AddTrackToPlaylist", s.ctx, s.playlistTrack).Return(errors.New("db error"))
+
+	err := s.service.AddTrack(s.ctx, s.claims, s.playlistTrack)
+	assert.ErrorContains(s.T(), err, "db error")
+	s.policy.AssertExpectations(s.T())
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *PlaylistTrackServiceSuite) TestGetAllTracksSuccess() {
+	s.SetupTest()
 	expected := []*entity.TrackMeta{{ID: uuid.New()}}
+	s.policy.On("CanView", s.ctx, s.claims, s.playlistID).Return(nil)
+	s.repo.On("GetAllPlaylistTracks", s.ctx, s.playlistID).Return(expected, nil)
 
-	cases := []struct {
-		name         string
-		setup        func(*mocks.PlaylistTracksRepository, *mocks.PlaylistPolicyService)
-		expectResult []*entity.TrackMeta
-		expectErr    error
-	}{
-		{
-			name: "success",
-			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanView", ctx, claims, playlistID).Return(nil)
-				repo.On("GetAllPlaylistTracks", ctx, playlistID).Return(expected, nil)
-			},
-			expectResult: expected,
-			expectErr:    nil,
-		},
-		{
-			name: "forbidden",
-			setup: func(_ *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanView", ctx, claims, playlistID).Return(commonerr.ErrForbidden)
-			},
-			expectResult: nil,
-			expectErr:    commonerr.ErrForbidden,
-		},
-		{
-			name: "repo error",
-			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanView", ctx, claims, playlistID).Return(nil)
-				repo.On("GetAllPlaylistTracks", ctx, playlistID).Return(nil, errors.New("db error"))
-			},
-			expectResult: nil,
-			expectErr:    errors.New("db error"),
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			repo := mocks.NewPlaylistTracksRepository(t)
-			policy := mocks.NewPlaylistPolicyService(t)
-			tc.setup(repo, policy)
-
-			svc := tracks.NewPlaylistTrackService(repo, policy)
-			res, err := svc.GetAllTracks(ctx, claims, playlistID)
-
-			assert.Equal(t, tc.expectResult, res)
-			if tc.expectErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.ErrorContains(t, err, tc.expectErr.Error())
-			}
-		})
-	}
+	tracksRes, err := s.service.GetAllTracks(s.ctx, s.claims, s.playlistID)
+	assert.NoError(s.T(), err)
+	assert.Equal(s.T(), expected, tracksRes)
+	s.policy.AssertExpectations(s.T())
+	s.repo.AssertExpectations(s.T())
 }
 
-func TestPlaylistTrackService_DeleteTrack(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	playlistID := uuid.New()
-	trackID := uuid.New()
-	claims := &entity.Claims{UserID: userID}
-	playlistTrack := &entity.PlaylistTrack{
-		PlaylistID: playlistID,
-		TrackID:    trackID,
-	}
+func (s *PlaylistTrackServiceSuite) TestGetAllTracksForbidden() {
+	s.SetupTest()
+	s.policy.On("CanView", s.ctx, s.claims, s.playlistID).Return(commonerr.ErrForbidden)
 
-	cases := []struct {
-		name      string
-		setup     func(*mocks.PlaylistTracksRepository, *mocks.PlaylistPolicyService)
-		expectErr error
-	}{
-		{
-			name: "success",
-			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("DeleteTrackFromPlaylist", ctx, playlistTrack).Return(nil)
-			},
-			expectErr: nil,
-		},
-		{
-			name: "forbidden",
-			setup: func(_ *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(commonerr.ErrForbidden)
-			},
-			expectErr: commonerr.ErrForbidden,
-		},
-		{
-			name: "repo error",
-			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("DeleteTrackFromPlaylist", ctx, playlistTrack).Return(errors.New("db error"))
-			},
-			expectErr: errors.New("db error"),
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			repo := mocks.NewPlaylistTracksRepository(t)
-			policy := mocks.NewPlaylistPolicyService(t)
-			tc.setup(repo, policy)
-
-			svc := tracks.NewPlaylistTrackService(repo, policy)
-			err := svc.DeleteTrack(ctx, claims, playlistTrack)
-
-			if tc.expectErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.ErrorContains(t, err, tc.expectErr.Error())
-			}
-		})
-	}
+	tracksRes, err := s.service.GetAllTracks(s.ctx, s.claims, s.playlistID)
+	assert.Nil(s.T(), tracksRes)
+	assert.ErrorIs(s.T(), err, commonerr.ErrForbidden)
+	s.policy.AssertExpectations(s.T())
 }
 
-func TestPlaylistTrackService_DeleteAllTracks(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	playlistID := uuid.New()
-	claims := &entity.Claims{UserID: userID}
+func (s *PlaylistTrackServiceSuite) TestGetAllTracksRepoError() {
+	s.SetupTest()
+	s.policy.On("CanView", s.ctx, s.claims, s.playlistID).Return(nil)
+	s.repo.On("GetAllPlaylistTracks", s.ctx, s.playlistID).Return(nil, errors.New("db error"))
 
-	cases := []struct {
-		name      string
-		setup     func(*mocks.PlaylistTracksRepository, *mocks.PlaylistPolicyService)
-		expectErr error
-	}{
-		{
-			name: "success",
-			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("DeleteAllTracksFromPlaylist", ctx, playlistID).Return(nil)
-			},
-			expectErr: nil,
-		},
-		{
-			name: "forbidden",
-			setup: func(_ *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(commonerr.ErrForbidden)
-			},
-			expectErr: commonerr.ErrForbidden,
-		},
-		{
-			name: "repo error",
-			setup: func(repo *mocks.PlaylistTracksRepository, policy *mocks.PlaylistPolicyService) {
-				policy.On("CanEdit", ctx, claims, playlistID).Return(nil)
-				repo.On("DeleteAllTracksFromPlaylist", ctx, playlistID).Return(errors.New("db error"))
-			},
-			expectErr: errors.New("db error"),
-		},
-	}
+	tracksRes, err := s.service.GetAllTracks(s.ctx, s.claims, s.playlistID)
+	assert.Nil(s.T(), tracksRes)
+	assert.ErrorContains(s.T(), err, "db error")
+	s.policy.AssertExpectations(s.T())
+	s.repo.AssertExpectations(s.T())
+}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			repo := mocks.NewPlaylistTracksRepository(t)
-			policy := mocks.NewPlaylistPolicyService(t)
-			tc.setup(repo, policy)
+func (s *PlaylistTrackServiceSuite) TestDeleteTrackSuccess() {
+	s.SetupTest()
+	s.policy.On("CanEdit", s.ctx, s.claims, s.playlistID).Return(nil)
+	s.repo.On("DeleteTrackFromPlaylist", s.ctx, s.playlistTrack).Return(nil)
 
-			svc := tracks.NewPlaylistTrackService(repo, policy)
-			err := svc.DeleteAllTracks(ctx, claims, playlistID)
+	err := s.service.DeleteTrack(s.ctx, s.claims, s.playlistTrack)
+	assert.NoError(s.T(), err)
+	s.policy.AssertExpectations(s.T())
+	s.repo.AssertExpectations(s.T())
+}
 
-			if tc.expectErr == nil {
-				assert.NoError(t, err)
-			} else {
-				assert.ErrorContains(t, err, tc.expectErr.Error())
-			}
-		})
-	}
+func (s *PlaylistTrackServiceSuite) TestDeleteTrackForbidden() {
+	s.SetupTest()
+	s.policy.On("CanEdit", s.ctx, s.claims, s.playlistID).Return(commonerr.ErrForbidden)
+
+	err := s.service.DeleteTrack(s.ctx, s.claims, s.playlistTrack)
+	assert.ErrorIs(s.T(), err, commonerr.ErrForbidden)
+	s.policy.AssertExpectations(s.T())
+}
+
+func (s *PlaylistTrackServiceSuite) TestDeleteTrackRepoError() {
+	s.SetupTest()
+	s.policy.On("CanEdit", s.ctx, s.claims, s.playlistID).Return(nil)
+	s.repo.On("DeleteTrackFromPlaylist", s.ctx, s.playlistTrack).Return(errors.New("db error"))
+
+	err := s.service.DeleteTrack(s.ctx, s.claims, s.playlistTrack)
+	assert.ErrorContains(s.T(), err, "db error")
+	s.policy.AssertExpectations(s.T())
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *PlaylistTrackServiceSuite) TestDeleteAllTracksSuccess() {
+	s.SetupTest()
+	s.policy.On("CanEdit", s.ctx, s.claims, s.playlistID).Return(nil)
+	s.repo.On("DeleteAllTracksFromPlaylist", s.ctx, s.playlistID).Return(nil)
+
+	err := s.service.DeleteAllTracks(s.ctx, s.claims, s.playlistID)
+	assert.NoError(s.T(), err)
+	s.policy.AssertExpectations(s.T())
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *PlaylistTrackServiceSuite) TestDeleteAllTracksForbidden() {
+	s.SetupTest()
+	s.policy.On("CanEdit", s.ctx, s.claims, s.playlistID).Return(commonerr.ErrForbidden)
+
+	err := s.service.DeleteAllTracks(s.ctx, s.claims, s.playlistID)
+	assert.ErrorIs(s.T(), err, commonerr.ErrForbidden)
+	s.policy.AssertExpectations(s.T())
+}
+
+func (s *PlaylistTrackServiceSuite) TestDeleteAllTracksRepoError() {
+	s.SetupTest()
+	s.policy.On("CanEdit", s.ctx, s.claims, s.playlistID).Return(nil)
+	s.repo.On("DeleteAllTracksFromPlaylist", s.ctx, s.playlistID).Return(errors.New("db error"))
+
+	err := s.service.DeleteAllTracks(s.ctx, s.claims, s.playlistID)
+	assert.ErrorContains(s.T(), err, "db error")
+	s.policy.AssertExpectations(s.T())
+	s.repo.AssertExpectations(s.T())
 }

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/license"
@@ -15,137 +15,186 @@ import (
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
-func TestCreateLicense(t *testing.T) {
-	ctx := context.Background()
-	lic := &entity.License{ID: uuid.New()}
-	adminClaims := &entity.Claims{AccessLvl: entity.Admin}
-	userClaims := &entity.Claims{AccessLvl: entity.User}
+type LicenseObjectMother struct{}
 
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		repo.On("Create", ctx, lic).Return(nil)
-		svc := license.NewLicenseService(repo)
-		err := svc.CreateLicense(ctx, adminClaims, lic)
-		assert.NoError(t, err)
+func (LicenseObjectMother) AdminClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.Admin}
+}
+
+func (LicenseObjectMother) UserClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.User}
+}
+
+func (LicenseObjectMother) ValidLicense() *entity.License {
+	return &entity.License{ID: uuid.New(), Title: "Pro"}
+}
+
+type LicenseServiceSuite struct {
+	suite.Suite
+
+	ctx    context.Context
+	repo   *mocks.LicenseRepository
+	svc    *license.LicenseService
+	mother LicenseObjectMother
+}
+
+func TestLicenseServiceSuite(t *testing.T) {
+	suite.Run(t, new(LicenseServiceSuite))
+}
+
+func (s *LicenseServiceSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.repo = mocks.NewLicenseRepository(s.T())
+	s.svc = license.NewLicenseService(s.repo)
+	s.mother = LicenseObjectMother{}
+}
+
+func (s *LicenseServiceSuite) TearDownTest() {
+	s.repo.AssertExpectations(s.T())
+}
+
+// --- CreateLicense ---
+
+func (s *LicenseServiceSuite) TestCreateLicense() {
+	admin := s.mother.AdminClaims()
+	user := s.mother.UserClaims()
+	valid := s.mother.ValidLicense()
+
+	s.Run("success", func() {
+		s.SetupTest()
+		s.repo.On("Create", s.ctx, valid).Return(nil)
+		err := s.svc.CreateLicense(s.ctx, admin, valid)
+		s.NoError(err)
 	})
 
-	t.Run("forbidden", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		svc := license.NewLicenseService(repo)
-		err := svc.CreateLicense(ctx, userClaims, lic)
-		assert.ErrorIs(t, err, commonerr.ErrForbidden)
+	s.Run("forbidden", func() {
+		s.SetupTest()
+		err := s.svc.CreateLicense(s.ctx, user, valid)
+		s.ErrorIs(err, commonerr.ErrForbidden)
 	})
 
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		repo.On("Create", ctx, lic).Return(errors.New("db error"))
-		svc := license.NewLicenseService(repo)
-		err := svc.CreateLicense(ctx, adminClaims, lic)
-		assert.ErrorIs(t, err, usecase.ErrCreateLicense)
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.repo.On("Create", s.ctx, valid).Return(errors.New("db error"))
+		err := s.svc.CreateLicense(s.ctx, admin, valid)
+		s.ErrorIs(err, usecase.ErrCreateLicense)
 	})
 }
 
-func TestGetLicense(t *testing.T) {
-	ctx := context.Background()
-	licenseID := uuid.New()
-	lic := &entity.License{ID: licenseID}
+// --- GetLicenseByID ---
 
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		repo.On("GetByID", ctx, licenseID).Return(lic, nil)
-		svc := license.NewLicenseService(repo)
-		result, err := svc.GetLicenseByID(ctx, licenseID)
-		assert.NoError(t, err)
-		assert.Equal(t, lic, result)
+func (s *LicenseServiceSuite) TestGetLicenseByID() {
+	valid := s.mother.ValidLicense()
+
+	s.Run("success", func() {
+		s.SetupTest()
+		s.repo.On("GetByID", s.ctx, valid.ID).Return(valid, nil)
+		res, err := s.svc.GetLicenseByID(s.ctx, valid.ID)
+		s.NoError(err)
+		s.Equal(valid, res)
 	})
 
-	t.Run("invalid id", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		svc := license.NewLicenseService(repo)
-		result, err := svc.GetLicenseByID(ctx, uuid.Nil)
-		assert.ErrorIs(t, err, license.ErrInvalidLicenseID)
-		assert.Nil(t, result)
+	s.Run("invalid ID", func() {
+		s.SetupTest()
+		res, err := s.svc.GetLicenseByID(s.ctx, uuid.Nil)
+		s.ErrorIs(err, license.ErrInvalidLicenseID)
+		s.Nil(res)
 	})
 
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		repo.On("GetByID", ctx, licenseID).Return(nil, errors.New("db error"))
-		svc := license.NewLicenseService(repo)
-		_, err := svc.GetLicenseByID(ctx, licenseID)
-		assert.ErrorIs(t, err, usecase.ErrGetLicense)
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.repo.On("GetByID", s.ctx, valid.ID).Return(nil, errors.New("db error"))
+		_, err := s.svc.GetLicenseByID(s.ctx, valid.ID)
+		s.ErrorIs(err, usecase.ErrGetLicense)
 	})
 }
 
-func TestUpdateLicense(t *testing.T) {
-	ctx := context.Background()
-	lic := &entity.License{ID: uuid.New()}
-	adminClaims := &entity.Claims{AccessLvl: entity.Admin}
-	userClaims := &entity.Claims{AccessLvl: entity.User}
+// --- UpdateLicense ---
 
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		repo.On("Update", ctx, lic).Return(nil)
-		svc := license.NewLicenseService(repo)
-		err := svc.UpdateLicense(ctx, adminClaims, lic)
-		assert.NoError(t, err)
+func (s *LicenseServiceSuite) TestUpdateLicense() {
+	admin := s.mother.AdminClaims()
+	user := s.mother.UserClaims()
+	valid := s.mother.ValidLicense()
+
+	s.Run("success", func() {
+		s.SetupTest()
+		s.repo.On("Update", s.ctx, valid).Return(nil)
+		err := s.svc.UpdateLicense(s.ctx, admin, valid)
+		s.NoError(err)
 	})
 
-	t.Run("forbidden", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		svc := license.NewLicenseService(repo)
-		err := svc.UpdateLicense(ctx, userClaims, lic)
-		assert.ErrorIs(t, err, commonerr.ErrForbidden)
+	s.Run("forbidden", func() {
+		s.SetupTest()
+		err := s.svc.UpdateLicense(s.ctx, user, valid)
+		s.ErrorIs(err, commonerr.ErrForbidden)
 	})
 
-	t.Run("invalid id", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		svc := license.NewLicenseService(repo)
-		err := svc.UpdateLicense(ctx, adminClaims, &entity.License{ID: uuid.Nil})
-		assert.ErrorIs(t, err, license.ErrInvalidLicenseID)
+	s.Run("invalid ID", func() {
+		s.SetupTest()
+		err := s.svc.UpdateLicense(s.ctx, admin, &entity.License{ID: uuid.Nil})
+		s.ErrorIs(err, license.ErrInvalidLicenseID)
 	})
 
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		repo.On("Update", ctx, lic).Return(errors.New("db error"))
-		svc := license.NewLicenseService(repo)
-		err := svc.UpdateLicense(ctx, adminClaims, lic)
-		assert.ErrorIs(t, err, usecase.ErrUpdateLicense)
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.repo.On("Update", s.ctx, valid).Return(errors.New("db error"))
+		err := s.svc.UpdateLicense(s.ctx, admin, valid)
+		s.ErrorIs(err, usecase.ErrUpdateLicense)
 	})
 }
 
-func TestDeleteLicense(t *testing.T) {
-	ctx := context.Background()
-	licenseID := uuid.New()
-	adminClaims := &entity.Claims{AccessLvl: entity.Admin}
-	userClaims := &entity.Claims{AccessLvl: entity.User}
+// --- DeleteLicense ---
 
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		repo.On("Delete", ctx, licenseID).Return(nil)
-		svc := license.NewLicenseService(repo)
-		err := svc.DeleteLicense(ctx, adminClaims, licenseID)
-		assert.NoError(t, err)
+func (s *LicenseServiceSuite) TestDeleteLicense() {
+	admin := s.mother.AdminClaims()
+	user := s.mother.UserClaims()
+	validID := uuid.New()
+
+	s.Run("success", func() {
+		s.SetupTest()
+		s.repo.On("Delete", s.ctx, validID).Return(nil)
+		err := s.svc.DeleteLicense(s.ctx, admin, validID)
+		s.NoError(err)
 	})
 
-	t.Run("forbidden", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		svc := license.NewLicenseService(repo)
-		err := svc.DeleteLicense(ctx, userClaims, licenseID)
-		assert.ErrorIs(t, err, commonerr.ErrForbidden)
+	s.Run("forbidden", func() {
+		s.SetupTest()
+		err := s.svc.DeleteLicense(s.ctx, user, validID)
+		s.ErrorIs(err, commonerr.ErrForbidden)
 	})
 
-	t.Run("invalid id", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		svc := license.NewLicenseService(repo)
-		err := svc.DeleteLicense(ctx, adminClaims, uuid.Nil)
-		assert.ErrorIs(t, err, license.ErrInvalidLicenseID)
+	s.Run("invalid ID", func() {
+		s.SetupTest()
+		err := s.svc.DeleteLicense(s.ctx, admin, uuid.Nil)
+		s.ErrorIs(err, license.ErrInvalidLicenseID)
 	})
 
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewLicenseRepository(t)
-		repo.On("Delete", ctx, licenseID).Return(errors.New("db error"))
-		svc := license.NewLicenseService(repo)
-		err := svc.DeleteLicense(ctx, adminClaims, licenseID)
-		assert.ErrorIs(t, err, usecase.ErrDeleteLicense)
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.repo.On("Delete", s.ctx, validID).Return(errors.New("db error"))
+		err := s.svc.DeleteLicense(s.ctx, admin, validID)
+		s.ErrorIs(err, usecase.ErrDeleteLicense)
+	})
+}
+
+// --- GetAllLicenses ---
+
+func (s *LicenseServiceSuite) TestGetAllLicenses() {
+	valid := []*entity.License{s.mother.ValidLicense()}
+
+	s.Run("success", func() {
+		s.SetupTest()
+		s.repo.On("GetAll", s.ctx).Return(valid, nil)
+		res, err := s.svc.GetAllLicenses(s.ctx)
+		s.NoError(err)
+		s.Equal(valid, res)
+	})
+
+	s.Run("repo error", func() {
+		s.SetupTest()
+		s.repo.On("GetAll", s.ctx).Return(nil, errors.New("db error"))
+		res, err := s.svc.GetAllLicenses(s.ctx)
+		s.ErrorIs(err, usecase.ErrGetAllLicenses)
+		s.Nil(res)
 	})
 }

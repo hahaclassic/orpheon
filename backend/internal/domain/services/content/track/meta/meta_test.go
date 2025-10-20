@@ -6,221 +6,141 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/track/meta"
 	"github.com/hahaclassic/orpheon/backend/mocks"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestTrackMetaService_CreateTrackMeta(t *testing.T) {
-	type args struct {
-		claims *entity.Claims
-		track  *entity.TrackMeta
-	}
-	tests := []struct {
-		name       string
-		args       args
-		mockSetup  func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService)
-		expectsErr bool
-	}{
-		{
-			name: "success",
-			args: args{
-				claims: &entity.Claims{AccessLvl: entity.Admin},
-				track:  &entity.TrackMeta{Duration: 180},
-			},
-			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
-				repo.On("Create", mock.Anything, mock.Anything).Return(nil)
-				segmentService.On("CreateSegments", mock.Anything, mock.Anything, 180).Return(nil)
-			},
-			expectsErr: false,
-		},
-		{
-			name: "permission denied",
-			args: args{
-				claims: &entity.Claims{AccessLvl: entity.User},
-				track:  &entity.TrackMeta{},
-			},
-			mockSetup:  func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {},
-			expectsErr: true,
-		},
-		{
-			name: "repo error",
-			args: args{
-				claims: &entity.Claims{AccessLvl: entity.Admin},
-				track:  &entity.TrackMeta{Duration: 180},
-			},
-			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
-				repo.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error"))
-			},
-			expectsErr: true,
-		},
-		{
-			name: "segment service error",
-			args: args{
-				claims: &entity.Claims{AccessLvl: entity.Admin},
-				track:  &entity.TrackMeta{Duration: 180},
-			},
-			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
-				repo.On("Create", mock.Anything, mock.Anything).Return(nil)
-				segmentService.On("CreateSegments", mock.Anything, mock.Anything, 180).Return(errors.New("segment error"))
-			},
-			expectsErr: true,
-		},
-	}
+func TestTrackMetaServiceSuite(t *testing.T) {
+	suite.Run(t, &TrackMetaServiceSuite{})
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewTrackMetaRepository(t)
-			segmentService := mocks.NewTrackSegmentService(t)
-			service := meta.NewTrackMetaService(repo, segmentService)
-			if tt.mockSetup != nil {
-				tt.mockSetup(repo, segmentService)
-			}
-			_, err := service.CreateTrackMeta(context.Background(), tt.args.claims, tt.args.track)
-			if tt.expectsErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				repo.AssertCalled(t, "Create", mock.Anything, mock.Anything)
-				segmentService.AssertCalled(t, "CreateSegments", mock.Anything, mock.Anything, 180)
-			}
-		})
+type TrackMetaObjectMother struct{}
+
+func (TrackMetaObjectMother) DefaultTrackMeta() *entity.TrackMeta {
+	return &entity.TrackMeta{
+		ID:       uuid.New(),
+		Name:     "Track 1",
+		Duration: 180,
 	}
 }
 
-func TestTrackMetaService_GetTrackMeta(t *testing.T) {
-	repo := mocks.NewTrackMetaRepository(t)
-	segmentService := mocks.NewTrackSegmentService(t)
-	service := meta.NewTrackMetaService(repo, segmentService)
+func (TrackMetaObjectMother) AdminClaims() *entity.Claims {
+	return &entity.Claims{UserID: uuid.New(), AccessLvl: entity.Admin}
+}
 
+func (TrackMetaObjectMother) UserClaims() *entity.Claims {
+	return &entity.Claims{UserID: uuid.New(), AccessLvl: entity.User}
+}
+
+type TrackMetaServiceSuite struct {
+	suite.Suite
+
+	ctx            context.Context
+	service        *meta.TrackMetaService
+	repo           *mocks.TrackMetaRepository
+	segmentService *mocks.TrackSegmentService
+
+	objMother *TrackMetaObjectMother
+}
+
+func (s *TrackMetaServiceSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.repo = mocks.NewTrackMetaRepository(s.T())
+	s.segmentService = mocks.NewTrackSegmentService(s.T())
+	s.service = meta.NewTrackMetaService(s.repo, s.segmentService)
+	s.objMother = &TrackMetaObjectMother{}
+}
+
+func (s *TrackMetaServiceSuite) TestGetTrackMeta_Success() {
+	track := s.objMother.DefaultTrackMeta()
+	s.repo.On("GetByID", s.ctx, track.ID).Return(track, nil)
+
+	result, err := s.service.GetTrackMeta(s.ctx, track.ID)
+
+	s.NoError(err)
+	s.Equal(track, result)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *TrackMetaServiceSuite) TestGetTrackMeta_Error() {
 	trackID := uuid.New()
-	expected := &entity.TrackMeta{ID: trackID, Name: "Test Track"}
-	repo.On("GetByID", mock.Anything, trackID).Return(expected, nil)
+	s.repo.On("GetByID", s.ctx, trackID).Return(nil, errors.New("db error"))
 
-	track, err := service.GetTrackMeta(context.Background(), trackID)
-	require.NoError(t, err)
-	assert.Equal(t, expected, track)
+	result, err := s.service.GetTrackMeta(s.ctx, trackID)
+
+	s.Error(err)
+	s.Nil(result)
+	s.repo.AssertExpectations(s.T())
 }
 
-func TestTrackMetaService_UpdateTrackMeta(t *testing.T) {
-	tests := []struct {
-		name       string
-		claims     *entity.Claims
-		track      *entity.TrackMeta
-		mockSetup  func(repo *mocks.TrackMetaRepository)
-		expectsErr bool
-	}{
-		{
-			name:   "success",
-			claims: &entity.Claims{AccessLvl: entity.Admin},
-			track:  &entity.TrackMeta{ID: uuid.New()},
-			mockSetup: func(repo *mocks.TrackMetaRepository) {
-				repo.On("Update", mock.Anything, mock.Anything).Return(nil)
-			},
-			expectsErr: false,
-		},
-		{
-			name:       "permission denied",
-			claims:     &entity.Claims{AccessLvl: entity.User},
-			track:      &entity.TrackMeta{ID: uuid.New()},
-			mockSetup:  func(repo *mocks.TrackMetaRepository) {},
-			expectsErr: true,
-		},
-		{
-			name:   "repo error",
-			claims: &entity.Claims{AccessLvl: entity.Admin},
-			track:  &entity.TrackMeta{ID: uuid.New()},
-			mockSetup: func(repo *mocks.TrackMetaRepository) {
-				repo.On("Update", mock.Anything, mock.Anything).Return(errors.New("db error"))
-			},
-			expectsErr: true,
-		},
-	}
+func (s *TrackMetaServiceSuite) TestCreateTrackMeta_Success() {
+	track := s.objMother.DefaultTrackMeta()
+	claims := s.objMother.AdminClaims()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewTrackMetaRepository(t)
-			segmentService := mocks.NewTrackSegmentService(t)
-			service := meta.NewTrackMetaService(repo, segmentService)
-			if tt.mockSetup != nil {
-				tt.mockSetup(repo)
-			}
-			err := service.UpdateTrackMeta(context.Background(), tt.claims, tt.track)
-			if tt.expectsErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				repo.AssertCalled(t, "Update", mock.Anything, mock.Anything)
-			}
-		})
-	}
+	s.repo.On("Create", s.ctx, mock.Anything).Return(nil)
+	s.segmentService.On("CreateSegments", s.ctx, mock.Anything, track.Duration).Return(nil)
+
+	id, err := s.service.CreateTrackMeta(s.ctx, claims, track)
+
+	s.NoError(err)
+	s.NotEqual(uuid.Nil, id)
+	s.repo.AssertExpectations(s.T())
+	s.segmentService.AssertExpectations(s.T())
 }
 
-func TestTrackMetaService_DeleteTrackMeta(t *testing.T) {
-	tests := []struct {
-		name       string
-		claims     *entity.Claims
-		trackID    uuid.UUID
-		mockSetup  func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService)
-		expectsErr bool
-	}{
-		{
-			name:    "success",
-			claims:  &entity.Claims{AccessLvl: entity.Admin},
-			trackID: uuid.New(),
-			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
-				segmentService.On("DeleteSegments", mock.Anything, mock.Anything).Return(nil)
-				repo.On("Delete", mock.Anything, mock.Anything).Return(nil)
-			},
-			expectsErr: false,
-		},
-		{
-			name:       "permission denied",
-			claims:     &entity.Claims{AccessLvl: entity.User},
-			trackID:    uuid.New(),
-			mockSetup:  func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {},
-			expectsErr: true,
-		},
-		{
-			name:    "segment service error",
-			claims:  &entity.Claims{AccessLvl: entity.Admin},
-			trackID: uuid.New(),
-			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
-				segmentService.On("DeleteSegments", mock.Anything, mock.Anything).Return(errors.New("segment error"))
-			},
-			expectsErr: true,
-		},
-		{
-			name:    "repo error",
-			claims:  &entity.Claims{AccessLvl: entity.Admin},
-			trackID: uuid.New(),
-			mockSetup: func(repo *mocks.TrackMetaRepository, segmentService *mocks.TrackSegmentService) {
-				segmentService.On("DeleteSegments", mock.Anything, mock.Anything).Return(nil)
-				repo.On("Delete", mock.Anything, mock.Anything).Return(errors.New("db error"))
-			},
-			expectsErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewTrackMetaRepository(t)
-			segmentService := mocks.NewTrackSegmentService(t)
-			service := meta.NewTrackMetaService(repo, segmentService)
-			if tt.mockSetup != nil {
-				tt.mockSetup(repo, segmentService)
-			}
-			err := service.DeleteTrackMeta(context.Background(), tt.claims, tt.trackID)
-			if tt.expectsErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				segmentService.AssertCalled(t, "DeleteSegments", mock.Anything, mock.Anything)
-				repo.AssertCalled(t, "Delete", mock.Anything, mock.Anything)
-			}
-		})
-	}
+func (s *TrackMetaServiceSuite) TestCreateTrackMeta_Forbidden() {
+	track := s.objMother.DefaultTrackMeta()
+	claims := s.objMother.UserClaims()
+
+	id, err := s.service.CreateTrackMeta(s.ctx, claims, track)
+
+	s.Error(err)
+	s.Equal(uuid.Nil, id)
+}
+
+func (s *TrackMetaServiceSuite) TestUpdateTrackMeta_Success() {
+	track := s.objMother.DefaultTrackMeta()
+	claims := s.objMother.AdminClaims()
+
+	s.repo.On("Update", s.ctx, track).Return(nil)
+
+	err := s.service.UpdateTrackMeta(s.ctx, claims, track)
+
+	s.NoError(err)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *TrackMetaServiceSuite) TestUpdateTrackMeta_Forbidden() {
+	track := s.objMother.DefaultTrackMeta()
+	claims := s.objMother.UserClaims()
+
+	err := s.service.UpdateTrackMeta(s.ctx, claims, track)
+
+	s.Error(err)
+}
+
+func (s *TrackMetaServiceSuite) TestDeleteTrackMeta_Success() {
+	track := s.objMother.DefaultTrackMeta()
+	claims := s.objMother.AdminClaims()
+
+	s.segmentService.On("DeleteSegments", s.ctx, track.ID).Return(nil)
+	s.repo.On("Delete", s.ctx, track.ID).Return(nil)
+
+	err := s.service.DeleteTrackMeta(s.ctx, claims, track.ID)
+
+	s.NoError(err)
+	s.segmentService.AssertExpectations(s.T())
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *TrackMetaServiceSuite) TestDeleteTrackMeta_Forbidden() {
+	track := s.objMother.DefaultTrackMeta()
+	claims := s.objMother.UserClaims()
+
+	err := s.service.DeleteTrackMeta(s.ctx, claims, track.ID)
+
+	s.Error(err)
 }

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/artist/avatar"
@@ -15,101 +15,146 @@ import (
 	"github.com/hahaclassic/orpheon/backend/mocks"
 )
 
-func TestGetCover(t *testing.T) {
-	ctx := context.Background()
-	artistID := uuid.New()
-	expected := &entity.Cover{}
+// --- Object Mother ---
 
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewArtistAvatarRepository(t)
-		repo.On("GetCover", ctx, artistID).Return(expected, nil)
+type ArtistAvatarObjectMother struct{}
 
-		svc := avatar.NewArtistCoverService(repo)
-		got, err := svc.GetCover(ctx, artistID)
-
-		assert.NoError(t, err)
-		assert.Equal(t, expected, got)
-	})
-
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewArtistAvatarRepository(t)
-		repo.On("GetCover", ctx, artistID).Return(nil, errors.New("repo error"))
-
-		svc := avatar.NewArtistCoverService(repo)
-		_, err := svc.GetCover(ctx, artistID)
-
-		assert.ErrorIs(t, err, usecase.ErrGetAvatar)
-	})
+func (ArtistAvatarObjectMother) AdminClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.Admin}
 }
 
-func TestUploadCover(t *testing.T) {
-	ctx := context.Background()
-	cover := &entity.Cover{}
-	admin := &entity.Claims{AccessLvl: entity.Admin}
-	user := &entity.Claims{AccessLvl: entity.User}
-
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewArtistAvatarRepository(t)
-		repo.On("SaveCover", ctx, cover).Return(nil)
-
-		svc := avatar.NewArtistCoverService(repo)
-		err := svc.UploadCover(ctx, admin, cover)
-
-		assert.NoError(t, err)
-	})
-
-	t.Run("forbidden", func(t *testing.T) {
-		repo := mocks.NewArtistAvatarRepository(t)
-
-		svc := avatar.NewArtistCoverService(repo)
-		err := svc.UploadCover(ctx, user, cover)
-
-		assert.ErrorIs(t, err, commonerr.ErrForbidden)
-	})
-
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewArtistAvatarRepository(t)
-		repo.On("SaveCover", ctx, cover).Return(errors.New("db error"))
-
-		svc := avatar.NewArtistCoverService(repo)
-		err := svc.UploadCover(ctx, admin, cover)
-
-		assert.ErrorIs(t, err, usecase.ErrUploadAvatar)
-	})
+func (ArtistAvatarObjectMother) UserClaims() *entity.Claims {
+	return &entity.Claims{AccessLvl: entity.User}
 }
 
-func TestDeleteCover(t *testing.T) {
-	ctx := context.Background()
-	artistID := uuid.New()
-	admin := &entity.Claims{AccessLvl: entity.Admin}
-	user := &entity.Claims{AccessLvl: entity.User}
+func (ArtistAvatarObjectMother) DefaultArtistID() uuid.UUID {
+	return uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+}
 
-	t.Run("success", func(t *testing.T) {
-		repo := mocks.NewArtistAvatarRepository(t)
-		repo.On("DeleteCover", ctx, artistID).Return(nil)
+func (ArtistAvatarObjectMother) DefaultCover() *entity.Cover {
+	return &entity.Cover{
+		ObjectID: uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+		Data:     []byte{0xFF, 0xD8, 0xFF}, // JPEG header bytes
+	}
+}
 
-		svc := avatar.NewArtistCoverService(repo)
-		err := svc.DeleteCover(ctx, admin, artistID)
+// --- Suite ---
 
-		assert.NoError(t, err)
-	})
+type ArtistAvatarServiceSuite struct {
+	suite.Suite
 
-	t.Run("forbidden", func(t *testing.T) {
-		repo := mocks.NewArtistAvatarRepository(t)
+	ctx       context.Context
+	repo      *mocks.ArtistAvatarRepository
+	service   *avatar.ArtistCoverService
+	objMother *ArtistAvatarObjectMother
+}
 
-		svc := avatar.NewArtistCoverService(repo)
-		err := svc.DeleteCover(ctx, user, artistID)
+func TestArtistAvatarServiceSuite(t *testing.T) {
+	suite.Run(t, new(ArtistAvatarServiceSuite))
+}
 
-		assert.ErrorIs(t, err, commonerr.ErrForbidden)
-	})
+func (s *ArtistAvatarServiceSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.repo = mocks.NewArtistAvatarRepository(s.T())
+	s.service = avatar.NewArtistCoverService(s.repo)
+	s.objMother = &ArtistAvatarObjectMother{}
+}
 
-	t.Run("repo error", func(t *testing.T) {
-		repo := mocks.NewArtistAvatarRepository(t)
-		repo.On("DeleteCover", ctx, artistID).Return(errors.New("repo error"))
+// --- GetCover ---
 
-		svc := avatar.NewArtistCoverService(repo)
-		err := svc.DeleteCover(ctx, admin, artistID)
+func (s *ArtistAvatarServiceSuite) TestGetCover_Success() {
+	artistID := s.objMother.DefaultArtistID()
+	expected := s.objMother.DefaultCover()
 
-		assert.ErrorIs(t, err, usecase.ErrDeleteAvatar)
-	})
+	s.repo.On("GetCover", s.ctx, artistID).Return(expected, nil)
+
+	got, err := s.service.GetCover(s.ctx, artistID)
+
+	s.NoError(err)
+	s.Equal(expected, got)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *ArtistAvatarServiceSuite) TestGetCover_RepoError() {
+	artistID := s.objMother.DefaultArtistID()
+
+	s.repo.On("GetCover", s.ctx, artistID).Return(nil, errors.New("repo error"))
+
+	got, err := s.service.GetCover(s.ctx, artistID)
+
+	s.ErrorIs(err, usecase.ErrGetAvatar)
+	s.Nil(got)
+	s.repo.AssertExpectations(s.T())
+}
+
+// --- UploadCover ---
+
+func (s *ArtistAvatarServiceSuite) TestUploadCover_Success() {
+	admin := s.objMother.AdminClaims()
+	cover := s.objMother.DefaultCover()
+
+	s.repo.On("SaveCover", s.ctx, cover).Return(nil)
+
+	err := s.service.UploadCover(s.ctx, admin, cover)
+
+	s.NoError(err)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *ArtistAvatarServiceSuite) TestUploadCover_Forbidden() {
+	user := s.objMother.UserClaims()
+	cover := s.objMother.DefaultCover()
+
+	err := s.service.UploadCover(s.ctx, user, cover)
+
+	s.ErrorIs(err, commonerr.ErrForbidden)
+	s.repo.AssertNotCalled(s.T(), "SaveCover", s.ctx, cover)
+}
+
+func (s *ArtistAvatarServiceSuite) TestUploadCover_RepoError() {
+	admin := s.objMother.AdminClaims()
+	cover := s.objMother.DefaultCover()
+
+	s.repo.On("SaveCover", s.ctx, cover).Return(errors.New("db error"))
+
+	err := s.service.UploadCover(s.ctx, admin, cover)
+
+	s.ErrorIs(err, usecase.ErrUploadAvatar)
+	s.repo.AssertExpectations(s.T())
+}
+
+// --- DeleteCover ---
+
+func (s *ArtistAvatarServiceSuite) TestDeleteCover_Success() {
+	admin := s.objMother.AdminClaims()
+	artistID := s.objMother.DefaultArtistID()
+
+	s.repo.On("DeleteCover", s.ctx, artistID).Return(nil)
+
+	err := s.service.DeleteCover(s.ctx, admin, artistID)
+
+	s.NoError(err)
+	s.repo.AssertExpectations(s.T())
+}
+
+func (s *ArtistAvatarServiceSuite) TestDeleteCover_Forbidden() {
+	user := s.objMother.UserClaims()
+	artistID := s.objMother.DefaultArtistID()
+
+	err := s.service.DeleteCover(s.ctx, user, artistID)
+
+	s.ErrorIs(err, commonerr.ErrForbidden)
+	s.repo.AssertNotCalled(s.T(), "DeleteCover", s.ctx, artistID)
+}
+
+func (s *ArtistAvatarServiceSuite) TestDeleteCover_RepoError() {
+	admin := s.objMother.AdminClaims()
+	artistID := s.objMother.DefaultArtistID()
+
+	s.repo.On("DeleteCover", s.ctx, artistID).Return(errors.New("repo error"))
+
+	err := s.service.DeleteCover(s.ctx, admin, artistID)
+
+	s.ErrorIs(err, usecase.ErrDeleteAvatar)
+	s.repo.AssertExpectations(s.T())
 }

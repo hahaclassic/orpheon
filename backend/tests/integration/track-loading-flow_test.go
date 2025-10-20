@@ -84,7 +84,7 @@ func TestTrackUploadFlow(t *testing.T) {
 		ID:          uuid.New(),
 		Name:        "new track",
 		AlbumID:     album.ID,
-		TrackNumber: 0,
+		TrackNumber: 1,
 		Duration:    120,
 		LicenseID:   license.ID,
 		GenreID:     genre.ID,

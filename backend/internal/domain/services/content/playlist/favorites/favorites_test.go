@@ -1,4 +1,4 @@
-package favorites
+package favorites_test
 
 import (
 	"context"
@@ -6,19 +6,56 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/hahaclassic/orpheon/backend/internal/domain/services/content/playlist/favorites"
 	usecase "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/content/playlist"
 	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
 	"github.com/hahaclassic/orpheon/backend/mocks"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestAddToUserFavorites(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	playlistID := uuid.New()
-	claims := &entity.Claims{UserID: userID}
+func TestPlaylistFavoriteServiceSuite(t *testing.T) {
+	suite.Run(t, &PlaylistFavoriteServiceSuite{})
+}
+
+type PlaylistFavoriteObjectMother struct{}
+
+func (PlaylistFavoriteObjectMother) Claims() *entity.Claims {
+	return &entity.Claims{UserID: uuid.New()}
+}
+
+func (PlaylistFavoriteObjectMother) PlaylistID() uuid.UUID {
+	return uuid.New()
+}
+
+func (PlaylistFavoriteObjectMother) UserIDs() []uuid.UUID {
+	return []uuid.UUID{uuid.New(), uuid.New()}
+}
+
+type PlaylistFavoriteServiceSuite struct {
+	suite.Suite
+
+	ctx     context.Context
+	service *favorites.PlaylistFavoriteService
+
+	repo   *mocks.PlaylistFavoriteRepository
+	policy *mocks.PlaylistPolicyService
+
+	objMother *PlaylistFavoriteObjectMother
+}
+
+func (s *PlaylistFavoriteServiceSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.repo = mocks.NewPlaylistFavoriteRepository(s.T())
+	s.policy = mocks.NewPlaylistPolicyService(s.T())
+	s.service = favorites.NewPlaylistFavoriteService(s.repo, s.policy)
+	s.objMother = &PlaylistFavoriteObjectMother{}
+}
+
+// --- AddToUserFavorites ---
+func (s *PlaylistFavoriteServiceSuite) TestAddToUserFavorites() {
+	claims := s.objMother.Claims()
+	playlistID := s.objMother.PlaylistID()
 
 	tests := []struct {
 		name      string
@@ -32,24 +69,25 @@ func TestAddToUserFavorites(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			policy := mocks.NewPlaylistPolicyService(t)
-			repo := mocks.NewPlaylistFavoriteRepository(t)
-			policy.On("CanView", ctx, claims, playlistID).Return(tt.policyErr)
+		s.Run(tt.name, func() {
+			s.SetupTest()
+			s.policy.On("CanView", s.ctx, claims, playlistID).Return(tt.policyErr)
 			if tt.policyErr == nil {
-				repo.On("AddToFavorites", ctx, userID, playlistID).Return(tt.repoErr)
+				s.repo.On("AddToFavorites", s.ctx, claims.UserID, playlistID).Return(tt.repoErr)
 			}
-			svc := NewPlaylistFavoriteService(repo, policy)
-			err := svc.AddToUserFavorites(ctx, claims, playlistID)
-			assert.ErrorIs(t, err, tt.wantErr)
+
+			err := s.service.AddToUserFavorites(s.ctx, claims, playlistID)
+			s.ErrorIs(err, tt.wantErr)
+
+			s.policy.AssertExpectations(s.T())
+			s.repo.AssertExpectations(s.T())
 		})
 	}
 }
 
-func TestGetUserFavorites(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	claims := &entity.Claims{UserID: userID}
+// --- GetUserFavorites ---
+func (s *PlaylistFavoriteServiceSuite) TestGetUserFavorites() {
+	claims := s.objMother.Claims()
 	mockResult := []*entity.PlaylistMeta{{ID: uuid.New()}}
 
 	tests := []struct {
@@ -63,23 +101,23 @@ func TestGetUserFavorites(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := mocks.NewPlaylistFavoriteRepository(t)
-			policy := mocks.NewPlaylistPolicyService(t)
-			repo.On("GetUserFavorites", ctx, userID).Return(tt.repoRes, tt.repoErr)
-			svc := NewPlaylistFavoriteService(repo, policy)
-			res, err := svc.GetUserFavorites(ctx, claims)
-			assert.Equal(t, tt.repoRes, res)
-			assert.ErrorIs(t, err, tt.wantErr)
+		s.Run(tt.name, func() {
+			s.SetupTest()
+			s.repo.On("GetUserFavorites", s.ctx, claims.UserID).Return(tt.repoRes, tt.repoErr)
+
+			res, err := s.service.GetUserFavorites(s.ctx, claims)
+			s.Equal(tt.repoRes, res)
+			s.ErrorIs(err, tt.wantErr)
+
+			s.repo.AssertExpectations(s.T())
 		})
 	}
 }
 
-func TestDeleteFromUserFavorites(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	playlistID := uuid.New()
-	claims := &entity.Claims{UserID: userID}
+// --- DeleteFromUserFavorites ---
+func (s *PlaylistFavoriteServiceSuite) TestDeleteFromUserFavorites() {
+	claims := s.objMother.Claims()
+	playlistID := s.objMother.PlaylistID()
 
 	tests := []struct {
 		name    string
@@ -91,26 +129,23 @@ func TestDeleteFromUserFavorites(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			policy := mocks.NewPlaylistPolicyService(t)
-			repo := mocks.NewPlaylistFavoriteRepository(t)
+		s.Run(tt.name, func() {
+			s.SetupTest()
+			s.repo.On("DeleteFromUserFavorites", s.ctx, claims.UserID, playlistID).Return(tt.repoErr)
 
-			repo.On("DeleteFromUserFavorites", ctx, userID, playlistID).Return(tt.repoErr)
+			err := s.service.DeleteFromUserFavorites(s.ctx, claims, playlistID)
+			s.ErrorIs(err, tt.wantErr)
 
-			svc := NewPlaylistFavoriteService(repo, policy)
-			err := svc.DeleteFromUserFavorites(ctx, claims, playlistID)
-			assert.ErrorIs(t, err, tt.wantErr)
-
-			repo.AssertExpectations(t)
+			s.repo.AssertExpectations(s.T())
 		})
 	}
 }
 
-func TestGetUsersWithFavoritePlaylist(t *testing.T) {
-	ctx := context.Background()
-	playlistID := uuid.New()
-	claims := &entity.Claims{UserID: uuid.New()}
-	userList := []uuid.UUID{uuid.New(), uuid.New()}
+// --- GetUsersWithFavoritePlaylist ---
+func (s *PlaylistFavoriteServiceSuite) TestGetUsersWithFavoritePlaylist() {
+	claims := s.objMother.Claims()
+	playlistID := s.objMother.PlaylistID()
+	userList := s.objMother.UserIDs()
 
 	tests := []struct {
 		name      string
@@ -125,25 +160,27 @@ func TestGetUsersWithFavoritePlaylist(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			policy := mocks.NewPlaylistPolicyService(t)
-			repo := mocks.NewPlaylistFavoriteRepository(t)
-			policy.On("CanView", ctx, claims, playlistID).Return(tt.policyErr)
+		s.Run(tt.name, func() {
+			s.SetupTest()
+			s.policy.On("CanView", s.ctx, claims, playlistID).Return(tt.policyErr)
 			if tt.policyErr == nil {
-				repo.On("GetUsersWithFavoritePlaylist", ctx, playlistID, false).Return(tt.repoRes, tt.repoErr)
+				s.repo.On("GetUsersWithFavoritePlaylist", s.ctx, playlistID, false).Return(tt.repoRes, tt.repoErr)
 			}
-			svc := NewPlaylistFavoriteService(repo, policy)
-			res, err := svc.GetUsersWithFavoritePlaylist(ctx, claims, playlistID, true)
-			assert.Equal(t, tt.repoRes, res)
-			assert.ErrorIs(t, err, tt.wantErr)
+
+			res, err := s.service.GetUsersWithFavoritePlaylist(s.ctx, claims, playlistID, true)
+			s.Equal(tt.repoRes, res)
+			s.ErrorIs(err, tt.wantErr)
+
+			s.policy.AssertExpectations(s.T())
+			s.repo.AssertExpectations(s.T())
 		})
 	}
 }
 
-func TestDeleteFromAllFavorites(t *testing.T) {
-	ctx := context.Background()
-	playlistID := uuid.New()
-	claims := &entity.Claims{UserID: uuid.New()}
+// --- DeleteFromAllFavorites ---
+func (s *PlaylistFavoriteServiceSuite) TestDeleteFromAllFavorites() {
+	claims := s.objMother.Claims()
+	playlistID := s.objMother.PlaylistID()
 
 	tests := []struct {
 		name      string
@@ -157,25 +194,27 @@ func TestDeleteFromAllFavorites(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			policy := mocks.NewPlaylistPolicyService(t)
-			repo := mocks.NewPlaylistFavoriteRepository(t)
-			policy.On("CanDelete", ctx, claims, playlistID).Return(tt.policyErr)
+		s.Run(tt.name, func() {
+			s.SetupTest()
+			s.policy.On("CanDelete", s.ctx, claims, playlistID).Return(tt.policyErr)
 			if tt.policyErr == nil {
-				repo.On("DeleteFromAllFavorites", ctx, playlistID, true).Return(tt.repoErr)
+				s.repo.On("DeleteFromAllFavorites", s.ctx, playlistID, true).Return(tt.repoErr)
 			}
-			svc := NewPlaylistFavoriteService(repo, policy)
-			err := svc.DeleteFromAllFavorites(ctx, claims, playlistID, true)
-			assert.ErrorIs(t, err, tt.wantErr)
+
+			err := s.service.DeleteFromAllFavorites(s.ctx, claims, playlistID, true)
+			s.ErrorIs(err, tt.wantErr)
+
+			s.policy.AssertExpectations(s.T())
+			s.repo.AssertExpectations(s.T())
 		})
 	}
 }
 
-func TestAddPlaylistToAllFavorites(t *testing.T) {
-	ctx := context.Background()
-	playlistID := uuid.New()
-	claims := &entity.Claims{UserID: uuid.New()}
-	userIDs := []uuid.UUID{uuid.New(), uuid.New()}
+// --- AddPlaylistToAllFavorites ---
+func (s *PlaylistFavoriteServiceSuite) TestAddPlaylistToAllFavorites() {
+	claims := s.objMother.Claims()
+	playlistID := s.objMother.PlaylistID()
+	userIDs := s.objMother.UserIDs()
 
 	tests := []struct {
 		name      string
@@ -189,16 +228,18 @@ func TestAddPlaylistToAllFavorites(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			policy := mocks.NewPlaylistPolicyService(t)
-			repo := mocks.NewPlaylistFavoriteRepository(t)
-			policy.On("CanDelete", ctx, claims, playlistID).Return(tt.policyErr)
+		s.Run(tt.name, func() {
+			s.SetupTest()
+			s.policy.On("CanDelete", s.ctx, claims, playlistID).Return(tt.policyErr)
 			if tt.policyErr == nil {
-				repo.On("RestoreAllFavorites", ctx, userIDs, playlistID).Return(tt.repoErr)
+				s.repo.On("RestoreAllFavorites", s.ctx, userIDs, playlistID).Return(tt.repoErr)
 			}
-			svc := NewPlaylistFavoriteService(repo, policy)
-			err := svc.AddPlaylistToAllFavorites(ctx, claims, userIDs, playlistID)
-			assert.ErrorIs(t, err, tt.wantErr)
+
+			err := s.service.AddPlaylistToAllFavorites(s.ctx, claims, userIDs, playlistID)
+			s.ErrorIs(err, tt.wantErr)
+
+			s.policy.AssertExpectations(s.T())
+			s.repo.AssertExpectations(s.T())
 		})
 	}
 }
