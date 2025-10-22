@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/hahaclassic/orpheon/services/auth-msv/gen/proto";
+
+package auth;
+
+service AuthService {
+    rpc RegisterUser (RegisterUserRequest) returns (AuthTokens);
+    rpc Login (UserCredentials) returns (AuthTokens);
+    rpc RefreshTokens (RefreshToken) returns (AuthTokens);
+    rpc Logout (RefreshToken) returns (google.protobuf.Empty); 
+    rpc GetClaims (AccessToken) returns (Claims);
+
+    rpc UpdatePassword (UserPasswords) returns (google.protobuf.Empty);
+}
+
+message RegisterUserRequest {
+    string login = 1;
+    string password = 2;
+    string username = 3;
+}
+
+message UserCredentials {
+    string login = 1;
+    string password = 2;
+}
+
+message AuthTokens {
+    string access = 1;
+    string refresh = 2;
+}
+
+message AccessToken {
+    string value = 1;
+}
+
+message RefreshToken {
+    string value = 1;
+}
+
+message UserPasswords {
+    string new = 1;
+    string old = 2;
+}
+
+message Claims {
+    string user_id = 1; // UUID
+    int32 access_level = 2;
+}

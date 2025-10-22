@@ -1,0 +1,236 @@
+openapi: 3.0.0
+info:
+  title: Orpheon Auth API
+  version: "2.0.0"
+servers:
+  - url: https://orpheon.space/api/v2
+    description: Production server
+  - url: http://localhost:8080/api/v2
+    description: Local development
+
+paths:
+  /auth/register:
+    post:
+      summary: Register new user
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - login
+                - password
+                - username
+                - birth_date
+              properties:
+                login:
+                  type: string
+                password:
+                  type: string
+                username:
+                  type: string
+                birth_date:
+                  type: string
+
+      responses:
+        '200':
+          description: User registered successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Access and refresh tokens set as cookies
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /auth/login:
+    post:
+      summary: Login user
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - login
+                - password
+              properties:
+                login:
+                  type: string
+                  description: User login
+                password:
+                  type: string
+                  description: User password
+      responses:
+        '200':
+          description: User logged in successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Access and refresh tokens set as cookies
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+      tags:
+        - auth
+      responses:
+        '200':
+          description: Tokens refreshed successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: New access and refresh tokens set as cookies
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      tags:
+        - auth
+      responses:
+        '200':
+          description: User logged out successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Access and refresh tokens cleared from cookies
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /auth/password/update:
+    post:
+      summary: Update user password
+      tags:
+        - auth
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - old
+                - new
+              properties:
+                old:
+                  type: string
+                  description: Current password
+                new:
+                  type: string
+                  description: New password
+      responses:
+        '200':
+          description: Password updated successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
