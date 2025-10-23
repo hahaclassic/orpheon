@@ -214,6 +214,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -267,6 +276,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -307,6 +325,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -340,6 +367,15 @@ paths:
                   $ref: '#/components/schemas/TrackMetaAggregated'
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -414,6 +450,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found artist or track
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -472,6 +517,15 @@ paths:
                     type: string
         '403':
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -546,6 +600,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -611,6 +674,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -647,6 +719,15 @@ paths:
                 format: binary
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -776,6 +857,15 @@ paths:
                     type: string
         '403':
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -1025,6 +1115,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -1084,6 +1183,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -1117,6 +1225,15 @@ paths:
                   $ref: '#/components/schemas/TrackMetaAggregated'
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -1184,6 +1301,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -1242,6 +1368,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -1278,6 +1413,15 @@ paths:
                 format: binary
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -1407,6 +1551,15 @@ paths:
                     type: string
         '403':
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -1660,6 +1813,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -1713,6 +1875,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -1746,6 +1917,15 @@ paths:
                   $ref: '#/components/schemas/TrackSegment'
         '400':
           description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -1994,6 +2174,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -2040,6 +2229,15 @@ paths:
                     type: string
         '403':
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -2113,6 +2311,15 @@ paths:
                 properties:
                   error:
                     type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
         '500':
           description: Internal server error
           content:
@@ -2160,6 +2367,15 @@ paths:
                     type: string
         '403':
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -2271,6 +2487,15 @@ paths:
                     type: string
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Not Found
           content:
             application/json:
               schema:
@@ -2862,140 +3087,6 @@ paths:
                     type: string
       operationId: deleteGenre
 
-  /albums/{id}/genres/{genre_id}:
-    post:
-      summary: Assign genre to album
-      description: Assign a specific genre to an album
-      tags:
-        - genres
-        - albums
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Album unique identifier
-        - name: genre_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Genre unique identifier
-      responses:
-        '200':
-          description: Genre assigned to album successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Genre assigned to album"
-        '400':
-          description: Bad request - invalid ID format
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-        '401':
-          description: Unauthorized - authentication required
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-        '403':
-          description: Forbidden - insufficient permissions
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-    
-    delete:
-      summary: Unassign genre from album
-      description: Remove genre assignment from an album
-      tags:
-        - genres
-        - albums
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Album unique identifier
-        - name: genre_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Genre unique identifier
-      responses:
-        '200':
-          description: Genre unassigned from album successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Genre unassigned from album"
-        '400':
-          description: Bad request - invalid ID format
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-        '401':
-          description: Unauthorized - authentication required
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-
 # Licenses
   /licenses:
     get:
@@ -3303,7 +3394,7 @@ paths:
                     type: string
 
 # Me
-  /me/playlists:
+  /users/me/playlists:
     get:
       summary: Get current user's playlists
       tags:
@@ -3339,7 +3430,48 @@ paths:
                   error:
                     type: string
 
-  /me/favorites:
+  /users/{id}/playlists:
+    get:
+      summary: Get user's playlists
+      tags:
+        - users
+        - playlists
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Playlist'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /favorites:
     get:
       summary: Get user's favorite playlists
       tags:
@@ -3375,7 +3507,7 @@ paths:
                   error:
                     type: string
 
-  /me/favorites/{playlist_id}:
+  /favorites/{playlist_id}:
     post:
       summary: Add playlist to favorites
       tags:
@@ -3447,46 +3579,92 @@ paths:
                   error:
                     type: string
 
-  /users/{id}/playlists:
-    get:
-      summary: Get user's playlists
-      tags:
-        - users
-        - playlists
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Playlist'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
+# Search
+  # /search:
+  #   get:
+  #     summary: Search content
+  #     description: |
+  #       Search across tracks, albums, artists, and playlists with filtering and pagination.
+  #       Authentication is optional but may provide personalized results for playlists.
+  #     tags:
+  #       - search
+  #     security:
+  #       - bearerAuth: []
+  #     parameters:
+  #       - name: type
+  #         in: query
+  #         required: true
+  #         schema:
+  #           type: string
+  #           enum: [track, album, artist, playlist]
+  #         description: Type of content to search for
+  #         example: "track"
+  #       - name: query
+  #         in: query
+  #         required: true
+  #         schema:
+  #           type: string
+  #           maxLength: 200
+  #         description: Search query string
+  #         example: "rock music"
+  #       - name: limit
+  #         in: query
+  #         schema:
+  #           type: integer
+  #           minimum: 1
+  #           maximum: 100
+  #           default: 30
+  #         description: Maximum number of results to return
+  #         example: 30
+  #       - name: offset
+  #         in: query
+  #         schema:
+  #           type: integer
+  #           minimum: 0
+  #           default: 0
+  #         description: Number of results to skip for pagination
+  #         example: 0
+  #     responses:
+  #       '200':
+  #         description: Search completed successfully
+  #         content:
+  #           application/json:
+  #             schema:
+  #               oneOf:
+  #                 - type: array
+  #                   items:
+  #                     $ref: '#/components/schemas/TrackMetaAggregated'
+  #                   description: Track search results
+  #                 - type: array
+  #                   items:
+  #                     $ref: '#/components/schemas/AlbumMetaAggregated'
+  #                   description: Album search results
+  #                 - type: array
+  #                   items:
+  #                     $ref: '#/components/schemas/ArtistMeta'
+  #                   description: Artist search results
+  #                 - type: array
+  #                   items:
+  #                     $ref: '#/components/schemas/PlaylistMetaAggregated'
+  #                   description: Playlist search results
+  #       '400':
+  #         description: Bad request - invalid parameters
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/Error'
+  #       '401':
+  #         description: Unauthorized - authentication required for personalized results
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/Error'
+  #       '500':
+  #         description: Internal server error
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/Error'
 
 components:
   schemas:

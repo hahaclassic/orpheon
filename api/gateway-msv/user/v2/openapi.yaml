@@ -9,7 +9,7 @@ servers:
     description: Local development
 
 paths:
-  /me:
+  /users/me:
     get:
       summary: Get current user info
       tags:
