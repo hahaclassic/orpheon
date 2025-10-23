@@ -24,15 +24,12 @@ paths:
                 - login
                 - password
                 - username
-                - birth_date
               properties:
                 login:
                   type: string
                 password:
                   type: string
                 username:
-                  type: string
-                birth_date:
                   type: string
 
       responses:

@@ -234,17 +234,10 @@ components:
         registration_date:
           type: string
           format: date-time
-        birth_date:
-          type: string
-          format: date-time
         access_lvl:
           type: integer
           enum: [0, 1, 2]
           description: 0 - Unauthorized, 1 - User, 2 - Admin
-
-    Playlist:
-      type: object
-      description: Playlist entity (schema to be defined based on actual implementation)
 
   securitySchemes:
     bearerAuth:

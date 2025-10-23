@@ -61,7 +61,7 @@ paths:
                   description: Artist description
                 country:
                   type: string
-                  description: Country code
+                  description: Country
       responses:
         '201':
           description: Artist created successfully
@@ -2567,8 +2567,740 @@ paths:
                     type: string
 
 # Genres
+  /genres:
+    get:
+      summary: Get all genres
+      tags:
+        - genres
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Genre'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    post:
+      summary: Create a new genre
+      tags:
+        - genres
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  readOnly: true
+                  description: Auto-generated genre ID
+                name:
+                  type: string
+                  maxLength: 100
+                  description: Genre name
+                description:
+                  type: string
+                  maxLength: 500
+                  description: Genre description
+      responses:
+        '201':
+          description: Genre created successfully
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the created genre
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /genres/{id}:
+    get:
+      summary: Get genre by ID
+      tags:
+        - genres
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Genre unique identifier
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+      
+    put:
+      summary: Update a genre
+      tags:
+        - genres
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Genre unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  readOnly: true
+                name:
+                  type: string
+                  maxLength: 100
+                  description: Genre name
+                description:
+                  type: string
+                  maxLength: 500
+                  description: Genre description
+      responses:
+        '200':
+          description: Genre updated successfully
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    delete:
+      summary: Delete a genre
+      tags:
+        - genres
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Genre unique identifier
+      responses:
+        '204':
+          description: Genre deleted successfully - no content
+        '400':
+          description: Bad request - invalid genre ID format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+      operationId: deleteGenre
+
+  /albums/{id}/genres/{genre_id}:
+    post:
+      summary: Assign genre to album
+      description: Assign a specific genre to an album
+      tags:
+        - genres
+        - albums
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Album unique identifier
+        - name: genre_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Genre unique identifier
+      responses:
+        '200':
+          description: Genre assigned to album successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Genre assigned to album"
+        '400':
+          description: Bad request - invalid ID format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+    
+    delete:
+      summary: Unassign genre from album
+      description: Remove genre assignment from an album
+      tags:
+        - genres
+        - albums
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Album unique identifier
+        - name: genre_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Genre unique identifier
+      responses:
+        '200':
+          description: Genre unassigned from album successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Genre unassigned from album"
+        '400':
+          description: Bad request - invalid ID format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 
 # Licenses
+  /licenses:
+    get:
+      summary: Get all licenses
+      tags:
+        - licenses
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/License'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    post:
+      summary: Create a new license
+      description: Create a new music license with the provided information
+      tags:
+        - licenses
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - type
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                  description: License name
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: License description
+                url:
+                  type: string
+                  description: license url
+      responses:
+        '201':
+          description: License created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "License created successfully"
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /licenses/{id}:
+    get:
+      summary: Get license by ID
+      description: Retrieve license details by its unique identifier
+      tags:
+        - licenses
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/License'
+        '400':
+          description: Bad request - invalid license ID format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: License not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    put:
+      summary: Update license information
+      tags:
+        - licenses
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - type
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                  description: License name
+                description:
+                  type: string
+                  maxLength: 1000
+                  description: License description
+                url:
+                  type: string
+                  description: license url
+      responses:
+        '200':
+          description: License updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "License updated successfully"
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: License not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+      operationId: updateLicense
+
+    delete:
+      summary: Delete license
+      description: Delete a license by its unique identifier
+      tags:
+        - licenses
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: License unique identifier
+      responses:
+        '200':
+          description: License deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "License deleted successfully"
+        '400':
+          description: Bad request - invalid license ID format
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '403':
+          description: Forbidden - insufficient permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
 
 # Me
   /me/playlists:
@@ -2867,15 +3599,124 @@ components:
 
     TrackSegment:
       type: object
-      description: Track segment entity (schema to be defined based on actual implementation)
+      required:
+        - track_id
+        - idx
+        - total_streams
+        - range
+      properties:
+        track_id:
+          type: string
+          format: uuid
+        idx:
+          type: integer
+          minimum: 0
+          description: Segment index within the track
+          example: 0
+        total_streams:
+          type: integer
+          minimum: 0
+          description: Total number of streams for this segment
+          example: 1500
+        range:
+          $ref: '#/components/schemas/Range'
+      example:
+        track_id: "123e4567-e89b-12d3-a456-426614174000"
+        idx: 0
+        total_streams: 1500
+        range:
+          start: 0
+          end: 30
+
+    Range:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: integer
+          minimum: 0
+          description: Start time of the segment in seconds
+          example: 0
+        end:
+          type: integer
+          minimum: 0
+          description: End time of the segment in seconds
+          example: 30
+      example:
+        start: 0
+        end: 30
+
+    SegmentsIdxs:
+      type: object
+      required:
+        - track_id
+        - idxs
+      properties:
+        track_id:
+          type: string
+          format: uuid
+          description: Unique track identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        idxs:
+          type: array
+          items:
+            type: integer
+            minimum: 0
+          description: Array of segment indices
+          example: [0, 1, 2]
 
     License:
       type: object
-      description: License entity (schema to be defined based on actual implementation)
+      required:
+        - id
+        - title
+        - description
+        - url
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 100
+          description: License title
+          example: "Creative Commons Attribution"
+        description:
+          type: string
+          maxLength: 500
+          description: License description
+          example: "Allows redistribution and reuse with attribution"
+        url:
+          type: string
+          format: uri
+          maxLength: 500
+          description: URL to license details
+          example: "https://creativecommons.org/licenses/by/4.0/"
+      example:
+        id: "123e4567-e89b-12d3-a456-426614174000"
+        title: "Creative Commons Attribution"
+        description: "Allows redistribution and reuse with attribution"
+        url: "https://creativecommons.org/licenses/by/4.0/"
 
     Genre:
       type: object
-      description: Genre entity (schema to be defined based on actual implementation)
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 50
+          description: Genre title
+          example: "Rock"
+      example:
+        id: "123e4567-e89b-12d3-a456-426614174000"
+        title: "Rock"
 
     PlaylistMeta:
       type: object
