@@ -7,4 +7,5 @@ use (
     ./services/user-msv
     // ./services/streaming-msv
     ./pkg
+    ./api
 )
