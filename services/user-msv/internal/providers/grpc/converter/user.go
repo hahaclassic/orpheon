@@ -1,13 +1,22 @@
 package converter
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/hahaclassic/orpheon/api/user-msv/v1/proto"
 	"github.com/hahaclassic/orpheon/services/user-msv/internal/domain/entity"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+var (
+	ErrNilUser = errors.New("converter: user is nil")
+)
+
 func ProtoToEntityUser(p *proto.User) (*entity.User, error) {
+	if p == nil {
+		return nil, ErrNilUser
+	}
 	id, err := uuid.Parse(p.Id)
 	if err != nil {
 		return nil, err
