@@ -19,8 +19,8 @@ func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *entity.User) error {
 	query := `
-		INSERT INTO users (id, name, registration_date, birth_date, access_level)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO users (id, name, registration_date, access_level)
+		VALUES ($1, $2, $3, $4)
 	`
 	_, err := r.pool.Exec(ctx, query,
 		user.ID,
@@ -34,7 +34,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *entity.User) erro
 
 func (r *UserRepository) GetUser(ctx context.Context, userID uuid.UUID) (*entity.User, error) {
 	query := `
-		SELECT id, name, registration_date, birth_date, access_level
+		SELECT id, name, registration_date, access_level
 		FROM users
 		WHERE id = $1
 	`
@@ -57,8 +57,8 @@ func (r *UserRepository) GetUser(ctx context.Context, userID uuid.UUID) (*entity
 func (r *UserRepository) UpdateUser(ctx context.Context, user *entity.User) error {
 	query := `
 		UPDATE users
-		SET name = $1, birth_date = $2
-		WHERE id = $3
+		SET name = $1
+		WHERE id = $2
 	`
 	cmdTag, err := r.pool.Exec(ctx, query,
 		user.Name,

@@ -16,7 +16,7 @@ var (
 )
 
 type UserService interface {
-	CreateUser(ctx context.Context, user *entity.User) (uuid.UUID, error)
+	CreateUser(ctx context.Context, user *entity.User) (*entity.User, error)
 	GetUser(ctx context.Context, userID uuid.UUID) (*entity.User, error)
 	UpdateUser(ctx context.Context, claims *entity.Claims, user *entity.User) error
 	DeleteUser(ctx context.Context, claims *entity.Claims, userID uuid.UUID) error

@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	proto "github.com/hahaclassic/orpheon/api/user-msv/v1/proto"
+	"github.com/hahaclassic/orpheon/services/user-msv/internal/domain/entity"
 	"github.com/hahaclassic/orpheon/services/user-msv/internal/domain/usecase"
 	"github.com/hahaclassic/orpheon/services/user-msv/internal/providers/grpc/converter"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -17,6 +18,19 @@ type UserController struct {
 
 func NewUserController(userService usecase.UserService) *UserController {
 	return &UserController{service: userService}
+}
+
+func (s *UserController) CreateUser(ctx context.Context, req *proto.CreateUserRequest) (*proto.User, error) {
+	requestUser := &entity.User{
+		Name: req.Username,
+	}
+
+	user, err := s.service.CreateUser(ctx, requestUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return converter.EntityToProtoUser(user), nil
 }
 
 func (s *UserController) GetUser(ctx context.Context, req *proto.GetUserRequest) (*proto.User, error) {

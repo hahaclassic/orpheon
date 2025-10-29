@@ -9,6 +9,7 @@ option go_package = "github.com/hahaclassic/orpheon/api/user-msv/v1/proto";
 package user.v1;
 
 service UserService {
+    rpc CreateUser(CreateUserRequest) returns (User);
     rpc GetUser(GetUserRequest) returns (User);
     rpc UpdateUser(UpdateUserRequest) returns (google.protobuf.Empty);
     rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty);
@@ -25,6 +26,10 @@ message User {
     string name = 2;
     AccessLevel access_level = 3;
     google.protobuf.Timestamp registration_date = 4;
+}
+
+message CreateUserRequest {
+    string username = 1;
 }
 
 message UpdateUserRequest {
