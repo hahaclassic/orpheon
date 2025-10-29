@@ -1,95 +1,68 @@
-package grpc
+package grpc_ctrl
 
 import (
 	"context"
 
-	"github.com/hahaclassic/orpheon/services/user-msv/internal/domain/entity"
-	"github.com/hahaclassic/orpheon/services/user-msv/internal/domain/usecase/user"
-	userpb "github.com/hahaclassic/orpheon/services/user-msv/pkg/proto/userpb"
+	"github.com/google/uuid"
+	proto "github.com/hahaclassic/orpheon/api/user-msv/v1/proto"
+	"github.com/hahaclassic/orpheon/services/user-msv/internal/domain/usecase"
+	"github.com/hahaclassic/orpheon/services/user-msv/internal/providers/grpc/converter"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type UserGRPCServer struct {
-	userpb.UnimplementedUserServiceServer
-	userService user.UserService
+type UserController struct {
+	proto.UnimplementedUserServiceServer
+	service usecase.UserService
 }
 
-func NewUserGRPCServer(userService user.UserService) *UserGRPCServer {
-	return &UserGRPCServer{userService: userService}
+func NewUserController(userService usecase.UserService) *UserController {
+	return &UserController{service: userService}
 }
 
-func (s *UserGRPCServer) GetUser(ctx context.Context, req *userpb.UserIDRequest) (*userpb.UserResponse, error) {
-	userID, err := entity.ParseUUID(req.Id)
+func (s *UserController) GetUser(ctx context.Context, req *proto.GetUserRequest) (*proto.User, error) {
+	userID, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, err
 	}
 
-	u, err := s.userService.GetUser(ctx, userID)
+	u, err := s.service.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &userpb.UserResponse{
-		User: &userpb.User{
-			Id:               u.ID.String(),
-			Name:             u.Name,
-			Email:            u.Email,
-			AccessLevel:      userpb.AccessLevel(u.AccessLvl),
-			RegistrationDate: entity.TimestampProto(u.RegistrationDate),
-		},
-	}, nil
+	return converter.EntityToProtoUser(u), nil
 }
 
-func (s *UserGRPCServer) GetMe(ctx context.Context, _ *emptypb.Empty) (*userpb.UserResponse, error) {
-	claims := entity.ClaimsFromContext(ctx)
-	if claims == nil {
-		return nil, user.ErrForbidden
-	}
-
-	u, err := s.userService.GetUser(ctx, claims.UserID)
+func (s *UserController) UpdateUser(ctx context.Context, req *proto.UpdateUserRequest) (*emptypb.Empty, error) {
+	claims, err := converter.ProtoToEntityClaims(req.Claims)
 	if err != nil {
 		return nil, err
 	}
 
-	return &userpb.UserResponse{
-		User: &userpb.User{
-			Id:               u.ID.String(),
-			Name:             u.Name,
-			Email:            u.Email,
-			AccessLevel:      userpb.AccessLevel(u.AccessLvl),
-			RegistrationDate: entity.TimestampProto(u.RegistrationDate),
-		},
-	}, nil
-}
-
-func (s *UserGRPCServer) UpdateMe(ctx context.Context, req *userpb.UpdateUserRequest) (*emptypb.Empty, error) {
-	claims := entity.ClaimsFromContext(ctx)
-	if claims == nil {
-		return nil, user.ErrForbidden
+	u, err := converter.ProtoToEntityUser(req.User)
+	if err != nil {
+		return nil, err
 	}
 
-	u := &entity.User{
-		ID:    entity.MustParseUUID(req.User.Id),
-		Name:  req.User.Name,
-		Email: req.User.Email,
-		// AccessLvl не обновляем через UpdateMe
-	}
-
-	if err := s.userService.UpdateUser(ctx, claims, u); err != nil {
+	if err := s.service.UpdateUser(ctx, claims, u); err != nil {
 		return nil, err
 	}
 
 	return &emptypb.Empty{}, nil
 }
 
-func (s *UserGRPCServer) DeleteUser(ctx context.Context, req *userpb.UserIDRequest) (*emptypb.Empty, error) {
-	claims := entity.ClaimsFromContext(ctx)
-	if claims == nil {
-		return nil, user.ErrForbidden
+func (s *UserController) DeleteUser(ctx context.Context, req *proto.DeleteUserRequest) (*emptypb.Empty, error) {
+	claims, err := converter.ProtoToEntityClaims(req.Claims)
+	if err != nil {
+		return nil, err
 	}
 
-	userID := entity.MustParseUUID(req.Id)
-	if err := s.userService.DeleteUser(ctx, claims, userID); err != nil {
+	userID, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.service.DeleteUser(ctx, claims, userID); err != nil {
 		return nil, err
 	}
 
