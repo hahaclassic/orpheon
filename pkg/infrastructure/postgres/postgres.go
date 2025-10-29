@@ -20,8 +20,8 @@ type PostgresConfig struct {
 	StartTimeout time.Duration `env:"POSTGRES_START_TIMEOUT" env-default:"5s"`
 }
 
-func NewPostgresPool(cfg PostgresConfig) *pgxpool.Pool {
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.StartTimeout)
+func NewPostgresPool(ctx context.Context, cfg PostgresConfig) *pgxpool.Pool {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, cfg.StartTimeout)
 	defer cancel()
 
 	dsn := fmt.Sprintf(
@@ -34,12 +34,12 @@ func NewPostgresPool(cfg PostgresConfig) *pgxpool.Pool {
 		cfg.SSLMode,
 	)
 
-	pool, err := pgxpool.New(ctx, dsn)
+	pool, err := pgxpool.New(ctxWithTimeout, dsn)
 	if err != nil {
 		log.Fatalf("unable to create pgx pool: %v", err)
 	}
 
-	if err = pool.Ping(ctx); err != nil {
+	if err = pool.Ping(ctxWithTimeout); err != nil {
 		log.Fatalf("unable to ping database: %v", err)
 	}
 
