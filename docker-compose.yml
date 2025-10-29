@@ -3,11 +3,11 @@ services:
     build:
       context: ./services/user-msv
       dockerfile: Dockerfile
-    container_name: user-msv
+    container_name: orpheon-user-msv
     env_file:
       - .env
     ports:
-      - "8080:8080"
+      - "50051:50051"
     depends_on:
       - postgres
 

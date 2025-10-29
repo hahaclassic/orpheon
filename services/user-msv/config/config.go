@@ -46,7 +46,7 @@ func Load() *Config {
 	envFile := flag.String("config", "", "path to env file")
 	flag.Parse()
 
-	if *envFile != "" {
+	if *envFile == "" {
 		*envFile = defaultEnvPath
 	}
 	log.Printf("load config from %s...\n", *envFile)

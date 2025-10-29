@@ -33,14 +33,14 @@ func New(repo UserRepository) *UserService {
 	}
 }
 
-func (u *UserService) CreateUser(ctx context.Context, user *entity.User) (_ uuid.UUID, err error) {
+func (u *UserService) CreateUser(ctx context.Context, user *entity.User) (_ *entity.User, err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrCreateUser, err)
 	}()
 
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return uuid.Nil, ErrGenerateID
+		return nil, ErrGenerateID
 	}
 
 	user.ID = id
@@ -48,10 +48,10 @@ func (u *UserService) CreateUser(ctx context.Context, user *entity.User) (_ uuid
 	user.AccessLvl = entity.UserLvl
 
 	if err = u.repo.CreateUser(ctx, user); err != nil {
-		return uuid.Nil, err
+		return nil, err
 	}
 
-	return id, nil
+	return user, nil
 }
 
 func (u *UserService) GetUser(ctx context.Context, userID uuid.UUID) (_ *entity.User, err error) {
