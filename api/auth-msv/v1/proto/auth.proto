@@ -1,8 +1,9 @@
 syntax = "proto3";
 
 import "google/protobuf/empty.proto";
+import "jwt/v1/proto/jwt.proto";
 
-option go_package = "github.com/hahaclassic/orpheon/services/auth-msv/gen/proto";
+option go_package = "github.com/hahaclassic/orpheon/pkg/gen/proto/auth/v1";
 
 package auth;
 
@@ -11,9 +12,9 @@ service AuthService {
     rpc Login (UserCredentials) returns (AuthTokens);
     rpc RefreshTokens (RefreshToken) returns (AuthTokens);
     rpc Logout (RefreshToken) returns (google.protobuf.Empty); 
-    rpc GetClaims (AccessToken) returns (Claims);
+    rpc GetClaims (AccessToken) returns (jwt.Claims);
 
-    rpc UpdatePassword (UserPasswords) returns (google.protobuf.Empty);
+    rpc UpdatePassword (UpdatePasswordRequest) returns (google.protobuf.Empty);
 }
 
 message RegisterUserRequest {
@@ -45,7 +46,7 @@ message UserPasswords {
     string old = 2;
 }
 
-message Claims {
-    string user_id = 1; // UUID
-    int32 access_level = 2;
+message UpdatePasswordRequest {
+    UserPasswords passwords = 1;
+    jwt.Claims claims = 2;
 }

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+// [!NOTE] not used. 
+// In the future, claims may be removed from all 
+// proto files and a single package will be used.
+
+option go_package = "github.com/hahaclassic/orpheon/api/jwt/v1/proto";
+
+package jwt;
+
+message Claims {
+    string user_id = 1; // UUID
+    int32 access_level = 2;
+}

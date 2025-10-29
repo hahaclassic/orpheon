@@ -1,16 +1,17 @@
 syntax = "proto3";
 
-package user;
-option go_package = "github.com/hahaclassic/orpheon/services/user-msv/pkg/proto/userpb";
-
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "jwt/v1/proto/jwt.proto";
+
+option go_package = "github.com/hahaclassic/orpheon/api/user-msv/v1/proto";
+
+package user.v1;
 
 service UserService {
-    rpc GetUser(UserIDRequest) returns (UserResponse);
-    rpc GetMe(google.protobuf.Empty) returns (UserResponse);
-    rpc UpdateMe(UpdateUserRequest) returns (google.protobuf.Empty);
-    rpc DeleteUser(UserIDRequest) returns (google.protobuf.Empty);
+    rpc GetUser(GetUserRequest) returns (User);
+    rpc UpdateUser(UpdateUserRequest) returns (google.protobuf.Empty);
+    rpc DeleteUser(DeleteUserRequest) returns (google.protobuf.Empty);
 }
 
 enum AccessLevel {
@@ -28,12 +29,14 @@ message User {
 
 message UpdateUserRequest {
     User user = 1;
+    jwt.Claims claims = 2;
 }
 
-message UserIDRequest {
-    string id = 1;
+message DeleteUserRequest {
+    string user_id = 1;
+    jwt.Claims claims = 2;
 }
 
-message UserResponse {
-    User user = 1;
+message GetUserRequest {
+    string user_id = 1;
 }
