@@ -21,6 +21,8 @@ func Run(cfg *config.Config) {
 	defer cancel()
 
 	pool := postgres.NewPostgresPool(ctx, cfg.Postgres)
+	defer pool.Close()
+
 	repo := user_postgres.NewUserRepository(pool)
 	userService := service.New(repo)
 	ctrl := grpc_ctrl.NewUserController(userService)
@@ -37,11 +39,11 @@ func Run(cfg *config.Config) {
 	proto.RegisterUserServiceServer(server, ctrl)
 
 	go func() {
-		slog.Info("[USER-MSV]: start listening at ", "addr", listen.Addr())
+		slog.Info("[USER-MSV]: start listening at", "addr", listen.Addr())
 
 		err := server.Serve(listen)
 		if err != nil {
-			slog.Error("[USER-MSV]: failed to serve: ", "err", err)
+			slog.Error("[USER-MSV]: failed to serve", "err", err)
 		}
 	}()
 
