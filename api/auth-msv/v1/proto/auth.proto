@@ -3,7 +3,7 @@ syntax = "proto3";
 import "google/protobuf/empty.proto";
 import "jwt/v1/proto/jwt.proto";
 
-option go_package = "github.com/hahaclassic/orpheon/pkg/gen/proto/auth/v1";
+option go_package = "github.com/hahaclassic/orpheon/api/auth-msv/v1/proto";
 
 package auth;
 

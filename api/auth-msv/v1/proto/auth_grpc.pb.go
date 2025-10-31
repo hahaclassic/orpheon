@@ -4,7 +4,7 @@
 // - protoc             v3.12.4
 // source: auth-msv/v1/proto/auth.proto
 
-package v1
+package proto
 
 import (
 	context "context"
