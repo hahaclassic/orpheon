@@ -3,11 +3,15 @@ package entity
 type AccessLevel int
 
 const (
-	Unauthorized AccessLevel = iota
-	User
-	Admin
+	UnauthorizedLvl AccessLevel = iota
+	UserLvl
+	AdminLvl
 )
 
 func (a AccessLevel) String() string {
-	return []string{"Unauthorized", "User", "Admin"}[a]
+	return []string{"Unauthorized Lvl", "User Lvl", "Admin Lvl"}[a]
+}
+
+func (a AccessLevel) IsValid() bool {
+	return a >= UnauthorizedLvl && a <= AdminLvl
 }

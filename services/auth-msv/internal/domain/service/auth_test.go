@@ -6,9 +6,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/backend/mocks"
 	"github.com/hahaclassic/orpheon/services/auth-msv/internal/domain/entity"
-	"github.com/stretchr/testify/mock"
+	"github.com/hahaclassic/orpheon/services/auth-msv/mocks"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -23,7 +22,7 @@ func (AuthObjectMother) DefaultCredentials() *entity.UserCredentials {
 }
 
 func (a AuthObjectMother) DefaultClaims() *entity.Claims {
-	return &entity.Claims{UserID: a.DefaultUserID(), AccessLvl: entity.User}
+	return &entity.Claims{UserID: a.DefaultUserID(), AccessLvl: entity.UserLvl}
 }
 
 func (AuthObjectMother) DefaultTokens() *entity.AuthTokens {
@@ -88,9 +87,7 @@ func (s *AuthServiceSuite) TestRegisterUser_Success() {
 	tokens := s.objMother.DefaultTokens()
 
 	s.hasher.On("GenerateFromPassword", creds.Password).Return(hashedPassword, nil)
-	s.userCreator.On("CreateUser", s.ctx, mock.MatchedBy(func(info *entity.UserInfo) bool {
-		return info.Name == creds.Login
-	})).Return(userID, nil)
+	s.userCreator.On("CreateUser", s.ctx, &entity.User{Name: "username"}).Return(&entity.User{ID: userID}, nil)
 
 	s.authRepo.On("SaveCredentials", s.ctx, userID, &entity.UserCredentials{
 		Login:    creds.Login,
@@ -104,7 +101,7 @@ func (s *AuthServiceSuite) TestRegisterUser_Success() {
 	s.tokenService.On("GenerateRefreshToken").Return(tokens.Refresh, nil)
 	s.refreshRepo.On("Set", s.ctx, tokens.Refresh, claims).Return(nil)
 
-	resulTtokens, err := s.service.RegisterUser(s.ctx, creds)
+	resulTtokens, err := s.service.RegisterUser(s.ctx, &entity.User{Name: "username"}, creds)
 
 	s.Require().NoError(err)
 	s.Equal(tokens.Access, resulTtokens.Access)
@@ -121,7 +118,7 @@ func (s *AuthServiceSuite) TestRegisterUser_HasherError() {
 	creds := s.objMother.DefaultCredentials()
 	s.hasher.On("GenerateFromPassword", creds.Password).Return("", errors.New("hash error"))
 
-	tokens, err := s.service.RegisterUser(s.ctx, creds)
+	tokens, err := s.service.RegisterUser(s.ctx, &entity.User{Name: "username"}, creds)
 
 	s.Error(err)
 	s.Nil(tokens)

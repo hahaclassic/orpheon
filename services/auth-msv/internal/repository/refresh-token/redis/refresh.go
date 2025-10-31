@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/hahaclassic/orpheon/services/auth-msv/internal/config"
+	"github.com/hahaclassic/orpheon/services/auth-msv/config"
 	"github.com/hahaclassic/orpheon/services/auth-msv/internal/domain/entity"
 	"github.com/redis/go-redis/v9"
 )

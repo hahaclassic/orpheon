@@ -18,7 +18,7 @@ var (
 )
 
 type AuthService interface {
-	RegisterUser(ctx context.Context, credentials *entity.UserCredentials) (*entity.AuthTokens, error)
+	RegisterUser(ctx context.Context, user *entity.User, credentials *entity.UserCredentials) (*entity.AuthTokens, error)
 	Login(ctx context.Context, credentials *entity.UserCredentials) (*entity.AuthTokens, error)
 
 	Logout(ctx context.Context, refreshToken string) error
