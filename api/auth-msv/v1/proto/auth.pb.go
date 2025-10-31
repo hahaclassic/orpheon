@@ -4,7 +4,7 @@
 // 	protoc        v3.12.4
 // source: auth-msv/v1/proto/auth.proto
 
-package v1
+package proto
 
 import (
 	empty "github.com/golang/protobuf/ptypes/empty"
@@ -411,7 +411,7 @@ const file_auth_msv_v1_proto_auth_proto_rawDesc = "" +
 	"\rRefreshTokens\x12\x12.auth.RefreshToken\x1a\x10.auth.AuthTokens\x124\n" +
 	"\x06Logout\x12\x12.auth.RefreshToken\x1a\x16.google.protobuf.Empty\x12+\n" +
 	"\tGetClaims\x12\x11.auth.AccessToken\x1a\v.jwt.Claims\x12E\n" +
-	"\x0eUpdatePassword\x12\x1b.auth.UpdatePasswordRequest\x1a\x16.google.protobuf.EmptyB6Z4github.com/hahaclassic/orpheon/pkg/gen/proto/auth/v1b\x06proto3"
+	"\x0eUpdatePassword\x12\x1b.auth.UpdatePasswordRequest\x1a\x16.google.protobuf.EmptyB6Z4github.com/hahaclassic/orpheon/api/auth-msv/v1/protob\x06proto3"
 
 var (
 	file_auth_msv_v1_proto_auth_proto_rawDescOnce sync.Once

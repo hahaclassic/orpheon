@@ -41,7 +41,7 @@ type AuthRepository interface {
 }
 
 type UserCreatorService interface {
-	CreateUser(ctx context.Context, info *entity.UserInfo) (uuid.UUID, error)
+	CreateUser(ctx context.Context, user *entity.User) (*entity.User, error)
 }
 
 type AuthService struct {
@@ -63,7 +63,7 @@ func NewAuthService(authRepo AuthRepository, refreshRepo RefreshTokenRepository,
 	}
 }
 
-func (a *AuthService) RegisterUser(ctx context.Context, credentials *entity.UserCredentials) (_ *entity.AuthTokens, err error) {
+func (a *AuthService) RegisterUser(ctx context.Context, newUser *entity.User, credentials *entity.UserCredentials) (_ *entity.AuthTokens, err error) {
 	defer func() {
 		err = errwrap.WrapIfErr(usecase.ErrRegisterUser, err)
 	}()
@@ -73,7 +73,7 @@ func (a *AuthService) RegisterUser(ctx context.Context, credentials *entity.User
 		return nil, err
 	}
 
-	userID, err := a.userCreator.CreateUser(ctx, &entity.UserInfo{Name: credentials.Login})
+	createdUser, err := a.userCreator.CreateUser(ctx, newUser)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (a *AuthService) RegisterUser(ctx context.Context, credentials *entity.User
 		Password: string(hashedPassword),
 	}
 
-	err = a.authRepo.SaveCredentials(ctx, userID, hashedCreds)
+	err = a.authRepo.SaveCredentials(ctx, createdUser.ID, hashedCreds)
 	if err != nil {
 		return nil, err
 	}
