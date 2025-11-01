@@ -1,4 +1,18 @@
 services:
+  gateway-msv:
+    build:
+      context: ./services/gateway-msv
+      dockerfile: Dockerfile
+    container_name: orpheon-gateway-msv
+    env_file:
+      - .gateway.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - user-msv
+      - auth-msv
+
   auth-msv:
     build:
       context: ./services/auth-msv
@@ -7,10 +21,11 @@ services:
     env_file:
       - .auth.env
     ports:
-      - "50051:50051"
+      - "50052:50051"
     depends_on:
       - postgres
       - user-msv
+      - redis
 
   user-msv:
     build:

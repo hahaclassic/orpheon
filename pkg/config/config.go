@@ -40,6 +40,16 @@ func GetEnvAsDuration(name string, fallback time.Duration) time.Duration {
 	return fallback
 }
 
+func GetEnvAsBool(name string, fallback bool) bool {
+	vStr := GetEnv(name, "")
+	v, err := strconv.ParseBool(vStr)
+	if err != nil {
+		return fallback
+	}
+
+	return v
+}
+
 type InternalConfigLoader interface {
 	Load()
 }

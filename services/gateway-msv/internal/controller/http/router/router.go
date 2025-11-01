@@ -15,9 +15,9 @@ func SetupRouter(controllers []RoutersRegistrator, middlewares []gin.HandlerFunc
 		router.Use(middleware)
 	}
 
-	v1 := router.Group("/api/v1")
+	v2 := router.Group("/api/v2")
 	for _, controller := range controllers {
-		controller.RegisterRoutes(v1)
+		controller.RegisterRoutes(v2)
 	}
 
 	return router
