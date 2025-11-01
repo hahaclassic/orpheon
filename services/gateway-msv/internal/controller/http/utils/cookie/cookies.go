@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hahaclassic/orpheon/backend/internal/config"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
+	"github.com/hahaclassic/orpheon/services/gateway-msv/config"
+	"github.com/hahaclassic/orpheon/services/gateway-msv/internal/controller/http/dto"
 )
 
 const (
@@ -21,7 +21,7 @@ func NewCookieTokensSetter(cookieConfig *config.CookieConfig) *CookieTokensSette
 	return &CookieTokensSetter{cookieConfig: cookieConfig}
 }
 
-func (c *CookieTokensSetter) SetAll(ctx *gin.Context, tokens *entity.AuthTokens) {
+func (c *CookieTokensSetter) SetAll(ctx *gin.Context, tokens *dto.AuthTokens) {
 	c.setToken(ctx, RefreshCookieName, tokens.Refresh, c.cookieConfig.RefreshTTL)
 	c.setToken(ctx, AccessCookieName, tokens.Access, c.cookieConfig.AccessTTL)
 }

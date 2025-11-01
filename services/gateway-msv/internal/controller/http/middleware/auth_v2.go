@@ -1,13 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	jwttokens "github.com/hahaclassic/orpheon/backend/internal/adapters/tokens/jwt"
-	"github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/cookie"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/auth"
+	"github.com/hahaclassic/orpheon/services/gateway-msv/internal/controller/http/dto"
+	"github.com/hahaclassic/orpheon/services/gateway-msv/internal/controller/http/utils/cookie"
 )
 
 var (
@@ -17,12 +17,17 @@ var (
 	ErrInvalidToken  = errors.New("invalid token")
 )
 
+type AuthService interface {
+	RefreshTokens(ctx context.Context, refreshToken string) (*dto.AuthTokens, error)
+	GetClaims(ctx context.Context, accessToken string) (*dto.Claims, error)
+}
+
 type AuthMiddleware struct {
-	authService        auth.AuthService
+	authService        AuthService
 	cookieTokensSetter *cookie.CookieTokensSetter
 }
 
-func NewAuthMiddleware(authService auth.AuthService, cookieTokensSetter *cookie.CookieTokensSetter) *AuthMiddleware {
+func NewAuthMiddleware(authService AuthService, cookieTokensSetter *cookie.CookieTokensSetter) *AuthMiddleware {
 	return &AuthMiddleware{
 		authService:        authService,
 		cookieTokensSetter: cookieTokensSetter,
@@ -52,28 +57,42 @@ func (a *AuthMiddleware) Optional() gin.HandlerFunc {
 func (a *AuthMiddleware) setClaims(c *gin.Context) error {
 	accessToken, err := c.Cookie(cookie.AccessCookieName)
 	if err != nil || accessToken == "" {
-		refreshToken, err := c.Cookie(cookie.RefreshCookieName)
-		if err != nil || refreshToken == "" {
-			return ErrNoTokens
-		}
-
-		tokens, err := a.authService.RefreshTokens(c.Request.Context(), refreshToken)
+		tokens, err := a.refresh(c)
 		if err != nil {
 			return err
 		}
-
-		a.cookieTokensSetter.SetAll(c, tokens)
 		accessToken = tokens.Access
 	}
 
 	claims, err := a.authService.GetClaims(c, accessToken)
-	if errors.Is(err, jwttokens.ErrExpired) {
-		return ErrExpiredToken
-	} else if err != nil {
-		return ErrInvalidToken
+	if err != nil {
+		tokens, err := a.refresh(c)
+		if err != nil {
+			return err
+		}
+		claims, err = a.authService.GetClaims(c, tokens.Access)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.Set("claims", claims)
 
 	return nil
+}
+
+func (a *AuthMiddleware) refresh(c *gin.Context) (*dto.AuthTokens, error) {
+	refreshToken, err := c.Cookie(cookie.RefreshCookieName)
+	if err != nil || refreshToken == "" {
+		return nil, ErrNoTokens
+	}
+
+	tokens, err := a.authService.RefreshTokens(c.Request.Context(), refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	a.cookieTokensSetter.SetAll(c, tokens)
+
+	return tokens, nil
 }

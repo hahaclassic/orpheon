@@ -1,22 +1,28 @@
 package user_ctrl
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	ctxclaims "github.com/hahaclassic/orpheon/backend/internal/controller/http/utils/claims"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/entity"
-	commonerr "github.com/hahaclassic/orpheon/backend/internal/domain/usecases/errors"
-	"github.com/hahaclassic/orpheon/backend/internal/domain/usecases/user"
+	"github.com/hahaclassic/orpheon/pkg/commonerr"
+	"github.com/hahaclassic/orpheon/services/gateway-msv/internal/controller/http/dto"
+	"github.com/hahaclassic/orpheon/services/gateway-msv/internal/controller/http/utils/ctxclaims"
 )
 
-type UserController struct {
-	userService user.UserService
+type UserService interface {
+	GetUser(ctx context.Context, userID uuid.UUID) (*dto.User, error)
+	UpdateUser(ctx context.Context, claims *dto.Claims, user *dto.EditUserRequest) error
+	DeleteUser(ctx context.Context, claims *dto.Claims, userID uuid.UUID) error
 }
 
-func NewUserController(userService user.UserService) *UserController {
+type UserController struct {
+	userService UserService
+}
+
+func NewUserController(userService UserService) *UserController {
 	return &UserController{
 		userService: userService,
 	}
@@ -66,15 +72,13 @@ func (c *UserController) UpdateMe(ctx *gin.Context) {
 		return
 	}
 
-	var userInfo entity.UserInfo
-	if err := ctx.ShouldBindJSON(&userInfo); err != nil {
+	var user dto.EditUserRequest
+	if err := ctx.ShouldBindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	userInfo.ID = claims.UserID
-
-	if err := c.userService.UpdateUser(ctx.Request.Context(), claims, &userInfo); err != nil {
+	if err := c.userService.UpdateUser(ctx.Request.Context(), claims, &user); err != nil {
 		if errors.Is(err, commonerr.ErrForbidden) {
 			ctx.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
 		} else {

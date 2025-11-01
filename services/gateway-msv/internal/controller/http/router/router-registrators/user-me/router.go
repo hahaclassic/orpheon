@@ -42,20 +42,25 @@ func NewMeRouter(playlistMetaController PlaylistMetaController,
 }
 
 func (r *UserMeRouter) RegisterRoutes(router *gin.RouterGroup) {
-	me := router.Group("/me")
-	me.Use(r.authMiddleware)
-	{
-		me.GET("/playlists", r.playlistMetaController.GetMyPlaylists)
-		me.GET("/favorites", r.playlistFavoritesController.GetFavoritePlaylists)
-		me.POST("/favorites/:playlist_id", r.playlistFavoritesController.AddToFavorites)
-		me.DELETE("/favorites/:playlist_id", r.playlistFavoritesController.RemoveFromFavorites)
-		me.GET("", r.userController.GetMe)
-		me.PUT("", r.userController.UpdateMe)
-	}
-
 	user := router.Group("/users")
 	{
 		user.GET("/:id", r.userController.GetUser)
-		user.GET("/:id/playlists", r.playlistMetaController.GetUserPlaylists)
+		// user.GET("/:id/playlists", r.playlistMetaController.GetUserPlaylists)
 	}
+	me := user.Group("/me")
+	me.Use(r.authMiddleware)
+	{
+		me.GET("", r.userController.GetMe)
+		me.PUT("", r.userController.UpdateMe)
+	}
+	// me := router.Group("/usersme")
+	// me.Use(r.authMiddleware)
+	// {
+	// 	// me.GET("/playlists", r.playlistMetaController.GetMyPlaylists)
+	// 	// me.GET("/favorites", r.playlistFavoritesController.GetFavoritePlaylists)
+	// 	// me.POST("/favorites/:playlist_id", r.playlistFavoritesController.AddToFavorites)
+	// 	// me.DELETE("/favorites/:playlist_id", r.playlistFavoritesController.RemoveFromFavorites)
+	// 	me.GET("", r.userController.GetMe)
+	// 	me.PUT("", r.userController.UpdateMe)
+	// }
 }
