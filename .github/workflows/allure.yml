@@ -1,11 +1,11 @@
-name: Run Go Tests with Allure
+name: Legacy testing CI with Allure
 
 on:
   pull_request:
     branches:
       - develop
     paths:
-      - 'backend/**'
+      - 'legacy/backend/**'
 
 jobs:
   unit-tests:
@@ -20,14 +20,14 @@ jobs:
         with:
           go-version: 1.25
           cache: true
-          cache-dependency-path: backend/go.sum
+          cache-dependency-path: legacy/backend/go.sum
 
       - name: Install golurectl
-        run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
+        run: cd legacy/backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
       - name: Run Unit Tests
         run: |
-          cd backend
+          cd legacy/backend
           mkdir -p report/unit-allure-results
           go test -json ./internal/domain/... | golurectl -l -e -o report/unit-allure-results --allure-suite Unit --allure-tags UNIT
 
@@ -36,7 +36,7 @@ jobs:
         if: always()
         with:
           name: allure-results-unit
-          path: backend/report/unit-allure-results
+          path: legacy/backend/report/unit-allure-results
 
   integration-tests:
     name: Integration Tests
@@ -51,14 +51,14 @@ jobs:
         with:
           go-version: 1.25
           cache: true
-          cache-dependency-path: backend/go.sum
+          cache-dependency-path: legacy/backend/go.sum
 
       - name: Install golurectl
-        run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
+        run: cd legacy/backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
       - name: Run Integration Tests
         run: |
-          cd backend
+          cd legacy/backend
           mkdir -p report/integration-allure-results
           go test -json ./tests/integration/... | golurectl -l -e -o report/integration-allure-results --allure-suite Integration --allure-tags INTEGRATION
 
@@ -67,7 +67,7 @@ jobs:
         if: always()
         with:
           name: allure-results-integration
-          path: backend/report/integration-allure-results
+          path: legacy/backend/report/integration-allure-results
 
   e2e-tests:
     name: E2E Tests
@@ -82,14 +82,14 @@ jobs:
         with:
           go-version: 1.25
           cache: true
-          cache-dependency-path: backend/go.sum
+          cache-dependency-path: legacy/backend/go.sum
 
       - name: Install golurectl
-        run: cd backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
+        run: cd legacy/backend && go install github.com/robotomize/go-allure/cmd/golurectl@latest
 
       - name: Run E2E Tests
         run: |
-          cd backend
+          cd legacy/backend
           mkdir -p report/e2e-allure-results
           go test -json ./tests/e2e/... | golurectl -l -e -o report/e2e-allure-results --allure-suite E2E --allure-tags E2E
 
@@ -98,7 +98,7 @@ jobs:
         if: always()
         with:
           name: allure-results-e2e
-          path: backend/report/e2e-allure-results
+          path: legacy/backend/report/e2e-allure-results
 
   generate-report:
     name: Generate and Publish Allure Report
@@ -112,15 +112,15 @@ jobs:
       - name: Download all Allure results
         uses: actions/download-artifact@v4
         with:
-          path: backend/tmp-allure
+          path: legacy/backend/tmp-allure
 
       - name: Merge Allure results
         run: |
-          mkdir -p backend/report/allure-results
-          cp -r backend/tmp-allure/allure-results-unit/* backend/report/allure-results/
-          cp -r backend/tmp-allure/allure-results-integration/* backend/report/allure-results/
-          cp -r backend/tmp-allure/allure-results-e2e/* backend/report/allure-results/
-          ls backend/report/allure-results/
+          mkdir -p legacy/backend/report/allure-results
+          cp -r legacy/backend/tmp-allure/allure-results-unit/* legacy/backend/report/allure-results/
+          cp -r legacy/backend/tmp-allure/allure-results-integration/* legacy/backend/report/allure-results/
+          cp -r legacy/backend/tmp-allure/allure-results-e2e/* legacy/backend/report/allure-results/
+          ls legacy/backend/report/allure-results/
         continue-on-error: true
 
       - name: Checkout gh-pages for history
@@ -135,15 +135,15 @@ jobs:
         if: always()
         run: |
           if [ -d gh-pages/history ]; then
-            mkdir -p backend/report/allure-results/history
-            cp -r gh-pages/history/* backend/report/allure-results/history/ || true
+            mkdir -p legacy/backend/report/allure-results/history
+            cp -r gh-pages/history/* legacy/backend/report/allure-results/history/ || true
           fi
 
       - name: Generate Allure Report
         uses: simple-elf/allure-report-action@v1.7
         if: always()
         with:
-          allure_results: backend/report/allure-results
+          allure_results: legacy/backend/report/allure-results
           allure_history: gh-pages
           gh_pages: gh-pages
 
