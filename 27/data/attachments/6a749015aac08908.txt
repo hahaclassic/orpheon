@@ -1,0 +1,6 @@
+=== RUN   TestAuthServiceSuite/TestLogin_GetPasswordError
+auth_test.go:164: 
+    	Error Trace:	/home/runner/work/orpheon/orpheon/backend/internal/domain/services/auth/auth_test.go:164
+    	Error:      	Expected value not to be nil.
+    	Test:       	TestAuthServiceSuite/TestLogin_GetPasswordError
+--- FAIL: TestAuthServiceSuite/TestLogin_GetPasswordError (0.00s)

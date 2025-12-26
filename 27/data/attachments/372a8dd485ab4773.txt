@@ -1,0 +1,34 @@
+=== RUN   TestAuthServiceSuite
+=== RUN   TestAuthServiceSuite/TestGetClaims_ParseError
+=== RUN   TestAuthServiceSuite/TestGetClaims_Success
+=== RUN   TestAuthServiceSuite/TestLogin_GetPasswordError
+    auth_test.go:164: 
+        	Error Trace:	/home/runner/work/orpheon/orpheon/backend/internal/domain/services/auth/auth_test.go:164
+        	Error:      	Expected value not to be nil.
+        	Test:       	TestAuthServiceSuite/TestLogin_GetPasswordError
+=== RUN   TestAuthServiceSuite/TestLogin_InvalidPassword
+=== RUN   TestAuthServiceSuite/TestLogin_Success
+=== RUN   TestAuthServiceSuite/TestLogout_DeleteError
+=== RUN   TestAuthServiceSuite/TestLogout_Success
+=== RUN   TestAuthServiceSuite/TestRefreshTokens_GetError
+=== RUN   TestAuthServiceSuite/TestRefreshTokens_Success
+=== RUN   TestAuthServiceSuite/TestRegisterUser_HasherError
+=== RUN   TestAuthServiceSuite/TestRegisterUser_Success
+=== RUN   TestAuthServiceSuite/TestUpdatePassword_GetPasswordError
+=== RUN   TestAuthServiceSuite/TestUpdatePassword_InvalidOldPassword
+=== RUN   TestAuthServiceSuite/TestUpdatePassword_Success
+--- FAIL: TestAuthServiceSuite (0.02s)
+    --- PASS: TestAuthServiceSuite/TestRefreshTokens_GetError (0.00s)
+    --- PASS: TestAuthServiceSuite/TestLogout_DeleteError (0.00s)
+    --- PASS: TestAuthServiceSuite/TestRegisterUser_Success (0.01s)
+    --- PASS: TestAuthServiceSuite/TestRegisterUser_HasherError (0.00s)
+    --- PASS: TestAuthServiceSuite/TestRefreshTokens_Success (0.00s)
+    --- PASS: TestAuthServiceSuite/TestUpdatePassword_Success (0.00s)
+    --- PASS: TestAuthServiceSuite/TestLogout_Success (0.00s)
+    --- PASS: TestAuthServiceSuite/TestUpdatePassword_GetPasswordError (0.00s)
+    --- PASS: TestAuthServiceSuite/TestLogin_Success (0.00s)
+    --- PASS: TestAuthServiceSuite/TestLogin_InvalidPassword (0.00s)
+    --- FAIL: TestAuthServiceSuite/TestLogin_GetPasswordError (0.00s)
+    --- PASS: TestAuthServiceSuite/TestGetClaims_Success (0.00s)
+    --- PASS: TestAuthServiceSuite/TestGetClaims_ParseError (0.00s)
+    --- PASS: TestAuthServiceSuite/TestUpdatePassword_InvalidOldPassword (0.00s)
