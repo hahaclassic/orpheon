@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	userproto "github.com/hahaclassic/orpheon/api/user-msv/v1/proto"
 	"github.com/hahaclassic/orpheon/pkg/http/router"
 	"github.com/hahaclassic/orpheon/pkg/infrastructure/postgres"
 	"github.com/hahaclassic/orpheon/pkg/infrastructure/redis"
@@ -17,11 +18,14 @@ import (
 	http_ctrl "github.com/hahaclassic/orpheon/services/auth-msv/internal/controller/http"
 	"github.com/hahaclassic/orpheon/services/auth-msv/internal/domain/service"
 	"github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/http/cookie"
+	"github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/http/middleware"
 	bcrypt_hasher "github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/password-hasher/bcrypt-hasher"
 	jwttokens "github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/tokens/jwt"
 	grpc_user_creator "github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/user-creator/grpc"
 	creds_postgres "github.com/hahaclassic/orpheon/services/auth-msv/internal/repository/credentials/postgres"
 	refresh_redis "github.com/hahaclassic/orpheon/services/auth-msv/internal/repository/refresh-token/redis"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func Run(cfg *config.Config) {
@@ -51,7 +55,7 @@ func Run(cfg *config.Config) {
 	refreshTokenRepo := refresh_redis.NewRefreshTokenRepository(redisClient, &cfg.RefreshToken)
 
 	userCreatorAddress := net.JoinHostPort(cfg.UserCreatorService.Host, cfg.UserCreatorService.Port)
-	userCreatorGRPCClient, err := http.NewClient(userCreatorAddress,
+	userCreatorGRPCClient, err := grpc.NewClient(userCreatorAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
@@ -61,7 +65,7 @@ func Run(cfg *config.Config) {
 
 	authService := service.NewAuthService(credentialsRepo,
 		refreshTokenRepo, userCreatorService, passwordHasher, jwtTokenService)
-	authCtrl := http_ctrl.NewAuthController(authService, cookieTokensSetter, nil)
+	authCtrl := http_ctrl.NewAuthController(authService, cookieTokensSetter, middleware.ClaimsRequired())
 
 	ginRouter := router.SetupRouter("/api/v1",
 		[]router.RoutersRegistrator{

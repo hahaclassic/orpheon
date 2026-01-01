@@ -36,11 +36,12 @@ func (ac *AuthController) RegisterRoutes(router *gin.RouterGroup) {
 	authGroup.POST("/refresh", ac.refresh)
 	authGroup.POST("/logout", ac.logout)
 
-	passwordGroup := authGroup.Group("/password") //.Use(ac.authMiddleware)
+	passwordGroup := authGroup.Group("/password").Use(ac.authMiddleware)
 	passwordGroup.POST("/update", ac.updatePassword)
 }
 
 func (ac *AuthController) register(c *gin.Context) {
+	slog.Info("register handler")
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})

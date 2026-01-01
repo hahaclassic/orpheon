@@ -49,7 +49,7 @@ type UserCreatorClientCofig struct {
 
 func (cfg *UserCreatorClientCofig) Load() {
 	cfg.Host = config.GetEnv("USER_CREATOR_HOST", "localhost")
-	cfg.Port = config.GetEnv("USER_CREATOR_PORT", "8081")
+	cfg.Port = config.GetEnv("USER_CREATOR_PORT", "50051")
 	cfg.URL = config.GetEnv("USER_CREATOR_URL", "/users")
 }
 

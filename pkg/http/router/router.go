@@ -16,9 +16,9 @@ func SetupRouter(basePath string, controllers []RoutersRegistrator, middlewares 
 		router.Use(middleware)
 	}
 
-	v1 := router.Group(basePath)
+	baseGroup := router.Group(basePath)
 	for _, controller := range controllers {
-		controller.RegisterRoutes(v1)
+		controller.RegisterRoutes(baseGroup)
 	}
 
 	return router
