@@ -5,16 +5,20 @@ import (
 	"log"
 	"log/slog"
 	"net"
+	"net/http"
 	"os/signal"
 	"syscall"
+	"time"
 
-	authproto "github.com/hahaclassic/orpheon/api/auth-msv/v1/proto"
 	userproto "github.com/hahaclassic/orpheon/api/user-msv/v1/proto"
+	"github.com/hahaclassic/orpheon/pkg/http/router"
 	"github.com/hahaclassic/orpheon/pkg/infrastructure/postgres"
 	"github.com/hahaclassic/orpheon/pkg/infrastructure/redis"
 	"github.com/hahaclassic/orpheon/services/auth-msv/config"
-	grpc_ctrl "github.com/hahaclassic/orpheon/services/auth-msv/internal/controller/grpc"
+	http_ctrl "github.com/hahaclassic/orpheon/services/auth-msv/internal/controller/http"
 	"github.com/hahaclassic/orpheon/services/auth-msv/internal/domain/service"
+	"github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/http/cookie"
+	"github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/http/middleware"
 	bcrypt_hasher "github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/password-hasher/bcrypt-hasher"
 	jwttokens "github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/tokens/jwt"
 	grpc_user_creator "github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/user-creator/grpc"
@@ -45,6 +49,7 @@ func Run(cfg *config.Config) {
 
 	passwordHasher := bcrypt_hasher.New(cfg.PasswordHasher.Cost)
 	jwtTokenService := jwttokens.New(cfg.AccessToken)
+	cookieTokensSetter := cookie.NewCookieTokensSetter(&cfg.Cookie)
 
 	credentialsRepo := creds_postgres.NewCredentialsRepository(pool)
 	refreshTokenRepo := refresh_redis.NewRefreshTokenRepository(redisClient, &cfg.RefreshToken)
@@ -60,29 +65,34 @@ func Run(cfg *config.Config) {
 
 	authService := service.NewAuthService(credentialsRepo,
 		refreshTokenRepo, userCreatorService, passwordHasher, jwtTokenService)
-	ctrl := grpc_ctrl.NewAuthController(authService)
+	authCtrl := http_ctrl.NewAuthController(authService, cookieTokensSetter, middleware.ClaimsRequired())
 
-	address := net.JoinHostPort(cfg.GRPCServer.Host, cfg.GRPCServer.Port)
-	listen, err := net.Listen("tcp", address)
-	if err != nil {
-		slog.Error("[AUTH-MSV]: failed to listen: ", "err", err)
+	ginRouter := router.SetupRouter("/api/v1",
+		[]router.RoutersRegistrator{
+			authCtrl,
+		}, nil)
 
-		return
+	srv := &http.Server{
+		Addr:    net.JoinHostPort(cfg.Server.Host, cfg.Server.Port),
+		Handler: ginRouter,
 	}
 
-	server := grpc.NewServer()
-	authproto.RegisterAuthServiceServer(server, ctrl)
-
 	go func() {
-		slog.Info("[AUTH-MSV]: start listening at", "addr", listen.Addr())
+		slog.Info("[AUTH-MSV]: start listening at", "addr", srv.Addr)
 
-		err := server.Serve(listen)
-		if err != nil {
+		if err := srv.ListenAndServe(); err != nil {
 			slog.Error("[AUTH-MSV]: failed to serve", "err", err)
 		}
 	}()
 
 	<-ctx.Done()
-	server.GracefulStop()
-	slog.Info("[AUTH-MSV]: the server has shut down.")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Error("[AUTH-MSV]: server forced to shutdown", "err", err)
+	} else {
+		slog.Info("[AUTH-MSV]: server exited properly")
+	}
 }

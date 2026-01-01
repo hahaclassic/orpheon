@@ -11,18 +11,19 @@ import (
 type Config struct {
 	Postgres           PostgresConfig
 	Redis              RedisConfig
-	GRPCServer         GRPCServerConfig
-	UserCreatorService GRPCUserCreatorClientCofig
+	Server             ServerConfig
+	UserCreatorService UserCreatorClientCofig
 	PasswordHasher     PasswordHasherConfig
 	AccessToken        AccessTokenConfig
 	RefreshToken       RefreshTokenConfig
+	Cookie             CookieConfig
 }
 
 func (cfg *Config) Loaders() []config.InternalConfigLoader {
 	return []config.InternalConfigLoader{
 		&cfg.Postgres,
 		&cfg.Redis,
-		&cfg.GRPCServer,
+		&cfg.Server,
 		&cfg.UserCreatorService,
 		&cfg.PasswordHasher,
 		&cfg.AccessToken,
@@ -30,24 +31,26 @@ func (cfg *Config) Loaders() []config.InternalConfigLoader {
 	}
 }
 
-type GRPCServerConfig struct {
-	Host string `env:"GRPC_HOST" env-required:"true"`
-	Port string `env:"GRPC_PORT" env-required:"true"`
+type ServerConfig struct {
+	Host string `env:"HOST" env-required:"true"`
+	Port string `env:"PORT" env-required:"true"`
 }
 
-func (cfg *GRPCServerConfig) Load() {
-	cfg.Host = config.GetEnv("GRPC_HOST", "auth")
-	cfg.Port = config.GetEnv("GRPC_PORT", "50051")
+func (cfg *ServerConfig) Load() {
+	cfg.Host = config.GetEnv("HOST", "localhost")
+	cfg.Port = config.GetEnv("PORT", "8080")
 }
 
-type GRPCUserCreatorClientCofig struct {
-	Host string `env:"USER_CREATOR_GRPC_HOST" env-required:"true"`
-	Port string `env:"USER_CREATOR_GRPC_PORT" env-required:"true"`
+type UserCreatorClientCofig struct {
+	Host string `env:"USER_CREATOR_HOST" env-required:"true"`
+	Port string `env:"USER_CREATOR_PORT" env-required:"true"`
+	URL  string `env:"USER_CREATOR_URL" env-required:"true"`
 }
 
-func (cfg *GRPCUserCreatorClientCofig) Load() {
-	cfg.Host = config.GetEnv("USER_CREATOR_GRPC_HOST", "user")
-	cfg.Port = config.GetEnv("USER_CREATOR_GRPC_PORT", "50051")
+func (cfg *UserCreatorClientCofig) Load() {
+	cfg.Host = config.GetEnv("USER_CREATOR_HOST", "localhost")
+	cfg.Port = config.GetEnv("USER_CREATOR_PORT", "50051")
+	cfg.URL = config.GetEnv("USER_CREATOR_URL", "/users")
 }
 
 type PasswordHasherConfig struct {
@@ -98,4 +101,22 @@ func (cfg *RedisConfig) Load() {
 	cfg.Addr = config.GetEnv("REDIS_ADDR", "localhost:6379")
 	cfg.Password = config.GetEnv("REDIS_PASSWORD", "")
 	cfg.DB = config.GetEnvAsInt("REDIS_DB", 0)
+}
+
+type CookieConfig struct {
+	Domain     string        `env:"COOKIE_DOMAIN"`
+	Path       string        `env:"COOKIE_PATH"`
+	Secure     bool          `env:"COOKIE_SECURE"`
+	HttpOnly   bool          `env:"COOKIE_HTTP_ONLY"`
+	RefreshTTL time.Duration `env:"COOKIE_REFRESH_TTL"`
+	AccessTTL  time.Duration `env:"COOKIE_ACCESS_TTL"`
+}
+
+func (cfg *CookieConfig) Load() {
+	cfg.Domain = config.GetEnv("COOKIE_DOMAIN", "")
+	cfg.Path = config.GetEnv("COOKIE_PATH", "/")
+	cfg.Secure = config.GetEnvAsBool("COOKIE_SECURE", false)
+	cfg.HttpOnly = config.GetEnvAsBool("COOKIE_HTTP_ONLY", true)
+	cfg.RefreshTTL = config.GetEnvAsDuration("COOKIE_REFRESH_TTL", 725*time.Hour)
+	cfg.AccessTTL = config.GetEnvAsDuration("COOKIE_ACCESS_TTL", 16*time.Minute)
 }

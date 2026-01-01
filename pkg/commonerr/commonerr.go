@@ -3,6 +3,7 @@ package commonerr
 import "errors"
 
 var (
-	ErrNotFound  = errors.New("not found error")
-	ErrForbidden = errors.New("permission denied error")
+	ErrNotFound     = errors.New("not found error")
+	ErrForbidden    = errors.New("permission denied error")
+	ErrUnauthorized = errors.New("unauthorized")
 )
