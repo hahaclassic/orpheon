@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/hahaclassic/orpheon/services/auth-msv/internal/domain/entity"
+	"github.com/hahaclassic/orpheon/services/user-msv/internal/domain/entity"
 )
 
 const (

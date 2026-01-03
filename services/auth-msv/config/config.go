@@ -28,6 +28,7 @@ func (cfg *Config) Loaders() []config.InternalConfigLoader {
 		&cfg.PasswordHasher,
 		&cfg.AccessToken,
 		&cfg.RefreshToken,
+		&cfg.Cookie,
 	}
 }
 
