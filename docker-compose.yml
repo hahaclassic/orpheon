@@ -1,53 +1,80 @@
 services:
-  gateway-msv:
-    build:
-      context: ./services/gateway-msv
-      dockerfile: Dockerfile
-    container_name: orpheon-gateway-msv
-    env_file:
-      - .gateway.env
+  nginx:
+    image: nginx:1.25
     ports:
-      - "8080:8080"
+      - "80:80"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./infra/nginx/conf.d:/etc/nginx/conf.d
     depends_on:
-      - postgres
-      - user-msv
       - auth-msv
+      - user-msv
+    networks:
+      - backend
 
   auth-msv:
     build:
       context: ./services/auth-msv
       dockerfile: Dockerfile
-    container_name: orpheon-auth-msv
+    # container_name: orpheon-auth-msv
+    deploy:
+      replicas: 3
     env_file:
       - .auth.env
-    ports:
-      - "50052:50051"
+    expose:
+      - "8080"
     depends_on:
       - postgres
       - user-msv
       - redis
+    networks:
+      - backend
 
   user-msv:
     build:
       context: ./services/user-msv
       dockerfile: Dockerfile
-    container_name: orpheon-user-msv
+    # container_name: orpheon-user-msv
+    deploy:
+      replicas: 3
     env_file:
       - .user.env
-    ports:
-      - "50051:50051"
+    expose:
+      - "8080"
+      - "50051"
     depends_on:
       - postgres
+    networks:
+      - backend
 
   postgres:
     image: postgres:17
     container_name: orpheon-postgres
     env_file:
-      - .env
+      - .db.env
+    expose:
+      - "5432"
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  redis:
+    image: redis:7
+    container_name: orpheon-redis
+    env_file:
+      - .env
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    command: redis-server --save "" --appendonly no --loglevel warning
+
+    # command: redis-server --save 60 1 --loglevel warning
 
   # minio:
   #   image: minio/minio:latest
@@ -61,20 +88,11 @@ services:
   #   volumes:
   #     - minio_data:/data
 
-  redis:
-    image: redis:7
-    container_name: orpheon-redis
-    env_file:
-      - .env
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --save "" --appendonly no --loglevel warning
-
-    # command: redis-server --save 60 1 --loglevel warning
-
 volumes:
   postgres_data:
   minio_data:
   redis_data:
+
+networks:
+  backend:
+    driver: bridge
