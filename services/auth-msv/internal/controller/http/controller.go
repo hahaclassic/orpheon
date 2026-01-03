@@ -12,6 +12,13 @@ import (
 	"github.com/hahaclassic/orpheon/services/auth-msv/internal/providers/http/ctxclaims"
 )
 
+const (
+	headerUserID    = "X-User-Id"
+	headerAccessLvl = "X-Access-Level"
+
+	cookieAccessToken = "access_token"
+)
+
 type AuthController struct {
 	service            usecase.AuthService
 	cookieTokensSetter *cookie.CookieTokensSetter
@@ -35,6 +42,7 @@ func (ac *AuthController) RegisterRoutes(router *gin.RouterGroup) {
 	authGroup.POST("/login", ac.login)
 	authGroup.POST("/refresh", ac.refresh)
 	authGroup.POST("/logout", ac.logout)
+	authGroup.GET("/claims", ac.getClaims)
 
 	passwordGroup := authGroup.Group("/password").Use(ac.authMiddleware)
 	passwordGroup.POST("/update", ac.updatePassword)
@@ -121,20 +129,53 @@ func (ac *AuthController) logout(c *gin.Context) {
 func (ac *AuthController) updatePassword(c *gin.Context) {
 	claims := ctxclaims.GetClaims(c)
 	if claims == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
 	var passwords entity.UserPasswords
 	if err := c.ShouldBindJSON(&passwords); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
 	if err := ac.service.UpdatePassword(c.Request.Context(), claims.UserID, &passwords); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	c.Status(http.StatusOK)
+}
+
+func (ac *AuthController) getClaims(c *gin.Context) {
+	var (
+		err    error
+		claims *entity.Claims
+	)
+
+	defer func() {
+		if err != nil {
+			slog.Error("[AUTH-MSV]: getClaims failed", "err", err)
+		} else if claims != nil {
+			slog.Info("[AUTH-MSV]: parsed claims",
+				"user_id", claims.UserID, "access_lvl", claims.AccessLvl)
+		}
+	}()
+
+	token, err := c.Cookie(cookieAccessToken)
+	if err != nil || token == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	claims, err = ac.service.GetClaims(c.Request.Context(), token)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized,
+			gin.H{"error": "user authentication failed"})
+		return
+	}
+
+	c.Header(headerUserID, claims.UserID.String())
+	c.Header(headerAccessLvl, claims.AccessLvl.String())
 	c.Status(http.StatusOK)
 }

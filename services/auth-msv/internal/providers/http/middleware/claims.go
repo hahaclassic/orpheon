@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -11,8 +12,8 @@ import (
 )
 
 const (
-	HeaderUserID    = "X-User-Id"
-	HeaderAccessLvl = "X-Access-Level"
+	headerUserID    = "X-User-Id"
+	headerAccessLvl = "X-Access-Level"
 )
 
 var (
@@ -23,32 +24,38 @@ var (
 
 func ClaimsRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDStr := c.GetHeader(HeaderUserID)
-		lvlStr := c.GetHeader(HeaderAccessLvl)
+		userIDStr := c.GetHeader(headerUserID)
+		lvlStr := c.GetHeader(headerAccessLvl)
+
+		slog.Info(
+			"[USER-MSV] Middleware ClaimsRequired headers:",
+			"X-User-Id", userIDStr,
+			"X-Access-Level", lvlStr,
+		)
 
 		if userIDStr == "" || lvlStr == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, ErrNoData)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, ErrNoData.Error())
 			return
 		}
 
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, ErrInvalidUserID)
+			c.AbortWithStatusJSON(http.StatusBadRequest, ErrInvalidUserID.Error())
 		}
 
 		lvlInt, err := strconv.Atoi(lvlStr)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusBadRequest, ErrInvalidAccessLvl)
+			c.AbortWithStatusJSON(http.StatusBadRequest, ErrInvalidAccessLvl.Error())
 			return
 		}
 
 		lvl := entity.AccessLevel(lvlInt)
 		if !lvl.IsValid() {
-			c.AbortWithStatusJSON(http.StatusBadRequest, ErrInvalidAccessLvl)
+			c.AbortWithStatusJSON(http.StatusBadRequest, ErrInvalidAccessLvl.Error())
 			return
 		}
 
-		claims := entity.Claims{
+		claims := &entity.Claims{
 			UserID:    userID,
 			AccessLvl: lvl,
 		}
@@ -60,8 +67,8 @@ func ClaimsRequired() gin.HandlerFunc {
 
 func ClaimsOptional() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDStr := c.GetHeader("X-User-Id")
-		lvlStr := c.GetHeader("X-Access-Level")
+		userIDStr := c.GetHeader(headerUserID)
+		lvlStr := c.GetHeader(headerAccessLvl)
 
 		if userIDStr == "" || lvlStr == "" {
 			c.Next()
@@ -82,7 +89,7 @@ func ClaimsOptional() gin.HandlerFunc {
 			c.Next()
 		}
 
-		claims := entity.Claims{
+		claims := &entity.Claims{
 			UserID:    userID,
 			AccessLvl: lvl,
 		}

@@ -6,7 +6,7 @@ COPY . .
 
 RUN go mod tidy
 
-RUN go build -o ./auth-msv.exe ./cmd/auth-msv/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./auth-msv.exe ./cmd/auth-msv/main.go
 
 FROM alpine:latest AS runner
 WORKDIR /
