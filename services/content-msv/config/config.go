@@ -32,13 +32,15 @@ func (cfg *Config) Loaders() []config.InternalConfigLoader {
 }
 
 type ServerConfig struct {
-	Host string `env:"HOST" env-required:"true"`
-	Port string `env:"PORT" env-required:"true"`
+	Host     string `env:"HOST" env-required:"true"`
+	Port     string `env:"PORT" env-required:"true"`
+	ReadOnly bool   `env:"READ_ONLY" env-required:"true"`
 }
 
 func (cfg *ServerConfig) Load() {
 	cfg.Host = config.GetEnv("HOST", "localhost")
 	cfg.Port = config.GetEnv("PORT", "8080")
+	cfg.ReadOnly = config.GetEnvAsBool("READ_ONLY", false)
 }
 
 type UserInfoClientCofig struct {

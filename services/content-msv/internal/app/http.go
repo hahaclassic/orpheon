@@ -96,6 +96,7 @@ func InitServerHTTP(cfg *config.Config, s *Services) *http.Server {
 			trackRouter,
 		},
 		[]gin.HandlerFunc{
+			middleware.ReadOnly(cfg.Server.ReadOnly),
 			// loggerMiddleware,
 			// middleware.CORSMiddleware(),
 		})

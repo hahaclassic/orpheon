@@ -32,13 +32,15 @@ func (cfg *GRPCServerConfig) Load() {
 }
 
 type HTTPServerConfig struct {
-	Host string `env:"HTTP_HOST" env-required:"true"`
-	Port string `env:"HTTP_PORT" env-required:"true"`
+	Host     string `env:"HTTP_HOST" env-required:"true"`
+	Port     string `env:"HTTP_PORT" env-required:"true"`
+	ReadOnly bool   `env:"READ_ONLY" env-required:"true"`
 }
 
 func (cfg *HTTPServerConfig) Load() {
 	cfg.Host = config.GetEnv("HTTP_HOST", "localhost")
 	cfg.Port = config.GetEnv("HTTP_PORT", "8081")
+	cfg.ReadOnly = config.GetEnvAsBool("READ_ONLY", false)
 }
 
 type PostgresConfig postgres.PostgresConfig

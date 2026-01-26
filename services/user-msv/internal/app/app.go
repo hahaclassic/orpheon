@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/hahaclassic/orpheon/api/user-msv/v1/proto"
 	"github.com/hahaclassic/orpheon/pkg/http/router"
 	"github.com/hahaclassic/orpheon/pkg/infrastructure/postgres"
@@ -37,7 +38,10 @@ func Run(cfg *config.Config) {
 	ginRouter := router.SetupRouter("/api/v1",
 		[]router.RoutersRegistrator{
 			externalCtrl,
-		}, nil)
+		},
+		[]gin.HandlerFunc{
+			middleware.ReadOnly(cfg.HTTP.ReadOnly),
+		})
 
 	srv := &http.Server{
 		Addr:    net.JoinHostPort(cfg.HTTP.Host, cfg.HTTP.Port),
