@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Server Status</title>
+    <link rel="stylesheet" href="./css/main.css">
+    <style>
+        /* Дополнительно для статус страницы */
+        .status-container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .metric-card {
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+
+        .metric-card span.value {
+            font-weight: bold;
+            color: #4fc3f7;
+        }
+
+        .chart-container {
+            margin-top: 40px;
+        }
+
+        canvas {
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .last-updated {
+            font-size: 0.9rem;
+            color: #888;
+            text-align: right;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container status-container">
+    <h1>Server Status</h1>
+
+    <div class="metric-card">
+        <span>Active Connections:</span>
+        <span class="value" id="active">0</span>
+    </div>
+
+    <div class="metric-card">
+        <span>Total Accepted Connections:</span>
+        <span class="value" id="accepted">0</span>
+    </div>
+
+    <div class="metric-card">
+        <span>Total Handled Connections:</span>
+        <span class="value" id="handled">0</span>
+    </div>
+
+    <div class="metric-card">
+        <span>Total Requests:</span>
+        <span class="value" id="requests">0</span>
+    </div>
+
+    <div class="last-updated" id="lastUpdated">Last updated: never</div>
+</div>
+
+<script>
+async function fetchStatus() {
+    try {
+        const response = await fetch('/status');
+        if (!response.ok) throw new Error('Unable to fetch status');
+        const text = await response.text();
+
+        // Пример stub_status:
+        // Active connections: 291
+        // server accepts handled requests
+        //  1042 1042 12345
+        const lines = text.trim().split('\n');
+
+        const activeMatch = lines[0].match(/Active connections:\s+(\d+)/);
+        if (activeMatch) document.getElementById('active').textContent = activeMatch[1];
+
+        const metrics = lines[2].trim().split(/\s+/);
+        if (metrics.length === 3) {
+            document.getElementById('accepted').textContent = metrics[0];
+            document.getElementById('handled').textContent = metrics[1];
+            document.getElementById('requests').textContent = metrics[2];
+        }
+
+        document.getElementById('lastUpdated').textContent =
+            'Last updated: ' + new Date().toLocaleTimeString();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+// Обновляем каждые 5 секунд
+fetchStatus();
+setInterval(fetchStatus, 5000);
+</script>
+</body>
+</html>
