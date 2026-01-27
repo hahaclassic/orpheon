@@ -1,0 +1,203 @@
+services:
+  auth-msv-mirror:
+    build:
+      context: ../services/auth-msv
+      dockerfile: Dockerfile
+    environment:
+      - READ_ONLY=false
+      - USER_CREATOR_HOST=user-msv-mirror
+    env_file:
+      - ../.config/.auth.env
+    expose:
+      - "8080"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      user-msv-mirror:
+        condition: service_started
+    networks:
+      - backend
+
+  auth-msv-ro-mirror:
+    build:
+      context: ../services/auth-msv
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 2
+    environment:
+      - READ_ONLY=true
+      - USER_CREATOR_HOST=user-msv-mirror
+    env_file:
+      - ../.config/.auth.env
+    expose:
+      - "8080"
+    depends_on:
+      postgres-replica:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      user-msv-mirror:
+        condition: service_started
+    networks:
+      - backend
+
+  # auth-msv-ro-mirror-2:
+  #   build:
+  #     context: ../services/auth-msv
+  #     dockerfile: Dockerfile
+  #   container_name: orpheon-auth-msv-ro-mirror-2
+  #   # deploy:
+  #   #   replicas: 2
+  #   environment:
+  #     - HOST=auth-msv-ro-mirror-2
+  #     - READ_ONLY=true
+  #     - USER_CREATOR_HOST=user-msv-mirror
+  #   env_file:
+  #     - ../.config/.auth.env
+  #   expose:
+  #     - "8080"
+  #   depends_on:
+  #     postgres-replica:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     user-msv-ro-mirror-2:
+  #       condition: service_started
+  #   networks:
+  #     - backend
+
+  user-msv-mirror:
+    build:
+      context: ../services/user-msv
+      dockerfile: Dockerfile
+    environment:
+      - HTTP_PORT=8080
+      - READ_ONLY=false
+    env_file:
+      - ../.config/.user.env
+    expose:
+      - "8080"
+      - "50051"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    networks:
+      - backend
+
+  user-msv-ro-mirror:
+    build:
+      context: ../services/user-msv
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 2
+    environment:
+      - HTTP_PORT=8080
+      - READ_ONLY=true
+    env_file:
+      - ../.config/.user.env
+    expose:
+      - "8080"
+      - "50051"
+    depends_on:
+      postgres-replica:
+        condition: service_healthy
+    networks:
+      - backend
+
+  # user-msv-ro2-mirror-2:
+  #   build:
+  #     context: ../services/user-msv
+  #     dockerfile: Dockerfile
+  #   # deploy:
+  #   #   replicas: 2
+  #   environment:
+  #     - READ_ONLY=true
+  #   env_file:
+  #     - ../.config/.user.env
+  #   expose:
+  #     - "8080"
+  #     - "50051"
+  #   depends_on:
+  #     postgres-replica:
+  #       condition: service_healthy
+  #   networks:
+  #     - backend
+
+  content-msv-mirror:
+    build:
+      context: ../services/content-msv
+      dockerfile: Dockerfile
+    environment:
+      - READ_ONLY=false
+      - USER_INFO_HOST=user-msv-mirror
+    env_file:
+      - ../.config/.content.env
+    expose:
+      - "8080"
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      user-msv-mirror:
+        condition: service_started
+    networks:
+      - backend
+
+  content-msv-ro-mirror:
+    build:
+      context: ../services/content-msv
+      dockerfile: Dockerfile
+    deploy:
+      replicas: 2
+    environment:
+      - READ_ONLY=true
+      - USER_INFO_HOST=user-msv-ro-mirror
+    env_file:
+      - ../.config/.content.env
+    expose:
+      - "8080"
+    depends_on:
+      postgres-replica:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      user-msv-ro-mirror:
+        condition: service_started
+
+    networks:
+      - backend
+
+  # content-msv-ro2-mirror:
+  #   build:
+  #     context: ../services/content-msv
+  #     dockerfile: Dockerfile
+  #   # deploy:
+  #   #   replicas: 2
+  #   environment:
+  #     - HOST=content-msv-ro2-mirror
+  #     - READ_ONLY=true
+  #     - USER_INFO_HOST=user-msv-ro2-mirror
+  #   env_file:
+  #     - ../.config/.content.env
+  #   expose:
+  #     - "8080"
+  #   depends_on:
+  #     postgres-replica:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_started
+  #     user-msv-ro2-mirror:
+  #       condition: service_started
+
+  #   networks:
+  #     - backend
+      
