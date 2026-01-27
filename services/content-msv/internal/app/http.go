@@ -81,7 +81,7 @@ func InitServerHTTP(cfg *config.Config, s *Services) *http.Server {
 
 	playlistRouter := playlist_router.NewPlaylistRouter(
 		playlistMetaController, playlistTrackController,
-		playlistCoverController, playlistFavoriteController, claimsRequired)
+		playlistCoverController, playlistFavoriteController, claimsOptional)
 
 	// Initialize router
 	router := router.SetupRouter(apiBasePath,

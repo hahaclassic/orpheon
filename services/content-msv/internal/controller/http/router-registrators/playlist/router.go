@@ -81,7 +81,11 @@ func (r *PlaylistRouter) RegisterRoutes(router *gin.RouterGroup) {
 		tracksGroup.PATCH("/:track_id/position", r.playlistTrackController.ChangeTrackPosition)
 	}
 
-	router.GET("/favorites", r.playlistFavoritesController.GetFavoritePlaylists)
-	router.POST("/favorites/:playlist_id", r.playlistFavoritesController.AddToFavorites)
-	router.DELETE("/favorites/:playlist_id", r.playlistFavoritesController.RemoveFromFavorites)
+	favoritesGroup := router.Group("/favorites")
+	favoritesGroup.Use(r.authMiddleware)
+	{
+		favoritesGroup.GET("", r.playlistFavoritesController.GetFavoritePlaylists)
+		favoritesGroup.POST("/:playlist_id", r.playlistFavoritesController.AddToFavorites)
+		favoritesGroup.DELETE("/:playlist_id", r.playlistFavoritesController.RemoveFromFavorites)
+	}
 }

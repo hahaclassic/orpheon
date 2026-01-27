@@ -25,9 +25,14 @@ type Config struct {
 
 func (cfg *Config) Loaders() []config.InternalConfigLoader {
 	return []config.InternalConfigLoader{
+		&cfg.Server,
+		&cfg.UserInfo,
 		&cfg.Postgres,
 		&cfg.Redis,
-		&cfg.Server,
+		&cfg.MinIO,
+		&cfg.MinIOBuckets,
+		&cfg.RedisAccessCache,
+		&cfg.LocalAccessCache,
 	}
 }
 
@@ -44,15 +49,15 @@ func (cfg *ServerConfig) Load() {
 }
 
 type UserInfoClientCofig struct {
-	Host string `env:"USER_CREATOR_HOST" env-required:"true"`
-	Port string `env:"USER_CREATOR_PORT" env-required:"true"`
-	URL  string `env:"USER_CREATOR_URL" env-required:"true"`
+	Host string `env:"USER_INFO_HOST" env-required:"true"`
+	Port string `env:"USER_INFO_PORT" env-required:"true"`
+	URL  string `env:"USER_INFO_URL" env-required:"true"`
 }
 
 func (cfg *UserInfoClientCofig) Load() {
-	cfg.Host = config.GetEnv("USER_CREATOR_HOST", "localhost")
-	cfg.Port = config.GetEnv("USER_CREATOR_PORT", "50051")
-	cfg.URL = config.GetEnv("USER_CREATOR_URL", "/users")
+	cfg.Host = config.GetEnv("USER_INFO_HOST", "localhost")
+	cfg.Port = config.GetEnv("USER_INFO_PORT", "50051")
+	cfg.URL = config.GetEnv("USER_INFO_URL", "/users")
 }
 
 type PostgresConfig postgres.PostgresConfig
