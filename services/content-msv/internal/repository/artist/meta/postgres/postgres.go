@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/hahaclassic/orpheon/pkg/commonerr"
 	"github.com/hahaclassic/orpheon/services/content-msv/internal/domain/entity"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -110,7 +111,7 @@ func (r *ArtistMetaRepository) Delete(ctx context.Context, id uuid.UUID) error {
 		return err
 	}
 	if cmdTag.RowsAffected() == 0 {
-		return errors.New("no rows deleted")
+		return commonerr.ErrNotFound
 	}
 	return nil
 }

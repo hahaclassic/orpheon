@@ -173,6 +173,8 @@ func (c *ArtistMetaController) DeleteArtist(ctx *gin.Context) {
 	if err != nil {
 		if errors.Is(err, commonerr.ErrForbidden) {
 			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		} else if errors.Is(err, commonerr.ErrNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "Not found"})
 		} else {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete artist"})
 		}
