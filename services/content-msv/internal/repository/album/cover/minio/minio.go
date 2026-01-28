@@ -8,6 +8,7 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/hahaclassic/orpheon/pkg/commonerr"
 	"github.com/hahaclassic/orpheon/services/content-msv/internal/domain/entity"
 	"github.com/minio/minio-go/v7"
 )
@@ -52,6 +53,10 @@ func (r *AlbumCoverRepository) GetCover(ctx context.Context, albumID uuid.UUID) 
 
 	obj, err := r.client.GetObject(ctx, r.bucketName, objectName, minio.GetObjectOptions{})
 	if err != nil {
+		errResponse := minio.ToErrorResponse(err)
+		if errResponse.Code == minio.NoSuchKey {
+			return nil, fmt.Errorf("cover not found for album %s: %w", albumID, commonerr.ErrNotFound)
+		}
 		return nil, fmt.Errorf("get cover object: %w", err)
 	}
 	defer func() {

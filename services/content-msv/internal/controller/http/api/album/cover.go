@@ -57,7 +57,11 @@ func (c *AlbumCoverController) GetCover(ctx *gin.Context) {
 
 	cover, err := c.service.GetCover(ctx.Request.Context(), albumID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, commonerr.ErrNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": commonerr.ErrNotFound.Error()})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 

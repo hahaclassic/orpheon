@@ -4,17 +4,19 @@ import (
 	"context"
 	"log/slog"
 
+	minio_client "github.com/hahaclassic/orpheon/pkg/infrastructure/minio"
 	"github.com/hahaclassic/orpheon/pkg/infrastructure/postgres"
 	redis_client "github.com/hahaclassic/orpheon/pkg/infrastructure/redis"
 	"github.com/hahaclassic/orpheon/services/content-msv/config"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 )
 
 type Infra struct {
 	postgres *pgxpool.Pool
 	redis    *redis.Client
-	//minIO    *minio.Client
+	minIO    *minio.Client
 }
 
 func (i *Infra) Init(ctx context.Context, cfg *config.Config) error {
@@ -28,13 +30,13 @@ func (i *Infra) Init(ctx context.Context, cfg *config.Config) error {
 	}
 	i.redis = redisClient
 
-	// minioClient, err := minio_client.NewMinioClient(minio_client.MinIOConfig(cfg.MinIO))
-	// if err != nil {
-	// 	closeErr := i.Close(ctx)
-	// 	slog.Error("[CONTENT-MSV] failed to close infra connection", "err", closeErr)
-	// 	return err
-	// }
-	// i.minIO = minioClient
+	minioClient, err := minio_client.NewMinioClient(minio_client.MinIOConfig(cfg.MinIO))
+	if err != nil {
+		closeErr := i.Close(ctx)
+		slog.Error("[CONTENT-MSV] failed to close infra connection", "err", closeErr)
+		return err
+	}
+	i.minIO = minioClient
 
 	return nil
 }

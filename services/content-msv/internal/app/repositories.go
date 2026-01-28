@@ -65,7 +65,7 @@ type Repositories struct {
 	search *search_postgres.SearchRepository
 }
 
-func InitRepositories(_ context.Context, cfg *config.Config, infra *Infra) (*Repositories, error) {
+func InitRepositories(ctx context.Context, cfg *config.Config, infra *Infra) (*Repositories, error) {
 	r := &Repositories{}
 
 	// Album
@@ -100,34 +100,34 @@ func InitRepositories(_ context.Context, cfg *config.Config, infra *Infra) (*Rep
 	r.playlistFavorite = favorites_postgres.NewPlaylistFavoriteRepository(infra.postgres)
 
 	// mocks
-	r.albumCover = &album_cover_minio.AlbumCoverRepository{}
-	r.artistAvatar = &avatar_minio.ArtistAvatarRepository{}
-	r.trackAudio = &audio_minio.AudioFileRepository{}
-	r.playlistCover = &playlist_cover_minio.PlaylistCoverRepository{}
-	// albumCoverRepo, err := album_cover_minio.NewAlbumCoverRepository(ctx, minioClient, conf.MinIOBuckets.BucketAlbum)
-	// if err != nil {
-	// 	slog.Error("failed to create album cover repository", "err", err)
-	// 	return
-	// }
-	// r.albumCover = albumCover
+	// r.albumCover = &album_cover_minio.AlbumCoverRepository{}
+	// r.artistAvatar = &avatar_minio.ArtistAvatarRepository{}
+	// r.trackAudio = &audio_minio.AudioFileRepository{}
+	// r.playlistCover = &playlist_cover_minio.PlaylistCoverRepository{}
 
-	// artistAvatarRepo, err := avatar_minio.NewArtistAvatarRepository(ctx, minioClient, conf.MinIOBuckets.BucketArtistAvatar)
-	// if err != nil {
-	// 	slog.Error("failed to create artist avatar repository", "err", err)
-	// 	return
-	// }
+	albumCoverRepo, err := album_cover_minio.NewAlbumCoverRepository(ctx, infra.minIO, cfg.MinIOBuckets.BucketAlbum)
+	if err != nil {
+		return nil, err
+	}
+	r.albumCover = albumCoverRepo
 
-	// audioRepo, err := audio_minio.NewAudioFileRepository(ctx, minioClient, conf.MinIOBuckets.BucketAudio)
-	// if err != nil {
-	// 	slog.Error("failed to create audio file repository", "err", err)
-	// 	return
-	// }
+	artistAvatarRepo, err := avatar_minio.NewArtistAvatarRepository(ctx, infra.minIO, cfg.MinIOBuckets.BucketArtistAvatar)
+	if err != nil {
+		return nil, err
+	}
+	r.artistAvatar = artistAvatarRepo
 
-	// playlistCoverRepo, err := playlist_cover_minio.NewPlaylistCoverRepository(ctx, minioClient, conf.MinIOBuckets.BucketPlaylist)
-	// if err != nil {
-	// 	slog.Error("failed to create playlist cover repository", "err", err)
-	// 	return
-	// }
+	audioRepo, err := audio_minio.NewAudioFileRepository(ctx, infra.minIO, cfg.MinIOBuckets.BucketAudio)
+	if err != nil {
+		return nil, err
+	}
+	r.trackAudio = audioRepo
+
+	playlistCoverRepo, err := playlist_cover_minio.NewPlaylistCoverRepository(ctx, infra.minIO, cfg.MinIOBuckets.BucketPlaylist)
+	if err != nil {
+		return nil, err
+	}
+	r.playlistCover = playlistCoverRepo
 
 	playlistAccessPostgres := access_meta_postgres.NewPlaylistAccessRepository(infra.postgres)
 	accessCacheLocal, err := access_cache_local.NewAccessCache(cfg.LocalAccessCache.Size)

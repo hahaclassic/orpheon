@@ -19,6 +19,7 @@ import (
 	playlist_tracks "github.com/hahaclassic/orpheon/services/content-msv/internal/domain/service/playlist/tracks"
 	"github.com/hahaclassic/orpheon/services/content-msv/internal/domain/service/search"
 	"github.com/hahaclassic/orpheon/services/content-msv/internal/domain/service/track"
+	audioconverter "github.com/hahaclassic/orpheon/services/content-msv/internal/providers/audio-converter"
 	grpc_user_info "github.com/hahaclassic/orpheon/services/content-msv/internal/providers/user-info/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -74,17 +75,17 @@ type Services struct {
 func InitServices(cfg *config.Config, repos *Repositories) (*Services, error) {
 	s := &Services{
 		// Album
-		albumMeta: album.NewAlbumMetaService(repos.albumMeta),
-		//albumCover: album.NewAlbumCoverService(repos.albumCover),
+		albumMeta:  album.NewAlbumMetaService(repos.albumMeta),
+		albumCover: album.NewAlbumCoverService(repos.albumCover),
 		albumTrack: album.NewAlbumTrackService(repos.albumTrack),
 
 		// Artist
-		artistMeta: artist.NewArtistMetaService(repos.artistMeta),
-		//artistAvatar: artist.NewArtistCoverService(repos.artistAvatar),
+		artistMeta:   artist.NewArtistMetaService(repos.artistMeta),
+		artistAvatar: artist.NewArtistCoverService(repos.artistAvatar),
 		artistAssign: artist.NewArtistAssignService(repos.artistAssign),
 
 		// Track
-		//trackAudio:   track.NewAudioFileService(repos.trackAudio, audioconverter.New()),
+		trackAudio:   track.NewAudioFileService(repos.trackAudio, audioconverter.New()),
 		trackSegment: track.NewTrackSegmentService(repos.trackSegment),
 		trackStat:    track.NewListeningStatService(repos.trackMeta, repos.trackSegment),
 
@@ -127,13 +128,13 @@ func (s *Services) initUserInfo(cfg *config.Config) error {
 	return nil
 }
 
-func (s *Services) initPlaylist(cfg *config.Config, repos *Repositories) {
+func (s *Services) initPlaylist(_ *config.Config, repos *Repositories) {
 	s.playlistPolicy = playlist_policy.New(repos.playlistAccessWithCache)
 	s.playlistPrivacy = playlist_privacy.NewPlaylistPrivacyChanger(
 		s.playlistPolicy, s.playlistFavorites, repos.playlistAccessWithCache)
 	s.playlistMeta = playlist_meta.NewPlaylistMetaService(repos.playlistMeta,
 		s.playlistPolicy, repos.playlistAccessWithCache)
-	//s.playlistCover = playlist_cover.New(repos.playlistCover, s.playlistPolicy)
+	s.playlistCover = playlist_cover.New(repos.playlistCover, s.playlistPolicy)
 
 	s.playlistTracks = playlist_tracks.NewPlaylistTrackService(repos.playlistTracks,
 		s.playlistPolicy)
