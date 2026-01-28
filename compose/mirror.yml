@@ -19,6 +19,9 @@ services:
         condition: service_started
     networks:
       - backend
+    restart: unless-stopped
+    labels:
+      - "logging=promtail"
 
   auth-msv-ro-mirror:
     build:
@@ -42,6 +45,9 @@ services:
         condition: service_started
     networks:
       - backend
+    restart: unless-stopped
+    labels:
+      - "logging=promtail"
 
   # auth-msv-ro-mirror-2:
   #   build:
@@ -85,6 +91,9 @@ services:
         condition: service_healthy
     networks:
       - backend
+    restart: unless-stopped
+    labels:
+      - "logging=promtail"
 
   user-msv-ro-mirror:
     build:
@@ -105,6 +114,9 @@ services:
         condition: service_healthy
     networks:
       - backend
+    restart: unless-stopped
+    labels:
+      - "logging=promtail"
 
   # user-msv-ro2-mirror-2:
   #   build:
@@ -147,6 +159,9 @@ services:
         condition: service_started
     networks:
       - backend
+    restart: unless-stopped
+    labels:
+      - "logging=promtail"
 
   content-msv-ro-mirror:
     build:
@@ -170,9 +185,11 @@ services:
         condition: service_started
       user-msv-ro-mirror:
         condition: service_started
-
     networks:
       - backend
+    restart: unless-stopped
+    labels:
+      - "logging=promtail"
 
   # content-msv-ro2-mirror:
   #   build:

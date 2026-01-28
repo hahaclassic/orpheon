@@ -2,14 +2,14 @@ services:
   postgres-primary:
     image: bitnami/postgresql:latest
     env_file:
-      ../.config/.pg.primary.env
+      - ../.config/.pg.primary.env
     expose:
       - "5432"
     ports:
       - "5432:5432"
     volumes:
       - postgres_primary_data:/bitnami/postgresql
-      - ../db/scripts/primary:/docker-entrypoint-initdb.d
+      - ../db/scripts:/docker-entrypoint-initdb.d
     networks:
       - backend
     healthcheck:
@@ -24,7 +24,7 @@ services:
       postgres-primary:
         condition: service_healthy
     env_file:
-      ../.config/.pg.replica.env
+      - ../.config/.pg.replica.env
     volumes:
       - postgres_replica_data:/bitnami/postgresql
       # - ../db/scripts/replica:/docker-entrypoint-initdb.d
@@ -66,3 +66,5 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
+    networks:
+      - backend

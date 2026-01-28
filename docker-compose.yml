@@ -3,6 +3,7 @@ include:
   - compose/mirror.yml
   - compose/databases.yml
   - compose/devtools.yml
+  - compose/frontend.yml
 
 volumes:
   postgres_primary_data:
@@ -12,6 +13,8 @@ volumes:
 
   loki_data:
   grafana_data:
+
+  legacy_frontend_dist:
 
 networks:
   backend:

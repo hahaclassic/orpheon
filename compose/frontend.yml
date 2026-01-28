@@ -1,0 +1,8 @@
+services:
+  legacy-frontend:
+    build:
+      context: ../legacy/frontend/web
+      dockerfile: Dockerfile.frontend
+    volumes:
+      - legacy_frontend_dist:/dist
+    command: ["sh", "-c", "cp -r /app/dist/* /dist"]
