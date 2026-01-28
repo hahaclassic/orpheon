@@ -93,9 +93,9 @@ export const Profile = () => {
       try {
         setLoading(true);
         const [userData, myPlaylistsData, favoritePlaylistsData] = await Promise.all([
-          apiService.get('/me'),
-          apiService.get('/me/playlists'),
-          apiService.get('/me/favorites'),
+          apiService.get('/users/me'),
+          apiService.get('/playlists?user_id=me'),
+          apiService.get('/favorites'),
         ]);
 
         // Загрузка обложек для плейлистов

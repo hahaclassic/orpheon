@@ -1,0 +1,68 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0     
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://orpheon-loki:3100/loki/api/v1/push
+    batchsize: 10240          # уменьшить размер батча
+    batchwait: 5s             # увеличить время ожидания перед отправкой
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["logging=promtail"]
+
+    relabel_configs:
+      # only logging=promtail
+      # - source_labels: [__meta_docker_container_label_logging]
+      #   regex: 'promtail'
+      #   action: keep
+
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+      - source_labels: [__meta_docker_container_id]
+        target_label: container_id
+      - source_labels: [__meta_docker_container_log_path]
+        target_label: __path__
+
+      # instance = container_name
+      - source_labels: [__meta_docker_container_name]
+        regex: "/(.*)"
+        target_label: instance
+
+      # job: auth-msv, user-msv, content-msv
+      - target_label: job
+        replacement: default
+        action: replace
+
+      - source_labels: [instance]
+        regex: '^orpheon-(auth-msv|user-msv|content-msv).*'
+        target_label: job
+        action: replace
+
+      # type: mirror/main
+      - target_label: logging_type
+        replacement: main
+        action: replace
+
+      - source_labels: [__meta_docker_container_name]
+        regex: '.*mirror.*'
+        target_label: logging_type
+        replacement: mirror
+        action: replace
+
+  - job_name: nginx
+    static_configs:
+      - targets: ['localhost']
+        labels:
+          job: nginx
+          instance: gateway
+          type: main
+          __path__: /var/log/nginx/*log

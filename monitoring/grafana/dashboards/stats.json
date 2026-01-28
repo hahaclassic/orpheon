@@ -1,0 +1,29 @@
+{
+  "id": null,
+  "uid": "orpheon-stats",
+  "title": "Orpheon Stats",
+  "tags": ["stats", "loki", "orpheon"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "title": "content-msv",
+      "type": "piechart",
+      "gridPos": { "h": 10, "w": 10, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (instance)(count_over_time({job=\"content-msv\", logging_type=\"main\"} [5m]))",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list", "placement": "right" },
+        "pieType": "pie",
+        "reduceOptions": { "values": false, "calcs": ["lastNotNull"] }
+      }
+    }
+  ]
+}

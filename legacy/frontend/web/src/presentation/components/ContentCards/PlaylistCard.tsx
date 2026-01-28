@@ -58,11 +58,11 @@ const PlaylistCard = ({
     try {
       setUpdatingFavorite(true);
       if (localIsFavorite) {
-        await apiService.delete(`/me/favorites/${id}`);
+        await apiService.delete(`/favorites/${id}`);
         setLocalIsFavorite(false);
         setLocalRating(prev => prev - 1);
       } else {
-        await apiService.post(`/me/favorites/${id}`);
+        await apiService.post(`/favorites/${id}`);
         setLocalIsFavorite(true);
         setLocalRating(prev => prev + 1);
       }

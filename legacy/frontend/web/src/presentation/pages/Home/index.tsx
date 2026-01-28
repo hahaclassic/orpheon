@@ -47,27 +47,27 @@ const Home = () => {
   const fetchAlbums = async () => {
     try {
       const response = await apiService.get('/albums');
-      const albumsData = Array.isArray(response) ? response : [];
-      
-      // Получаем обложки для каждого альбома
-      const albumsWithCovers = await Promise.all(
-        albumsData.map(async (album) => {
+      const albumsData = Array.isArray(response.data) ? response.data : [];
+
+      const albumsWithCovers: Album[] = await Promise.all(
+        albumsData.map(async (album: Album) => {
           try {
             const coverResponse = await apiService.get(`/albums/${album.id}/cover`, {
               responseType: 'blob'
             });
-            const coverUrl = URL.createObjectURL(coverResponse);
+            const coverUrl = URL.createObjectURL(coverResponse.data);
             return { ...album, coverUrl };
           } catch (err) {
             console.error(`Error fetching cover for album ${album.id}:`, err);
-            return { ...album, coverUrl: "/default-cover.jpg" };
+            return { ...album, coverUrl: undefined };
           }
         })
       );
-      
+
       setAlbums(albumsWithCovers);
     } catch (err) {
       console.error("Error fetching albums:", err);
+      setAlbums([]); // всегда устанавливаем массив, чтобы UI не ломался
       setError("Ошибка при загрузке альбомов");
     }
   };
@@ -145,7 +145,7 @@ const Home = () => {
                         objectFit: 'cover',
                         aspectRatio: '1/1'
                       }}
-                      image={album.coverUrl || "/default-cover.jpg"}
+                      image={album.coverUrl}
                       alt={album.title}
                       onClick={() => handleAlbumClick(album.id)}
                     />

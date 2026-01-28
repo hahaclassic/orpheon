@@ -30,7 +30,7 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
+      <BrowserRouter basename="/legacy">
         <AuthProvider>
           <PlayerProvider>
             <LocalizationProvider dateAdapter={AdapterDateFns}>

@@ -28,7 +28,7 @@ func ClaimsRequired() gin.HandlerFunc {
 		lvlStr := c.GetHeader(headerAccessLvl)
 
 		slog.Info(
-			"[USER-MSV] Middleware ClaimsRequired headers:",
+			"[AUTH-MSV] Middleware ClaimsRequired headers:",
 			"X-User-Id", userIDStr,
 			"X-Access-Level", lvlStr,
 		)

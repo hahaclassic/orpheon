@@ -3394,12 +3394,25 @@ paths:
                     type: string
 
 # Me
-  /users/me/playlists:
+  /playlists:
     get:
-      summary: Get current user's playlists
+      summary: Get playlists by user
       tags:
-        - users
         - playlists
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          description: |
+            User identifier.
+            Use `me` to get playlists of the currently authenticated user,
+            or UUID to get playlists of a specific user.
+          schema:
+            oneOf:
+              - type: string
+                enum: [me]
+              - type: string
+                format: uuid
       security:
         - bearerAuth: []
       responses:
@@ -3411,49 +3424,17 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Playlist'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-
-  /users/{id}/playlists:
-    get:
-      summary: Get user's playlists
-      tags:
-        - users
-        - playlists
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Playlist'
         '400':
-          description: Bad request
+          description: Bad request (invalid user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '401':
+          description: Unauthorized (required when user_id=me)
           content:
             application/json:
               schema:

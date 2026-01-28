@@ -151,7 +151,7 @@ const ArtistPage = () => {
 
     const fetchPlaylists = async () => {
       try {
-        const response = await apiService.get('/me/playlists');
+        const response = await apiService.get('/playlists?user_id=me');
         setPlaylists(response);
       } catch (err) {
         console.error('Error fetching playlists:', err);
