@@ -1,0 +1,138 @@
+{
+  "id": null,
+  "uid": "orpheon-logs",
+  "title": "Orpheon Logs Only",
+  "tags": ["logs", "loki", "orpheon"],
+  "timezone": "browser",
+  "schemaVersion": 37,
+  "version": 0,
+  "panels": [
+    {
+      "id": 1,
+      "title": "orpheon-auth-msv-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 0},
+      "targets": [{"expr": "{instance=~\"orpheon-auth-msv-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 2,
+      "title": "orpheon-auth-msv-mirror-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 0},
+      "targets": [{"expr": "{instance=~\"orpheon-auth-msv-mirror-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 3,
+      "title": "orpheon-auth-msv-ro-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 6},
+      "targets": [{"expr": "{instance=~\"orpheon-auth-msv-ro-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 4,
+      "title": "orpheon-auth-msv-ro-mirror-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 6},
+      "targets": [{"expr": "{instance=~\"orpheon-auth-msv-ro-mirror-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 5,
+      "title": "orpheon-auth-msv-ro-2",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 12},
+      "targets": [{"expr": "{instance=~\"orpheon-auth-msv-ro-2\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 6,
+      "title": "orpheon-auth-msv-ro-mirror-2",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 12},
+      "targets": [{"expr": "{instance=~\"orpheon-auth-msv-ro-mirror-2\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 7,
+      "title": "orpheon-user-msv-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 18},
+      "targets": [{"expr": "{instance=~\"orpheon-user-msv-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 8,
+      "title": "orpheon-user-msv-mirror-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 18},
+      "targets": [{"expr": "{instance=~\"orpheon-user-msv-mirror-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 9,
+      "title": "orpheon-user-msv-ro-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 24},
+      "targets": [{"expr": "{instance=~\"orpheon-user-msv-ro-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 10,
+      "title": "orpheon-user-msv-ro-mirror-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 24},
+      "targets": [{"expr": "{instance=~\"orpheon-user-msv-ro-mirror-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 11,
+      "title": "orpheon-user-msv-ro-2",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 30},
+      "targets": [{"expr": "{instance=~\"orpheon-user-msv-ro-2\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 12,
+      "title": "orpheon-user-msv-ro-mirror-2",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 30},
+      "targets": [{"expr": "{instance=~\"orpheon-user-msv-ro-mirror-2\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 13,
+      "title": "orpheon-content-msv-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 36},
+      "targets": [{"expr": "{instance=~\"orpheon-content-msv-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 14,
+      "title": "orpheon-content-msv-mirror-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 36},
+      "targets": [{"expr": "{instance=~\"orpheon-content-msv-mirror-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 15,
+      "title": "orpheon-content-msv-ro-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 42},
+      "targets": [{"expr": "{instance=~\"orpheon-content-msv-ro-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 16,
+      "title": "orpheon-content-msv-ro-mirror-1",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 42},
+      "targets": [{"expr": "{instance=~\"orpheon-content-msv-ro-mirror-1\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 17,
+      "title": "orpheon-content-msv-ro-2",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 48},
+      "targets": [{"expr": "{instance=~\"orpheon-content-msv-ro-2\"}", "refId": "A", "maxLines": 50}]
+    },
+    {
+      "id": 18,
+      "title": "orpheon-content-msv-ro-mirror-2",
+      "type": "logs",
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 48},
+      "targets": [{"expr": "{instance=~\"orpheon-content-msv-ro-mirror-2\"}", "refId": "A", "maxLines": 50}]
+    }
+  ],
+  "time": {"from": "now-1h", "to": "now"}
+}
