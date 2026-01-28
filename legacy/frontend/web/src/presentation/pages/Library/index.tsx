@@ -71,8 +71,8 @@ const Library = () => {
       setLoading(true);
       setError(null);
       const [myPlaylistsData, favoritePlaylistsData] = await Promise.all([
-        apiService.get('/me/playlists'),
-        apiService.get('/me/favorites'),
+        apiService.get('/playlists?user_id=me'),
+        apiService.get('/favorites'),
       ]);
       const [myPlaylistsWithCovers, favoritePlaylistsWithCovers] = await Promise.all([
         fetchPlaylistCovers(myPlaylistsData ?? []),
@@ -135,13 +135,13 @@ const Library = () => {
       if (!playlist) return;
 
       if (playlist.is_favorite) {
-        await apiService.delete(`/me/favorites/${playlistId}`);
+        await apiService.delete(`/favorites/${playlistId}`);
         setMyPlaylists(prev => prev.map(p => 
           p.id === playlistId ? { ...p, is_favorite: false, rating: p.rating - 1 } : p
         ));
         setFavoritePlaylists(prev => prev.filter(p => p.id !== playlistId));
       } else {
-        await apiService.post(`/me/favorites/${playlistId}`);
+        await apiService.post(`/favorites/${playlistId}`);
         setMyPlaylists(prev => prev.map(p => 
           p.id === playlistId ? { ...p, is_favorite: true, rating: p.rating + 1 } : p
         ));

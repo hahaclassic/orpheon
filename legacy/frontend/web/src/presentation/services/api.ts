@@ -120,13 +120,13 @@ export const api = {
   changePassword: (oldPassword: string, newPassword: string): Promise<void> =>
     apiService.post('/auth/password/update', { old: oldPassword, new: newPassword }),
 
-  getMe: (): Promise<User> => apiService.get('/me'),
+  getMe: (): Promise<User> => apiService.get('/users/me'),
 
-  updateUser: (user: User): Promise<User> => apiService.put('/me', user),
+  updateUser: (user: User): Promise<User> => apiService.put('/users/me', user),
 
   // User endpoints
   getUser: (id: string): Promise<User> => apiService.get(`/users/${id}`),
-  getUserPlaylists: (id: string): Promise<Playlist[]> => apiService.get(`/users/${id}/playlists`),
+  getUserPlaylists: (id: string): Promise<Playlist[]> => apiService.get(`/playlists?user_id=${id}`),
   getUserFavorites: (id: string): Promise<Playlist[]> => apiService.get(`/users/${id}/favorites`),
 
   // Tracks

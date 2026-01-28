@@ -52,7 +52,7 @@ const UserProfile = () => {
         setLoading(true);
         const [userData, playlistsData] = await Promise.all([
           apiService.get(`/users/${id}`),
-          apiService.get(`/users/${id}/playlists`),
+          apiService.get(`/playlists?user_id=${id}`),
         ]);
 
         // Load playlist covers

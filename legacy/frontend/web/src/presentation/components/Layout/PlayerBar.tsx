@@ -298,7 +298,7 @@ const PlayerBar = () => {
     }
 
     try {
-      const data = await apiService.get('/me/playlists');
+      const data = await apiService.get('/playlists?user_id=me');
       setPlaylists(data);
     } catch (err) {
       setPlaylists([]);

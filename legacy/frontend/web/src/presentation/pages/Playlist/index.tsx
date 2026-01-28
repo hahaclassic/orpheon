@@ -209,7 +209,7 @@ const PlaylistPage = () => {
     if (isAuthenticated) {
       const fetchPlaylists = async () => {
         try {
-          const response: AxiosResponse<Playlist[]> = await api.get('/me/playlists');
+          const response: AxiosResponse<Playlist[]> = await api.get('/playlists?user_id=me');
           setPlaylists(response.data);
         } catch (err) {
           console.error('Error fetching playlists:', err);
@@ -270,14 +270,14 @@ const PlaylistPage = () => {
     try {
       setUpdatingFavorite(true);
       if (playlist.is_favorite) {
-        await api.delete(`/me/favorites/${id}`);
+        await api.delete(`/favorites/${id}`);
         setPlaylist(prev => prev ? {
           ...prev,
           is_favorite: false,
           rating: prev.rating - 1
         } : null);
       } else {
-        await api.post(`/me/favorites/${id}`);
+        await api.post(`/favorites/${id}`);
         setPlaylist(prev => prev ? {
           ...prev,
           is_favorite: true,

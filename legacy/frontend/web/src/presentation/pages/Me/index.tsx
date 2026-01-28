@@ -65,7 +65,7 @@ const Me = () => {
 
   useEffect(() => {
     setProfileLoading(true);
-    api.get('/me')
+    api.get('/users/me')
       .then(res => setProfile(res.data))
       .catch(() => setProfile(null))
       .finally(() => setProfileLoading(false));
@@ -73,7 +73,7 @@ const Me = () => {
 
   useEffect(() => {
     setPlaylistsLoading(true);
-    api.get('/me/playlists')
+    api.get('/playlists?user_id=me')
       .then(res => setPlaylists(res.data))
       .catch(() => setPlaylists([]))
       .finally(() => setPlaylistsLoading(false));
@@ -81,7 +81,7 @@ const Me = () => {
 
   useEffect(() => {
     setFavoritesLoading(true);
-    api.get('/me/favorites')
+    api.get('/favorites')
       .then(res => setFavorites(res.data))
       .catch(() => setFavorites([]))
       .finally(() => setFavoritesLoading(false));

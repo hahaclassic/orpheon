@@ -28,7 +28,7 @@ export const useApi = () => {
   }, []);
 
   const getPlaylists = useCallback(async (): Promise<Playlist[]> => {
-    const response = await execute(apiService.get('/playlists'));
+    const response = await execute(apiService.get('/playlists?user_id=me'));
     return (response as ApiResponse<Playlist[]>).data;
   }, [execute]);
 
