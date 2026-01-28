@@ -6,6 +6,7 @@ services:
     environment:
       - READ_ONLY=false
       - USER_CREATOR_HOST=user-msv-mirror
+      - POSTGRES_HOST=postgres-primary
     env_file:
       - ../.config/.auth.env
     expose:
@@ -32,6 +33,7 @@ services:
     environment:
       - READ_ONLY=true
       - USER_CREATOR_HOST=user-msv-mirror
+      - POSTGRES_HOST=postgres-replica
     env_file:
       - ../.config/.auth.env
     expose:
@@ -81,6 +83,7 @@ services:
     environment:
       - HTTP_PORT=8080
       - READ_ONLY=false
+      - POSTGRES_HOST=postgres-primary
     env_file:
       - ../.config/.user.env
     expose:
@@ -104,6 +107,7 @@ services:
     environment:
       - HTTP_PORT=8080
       - READ_ONLY=true
+      - POSTGRES_HOST=postgres-replica
     env_file:
       - ../.config/.user.env
     expose:
@@ -144,6 +148,7 @@ services:
     environment:
       - READ_ONLY=false
       - USER_INFO_HOST=user-msv-mirror
+      - POSTGRES_HOST=postgres-primary
     env_file:
       - ../.config/.content.env
     expose:
@@ -172,6 +177,7 @@ services:
     environment:
       - READ_ONLY=true
       - USER_INFO_HOST=user-msv-ro-mirror
+      - POSTGRES_HOST=postgres-replica
     env_file:
       - ../.config/.content.env
     expose:
